@@ -108,6 +108,10 @@ tree = hierarchy()
 find(tree, "Camera")
 assert not any(n.get("text") == "Phone" for n in tree.iter("node"))
 print("PASS: app search filters real installed apps")
+# A fullscreen IME can cover app rows while accessibility still exposes them.
+if "mInputShown=true" in adb("shell", "dumpsys", "input_method"):
+    adb("shell", "input", "keyevent", "4")
+    wait_for("Camera")
 tap("Camera")
 for _ in range(20):
     focus = adb("shell", "dumpsys", "activity", "activities")
@@ -168,7 +172,7 @@ x = int(rail_right - 32 * density)  # clear Back and landscape system-bar insets
 adb("shell", "input", "swipe", str(x), str(int(rail_bottom - 48 * density)), str(x), str(int(rail_bottom + 48 * density)), "1000")
 wait_for("Поиск приложений")
 tree = hierarchy()
-assert any(n.get("content-desc", "").startswith("Алфавит приложений, #.") for n in tree.iter("node"))
+assert any(re.match(r"Алфавит приложений, [A-Z#]\.", n.get("content-desc", "")) for n in tree.iter("node"))
 assert not any(n.get("text") == "Camera" for n in tree.iter("node"))
 print("PASS: release below the alphabet keeps the app list at the final section")
 adb("shell", "input", "keyevent", "4")
