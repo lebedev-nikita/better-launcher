@@ -20,13 +20,15 @@ def adb(*command):
 
 
 def hierarchy():
-    for _ in range(3):
+    deadline = time.monotonic() + 30
+    while True:
         adb("shell", "rm", "-f", "/data/local/tmp/better-smoke.xml")
         result = adb("shell", "uiautomator", "dump", "/data/local/tmp/better-smoke.xml")
-        if "dumped to" in result:
+        if "dumped to:" in result:
             return ET.fromstring(adb("shell", "cat", "/data/local/tmp/better-smoke.xml"))
-        time.sleep(.4)
-    raise AssertionError("uiautomator could not capture the current UI")
+        if time.monotonic() >= deadline:
+            raise AssertionError("Unable to obtain a fresh UI hierarchy")
+        time.sleep(.25)
 
 
 def find(tree, label):
@@ -95,7 +97,12 @@ wait_for("Все приложения")
 print("PASS: settings entry and system Back")
 
 tap("Все приложения")
-adb("shell", "input", "text", "camera")
+wait_for("Поиск приложений")
+# Let the IME commit each injected character before sending the next one.
+for character in "camera":
+    adb("shell", "input", "text", character)
+    time.sleep(.1)
+wait_for("Camera")
 tree = hierarchy()
 find(tree, "Camera")
 assert not any(n.get("text") == "Phone" for n in tree.iter("node"))

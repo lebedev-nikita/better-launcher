@@ -29,6 +29,7 @@ class AppCatalog(private val context: Context, private val store: LauncherStore)
         return Prepared(source, settings, index)
     }
     fun load() {
+        AppListRules.prepareSections()
         val loaded = users.userProfiles.flatMap { user ->
             runCatching { launcherApps.getActivityList(null, user).mapNotNull { info ->
                 if (info.componentName.packageName == context.packageName) null

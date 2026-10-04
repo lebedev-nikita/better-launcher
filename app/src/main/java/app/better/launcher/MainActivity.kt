@@ -206,9 +206,8 @@ class MainActivity : AppCompatActivity() {
     private fun updateAlphabet() {
         val sections = catalog.sections()
         rail.activeLetters = sections
-        rail.letters = if (resources.displayMetrics.heightPixels / resources.displayMetrics.density < 500) {
-            listOf("★") + sections.sortedBy(AppListRules::sectionOrder)
-        } else listOf("★") + ('A'..'Z').map(Char::toString) + sections.filter { it.first() in 'А'..'Я' }.sortedBy(AppListRules::sectionOrder) + "#"
+        rail.letters = AppListRules.railLetters(sections,
+            shortWindow = resources.displayMetrics.heightPixels / resources.displayMetrics.density < 500)
     }
     private fun refreshHomePreservingScroll() {
         val y = homeScroll?.scrollY ?: 0

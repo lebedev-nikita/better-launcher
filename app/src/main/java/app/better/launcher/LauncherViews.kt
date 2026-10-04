@@ -70,9 +70,10 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
 
 /** One continuous control, with scroll accessibility actions and keyboard alternatives. */
 class AlphabetRail(context: Context) : View(context) {
-    var letters = listOf("★") + ('A'..'Z').map(Char::toString) + "#"
+    var letters = AppListRules.railLetters(emptySet(), shortWindow = false)
         set(value) { field = value; invalidate() }
     var activeLetters = emptySet<String>()
+        set(value) { field = value; invalidate() }
     var onSelect: (String) -> Unit = {}
     var selected = "★"
         set(value) { field = value; contentDescription = "Алфавит приложений, $value. Проведите вверх или вниз для выбора."; invalidate() }

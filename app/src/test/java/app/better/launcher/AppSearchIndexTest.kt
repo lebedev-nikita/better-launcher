@@ -9,11 +9,11 @@ class AppSearchIndexTest {
     @Test fun `prepared search keeps alias and original matching and section order`() {
         val apps = listOf(App("maps", "Карты", "Google Maps"), App("cafe", "Café"), App("tree", "Ёлка"), App("number", "123"))
         val index = AppSearchIndex(apps, App::label, App::original)
-        assertEquals(listOf("number", "cafe", "tree", "maps"), index.apps.map(App::id))
+        assertEquals(listOf("cafe", "maps", "tree", "number"), index.apps.map(App::id))
         for (query in listOf("cafe", "CAFÉ", "елка", "google карты", "maps", "maps camera", "  ")) {
             assertEquals(index.apps.filter { AppListRules.matches(query, it.label, it.original) }, index.matching(query))
         }
-        assertEquals(setOf("#", "C", "Е", "К"), index.sections)
+        assertEquals(setOf("C", "K", "Y", "#"), index.sections)
     }
 
     @Test fun `opening and repeated queries do not reread app labels`() {

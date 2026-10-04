@@ -150,9 +150,9 @@ Android supplies the wallpaper behind the transparent launcher window, including
 
 ## Layout
 
-The phone UI uses one vertical content column. Home content and the app list reserve space for the alphabet: normal content margins are (28dp) at the start and (84dp) at the end; left-handed mode reverses these. The rail occupies a (92dp) overlay, while its resting letter center stays (32dp) inside the screen edge. Its touch corridor is (48dp), between (24dp) and (72dp) from the edge.
+The phone UI uses one vertical content column. Home content and the app list reserve space for the alphabet: normal content margins are (28dp) at the start and (84dp) at the end; left-handed mode reverses these. The rail occupies a (92dp) overlay, while its resting letter center stays (32dp) inside the screen edge. Its touch corridor is (48dp), between (24dp) and (72dp) from the usable edge. Horizontal system-bar and cutout insets shift the rail inward, including side navigation bars in landscape.
 
-The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Home top padding is 14% of viewport height, clamped to (36–126dp). Below a viewport height (500dp), it becomes (24dp), the optional information-to-list gap decreases, and the alphabet shows only available app sections plus favorites. This is a height adaptation; no width breakpoint or tablet layout is implemented.
+The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Home top padding is 14% of viewport height, clamped to (36–126dp). Below a viewport height (500dp), it becomes (24dp), the optional information-to-list gap decreases, and the alphabet shows only available Latin app sections plus favorites and a final hash. This is a height adaptation; no width breakpoint or tablet layout is implemented.
 
 Home has no built-in clock or date. When no weather, widget, or media content is present, favorites start directly after the top padding; otherwise an (18dp) short-window or (30dp) normal gap separates that content from favorites. Calendar events remain available from settings.
 
@@ -194,7 +194,7 @@ Settings are label-description rows on an opaque dark surface. Destination rows 
 
 ### Navigation
 
-The footer provides app search on the left, then a widget-page button and settings on the right. The search label wraps within the remaining space at large font sizes. The alphabet rail reserves system/IME insets and the measured home footer height so it cannot cover or intercept footer actions. The app list has back and clear controls; Android Back returns to home. Settings and the widget page hide the alphabet rail. Favorites navigation uses the star entry; the normal rail contains Latin letters, available Cyrillic sections, and a final number/symbol section.
+The footer provides app search on the left, then a widget-page button and settings on the right. The search label wraps within the remaining space at large font sizes. The alphabet rail reserves system/IME insets and the measured home footer height so it cannot cover or intercept footer actions. The app list has back and clear controls; Android Back returns to home. Settings and the widget page hide the alphabet rail. Favorites navigation uses the star entry; the normal rail contains only A–Z, with a final hash for numbers, symbols, and initials without a Latin transliteration. Cyrillic app names use the first Latin letter from ICU4J Russian-Latin/BGN transliteration: B/Б, V/В, Y/Я/Ю/Й, Z/Ж. Multi-letter equivalents participate by their first letter (Яндекс → Yandeks → Y); hard/soft signs use the hash. The hash remains last in short windows and in the app list.
 
 ### Widgets
 

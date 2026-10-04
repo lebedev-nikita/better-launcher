@@ -123,4 +123,19 @@ class LauncherIntegrationTest {
         store.rename(app.id, "")
         assertEquals(app.originalLabel, catalog.label(catalog.visible(app.originalLabel).first { it.id == app.id }))
     }
+    @Test fun catalogGroupsLatinAndCyrillicAliasesAndPutsOtherNamesLast() = isolated { store ->
+        val catalog = AppCatalog(context, store)
+        catalog.load()
+        val labels = listOf("Bank", "Банк", "Видео", "Zoom", "Яндекс", "123")
+        val apps = catalog.apps.take(labels.size)
+        assertEquals(labels.size, apps.size)
+        apps.zip(labels).forEach { (app, label) -> store.rename(app.id, label) }
+        val ids = apps.map { it.id }.toSet()
+        val sections = catalog.visible().filter { it.id in ids }.map { AppListRules.section(catalog.label(it)) }
+        assertEquals(listOf("B", "B", "V", "Y", "Z", "#"), sections)
+        store.hidden = setOf(apps[2].id)
+        assertFalse(catalog.visible().any { it.id == apps[2].id })
+        assertEquals(setOf("B", "Y", "Z", "#"), catalog.visible().filter { it.id in ids }
+            .map { AppListRules.section(catalog.label(it)) }.toSet())
+    }
 }
