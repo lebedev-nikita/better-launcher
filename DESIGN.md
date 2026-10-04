@@ -151,7 +151,7 @@ Android supplies the wallpaper behind the transparent launcher window, including
 - **App labels:** `app-label`, or `app-label-large` when the user enables larger app names. Labels wrap to two lines before ellipsizing.
 - **Setting titles:** `setting-title`.
 - **Body and actions:** `body`; explanatory copy also uses nearby sizes according to its component.
-- **Secondary labels:** `label`, including section labels and footer text.
+- **Secondary labels:** `label`, including section labels and supporting information.
 - **Details:** `detail`, including settings descriptions and notification previews.
 - **Search:** unboxed native `EditText` (19sp).
 - **Alphabet:** native `sans-serif-medium`; resting letters (11sp) grow by up to (7sp) near the finger, with a selected bubble label (27sp).
@@ -212,7 +212,7 @@ Settings are label-description rows on an opaque dark surface. Destination rows 
 
 ### Navigation
 
-The footer provides app search on the left, then a widget-page button and settings on the right. The search label wraps within the remaining space at large font sizes. The alphabet rail reserves system/IME insets and the measured home footer height so it cannot cover or intercept footer actions. The app list has back and clear controls; Android Back returns to home. Settings and the widget page hide the alphabet rail. Favorites navigation uses the star entry; the normal rail contains only A–Z, with a final hash for numbers, symbols, and initials without a Latin transliteration. Cyrillic app names use the first Latin letter from Android ICU Russian-Latin/BGN transliteration: B/Б, V/В, Y/Я/Ю/Й, Z/Ж. Multi-letter equivalents participate by their first letter (Яндекс → Yandeks → Y); hard/soft signs use the hash. The hash remains last in short windows and in the app list.
+The footer provides icon-only app search on the left and settings on the right, with the widget-page button centered between them. All three targets are 48×48dp; equal flexible gaps and 22dp side padding keep the outer buttons symmetric. Search retains its accessible name without a visible label. The alphabet rail reserves system/IME insets and the measured home footer height so it cannot cover or intercept footer actions. The app list has back and clear controls; Android Back returns to home. Settings and the widget page hide the alphabet rail. Favorites navigation uses the star entry; the normal rail contains only A–Z, with a final hash for numbers, symbols, and initials without a Latin transliteration. Cyrillic app names use the first Latin letter from Android ICU Russian-Latin/BGN transliteration: B/Б, V/В, Y/Я/Ю/Й, Z/Ж. Multi-letter equivalents participate by their first letter (Яндекс → Yandeks → Y); hard/soft signs use the hash. The hash remains last in short windows and in the app list.
 
 ### Widgets
 
