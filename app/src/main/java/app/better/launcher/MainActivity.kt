@@ -27,6 +27,8 @@ import androidx.core.view.isNotEmpty
 import androidx.core.view.isEmpty
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.slider.Slider
+import com.google.android.material.slider.TickVisibilityMode
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
@@ -188,8 +190,7 @@ class MainActivity : AppCompatActivity() {
     }
     private fun contentMargins(): Pair<Int, Int> = if (store.bool("leftHanded")) dp(84) to dp(28) else dp(28) to dp(84)
     private fun applyAppearance() {
-        // Contrast floor for white system wallpaper; legacy artwork preferences are ignored.
-        wallpaperScrim.shade = .61f + if (store.bool("dimWallpaper", true)) .06f else 0f
+        wallpaperScrim.shade = store.wallpaperDimming / 100f
         rail.leftHanded = store.bool("leftHanded")
         rail.layoutParams = FrameLayout.LayoutParams(dp(92), -1, if (rail.leftHanded) Gravity.START else Gravity.END)
         updateRailBounds()
@@ -634,7 +635,7 @@ class MainActivity : AppCompatActivity() {
             val names = listOf("sans-serif", "sans-serif-light", "sans-serif-condensed", "serif")
             choose("Шрифт", listOf("Системный", "Лёгкий", "Компактный", "С засечками"), names.indexOf(store.string("font", "sans-serif"))) { store.set("font", names[it]); showSettings() }
         })
-        body.addView(toggle("Затемнять обои", "Для читаемости текста", "dimWallpaper", true) { applyAppearance() })
+        body.addView(wallpaperDimmingSetting())
         body.addView(toggle("Скрыть значки", "Оставить только названия приложений", "hideIcons"))
         body.addView(toggle("Крупные названия", "Увеличить текст приложений", "largeText"))
         body.addView(toggle("Компактный список", "Уменьшить расстояние между приложениями", "compact"))
@@ -655,6 +656,31 @@ class MainActivity : AppCompatActivity() {
         body.addView(setting("Импорт настроек", "Восстановить из файла; текущие настройки заменятся") { safeStartForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE), 52) })
         body.addView(gap(22)); body.addView(text("Better Launcher ${packageManager.getPackageInfo(packageName, 0).versionName}", 14f, secondary).apply { setPadding(dp(16), 0, 0, 0) })
         scroll.addView(body); screen.addView(scroll, FrameLayout.LayoutParams(-1, -1))
+    }
+    private fun wallpaperDimmingSetting(): View = vertical().apply {
+        setPadding(dp(16), dp(10), dp(16), dp(10))
+        val percentage = text(getString(R.string.wallpaper_dimming_percentage, store.wallpaperDimming), 17f, secondary).apply {
+            minWidth = dp(60); gravity = Gravity.END or Gravity.CENTER_VERTICAL
+        }
+        val heading = horizontal().apply {
+            addView(text("Затемнение обоев", 17f), LinearLayout.LayoutParams(0, -2, 1f))
+            addView(percentage)
+        }
+        addView(heading)
+        addView(Slider(this@MainActivity).apply {
+            valueFrom = 0f; valueTo = 100f; stepSize = 1f; value = store.wallpaperDimming.toFloat()
+            setTickVisibilityMode(TickVisibilityMode.TICK_VISIBILITY_HIDDEN)
+            contentDescription = "Затемнение обоев"
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            setLabelFormatter { getString(R.string.wallpaper_dimming_percentage, it.toInt()) }
+            addOnChangeListener { _, value, fromUser ->
+                if (fromUser) {
+                    store.wallpaperDimming = value.toInt()
+                    percentage.text = getString(R.string.wallpaper_dimming_percentage, store.wallpaperDimming)
+                    applyAppearance()
+                }
+            }
+        }, LinearLayout.LayoutParams(-1, dp(48)))
     }
     private fun section(body: LinearLayout, label: String) {
         body.addView(gap(20)); body.addView(text(label, 14f, 0xFFE9CBB6.toInt()).apply { setPadding(dp(16), dp(8), 0, dp(8)) })

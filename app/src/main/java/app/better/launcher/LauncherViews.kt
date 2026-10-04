@@ -19,7 +19,7 @@ fun touchBackground(color: Int = 0x00000000): RippleDrawable = RippleDrawable(Co
 
 /** Readability overlay; Android draws the actual system wallpaper behind the window. */
 class WallpaperScrimView(context: Context) : View(context) {
-    var shade = 0.61f
+    var shade = 0.20f
         set(value) { field = value; invalidate() }
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     override fun onDraw(canvas: Canvas) {

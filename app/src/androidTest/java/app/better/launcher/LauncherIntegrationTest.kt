@@ -1,6 +1,16 @@
 package app.better.launcher
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.os.Bundle
+import android.view.KeyEvent
+import android.view.View
+import android.view.ViewGroup
+import android.view.accessibility.AccessibilityNodeInfo
+import androidx.test.core.app.ActivityScenario
+import com.google.android.material.slider.Slider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
@@ -102,6 +112,66 @@ class LauncherIntegrationTest {
         ).forEach { invalid ->
             assertTrue(runCatching { store.import("""{"version":1,"preferences":$invalid}""") }.isFailure)
             assertEquals(before, store.prefs.all)
+        }
+    }
+    @Test fun dimmingSurvivesBackupAndRejectsInvalidValuesAtomically() = isolated { store ->
+        assertEquals(20, store.wallpaperDimming)
+        store.set("dimWallpaper", false)
+        assertEquals(0, store.wallpaperDimming)
+        store.set("dimWallpaper", true)
+        assertEquals(20, store.wallpaperDimming)
+        store.favorites = listOf("keep-me")
+        store.widgets = listOf(42)
+        for (level in listOf(0, 37, 100)) {
+            store.wallpaperDimming = level
+            val backup = store.export()
+            store.wallpaperDimming = 50
+            store.import(backup)
+            assertEquals(level, LauncherStore(context).wallpaperDimming)
+            assertEquals(listOf(42), store.widgets)
+        }
+        val before = store.export()
+        for (invalid in listOf("-1", "101", "20.5", "\"20\"", "true", "null")) {
+            val backup = """{"version":1,"preferences":{"favorites":"[]","wallpaperDimming":$invalid}}"""
+            assertTrue(runCatching { store.import(backup) }.isFailure)
+            assertEquals(before, store.export())
+        }
+        store.import("""{"version":1,"preferences":{"dimWallpaper":false}}""")
+        assertEquals(0, store.wallpaperDimming)
+        store.import("""{"version":1,"preferences":{"dimWallpaper":true}}""")
+        assertEquals(20, store.wallpaperDimming)
+    }
+    private fun descendants(view: View): List<View> = listOf(view) + if (view is ViewGroup) {
+        (0 until view.childCount).flatMap { descendants(view.getChildAt(it)) }
+    } else emptyList()
+    @Test fun dimmingSliderSupportsKeyboardAccessibilityAndRecreation() = isolated { store ->
+        store.set("initialized", true)
+        store.wallpaperDimming = 20
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                descendants(activity.window.decorView).first { it.contentDescription == "Настройки лаунчера" }.performClick()
+                val slider = descendants(activity.window.decorView).filterIsInstance<Slider>().single()
+                assertEquals(20f, slider.value, 0f)
+                slider.requestFocus()
+                slider.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
+                slider.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER))
+                slider.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT))
+                slider.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT))
+                assertEquals(21, activity.store.wallpaperDimming)
+                val progress = Bundle().apply { putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, 37f) }
+                assertTrue(slider.accessibilityNodeProvider.performAction(0, android.R.id.accessibilityActionSetProgress, progress))
+                assertEquals(37, activity.store.wallpaperDimming)
+            }
+            scenario.recreate()
+            scenario.onActivity { activity ->
+                val scrim = descendants(activity.window.decorView).filterIsInstance<WallpaperScrimView>().single()
+                val bitmap = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+                scrim.draw(Canvas(bitmap))
+                assertEquals((.37f * 255).toInt(), Color.alpha(bitmap.getPixel(0, 0)))
+                bitmap.recycle()
+                descendants(activity.window.decorView).first { it.contentDescription == "Настройки лаунчера" }.performClick()
+                assertEquals(37f, descendants(activity.window.decorView).filterIsInstance<Slider>().single().value, 0f)
+            }
         }
     }
     @Test fun catalogLoadsRealAppsAndRespectsHiddenAppsAndAliases() = isolated { store ->

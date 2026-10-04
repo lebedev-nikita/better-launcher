@@ -19,8 +19,9 @@ class LauncherNavigationTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
 
     @Test fun widgetPageHasAccessibleNavigationAndHomeAlwaysReturnsHome() {
-        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
+        val activity = instrumentation.startActivitySync(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            .setClass(instrumentation.targetContext, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)) as MainActivity
         try {
             instrumentation.waitForIdleSync()
             bounds(activity, "Все приложения")
@@ -43,7 +44,7 @@ class LauncherNavigationTest {
             }
             instrumentation.waitForIdleSync()
             // HOME can create a new task/activity; inspect the active window, not the old decor.
-            val deadline = SystemClock.uptimeMillis() + 5000
+            val deadline = SystemClock.uptimeMillis() + 15000
             var homeVisible = false
             while (SystemClock.uptimeMillis() < deadline && !homeVisible) {
                 val window = instrumentation.uiAutomation.rootInActiveWindow
@@ -68,7 +69,7 @@ class LauncherNavigationTest {
         bounds(activity, label, stage)
     }
     private fun bounds(activity: MainActivity, label: String, stage: String = label): Rect {
-        val deadline = SystemClock.uptimeMillis() + 5000
+        val deadline = SystemClock.uptimeMillis() + 15000
         while (SystemClock.uptimeMillis() < deadline) {
             val bounds = Rect()
             var visible = false

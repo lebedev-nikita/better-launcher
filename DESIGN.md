@@ -127,7 +127,7 @@ Warm dark neutrals support a small peach accent; wallpaper palettes supply the b
 
 Android supplies the wallpaper behind the transparent launcher window, including live wallpapers. Better Launcher draws only a translucent black readability scrim; it has no built-in wallpaper artwork. The wallpaper settings row opens the system wallpaper picker directly. Legacy wallpaper selections in preferences or version 1 backups are accepted for compatibility and ignored when rendering.
 
-**The Readable Wallpaper Rule.** The system wallpaper keeps a base black scrim with opacity (0.61); the optional dim setting adds (0.06) instead of removing that contrast floor. These are current rendering values, not proof of legibility for every wallpaper or device.
+**The Readable Wallpaper Rule.** A native Material slider controls black scrim opacity from 0% (fully visible wallpaper) to 100% (black background), in 1% steps. The default is 20%, with no mandatory contrast floor. The inline percentage updates and saves immediately; the slider supports keyboard and accessibility input. Lower dimming can reduce white-text contrast on bright wallpapers. Legacy enabled dimming maps to 20%, disabled dimming to 0%; an explicitly saved percentage takes precedence.
 
 ## Typography
 
@@ -216,7 +216,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 
 - **Do** preserve the user's Niagara-style vertical lists and alphabetical navigation.
 - **Do** keep app rows transparent and use installed app icons and actual system data.
-- **Do** retain wallpaper contrast floors and warm secondary text.
+- **Do** respect the selected wallpaper dimming percentage and retain warm secondary text.
 - **Do** keep scrolling home content separate from persistent footer actions.
 - **Do** let text rows grow with font scale and preserve keyboard and accessibility alternatives.
 - **Do** use native Material 3 controls within the existing dark theme.

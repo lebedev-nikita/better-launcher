@@ -211,7 +211,7 @@
       "kind": "custom",
       "refersTo": "material-switch",
       "description": "Illustrative native translation. Runtime uses MaterialSwitch 1.13.0 with library-resolved states. This CSS control shows theme roles only; track geometry and state rendering are approximate.",
-      "html": "<div class=\"ds-toggle-stage\"><label class=\"ds-toggle\"><span class=\"ds-toggle-words\"><span class=\"ds-toggle-title\">Затемнять обои</span><span class=\"ds-toggle-detail\">Для читаемости текста</span></span><input class=\"ds-toggle-input\" type=\"checkbox\" checked aria-label=\"Затемнять обои\"/><span class=\"ds-toggle-target\" aria-hidden=\"true\"><span class=\"ds-toggle-track\"><span class=\"ds-toggle-thumb\"></span></span></span></label></div>",
+      "html": "<div class=\"ds-toggle-stage\"><label class=\"ds-toggle\"><span class=\"ds-toggle-words\"><span class=\"ds-toggle-title\">Скрыть значки</span><span class=\"ds-toggle-detail\">Оставить только названия приложений</span></span><input class=\"ds-toggle-input\" type=\"checkbox\" checked aria-label=\"Скрыть значки\"/><span class=\"ds-toggle-target\" aria-hidden=\"true\"><span class=\"ds-toggle-track\"><span class=\"ds-toggle-thumb\"></span></span></span></label></div>",
       "css": ".ds-toggle-stage { background:#292724; padding:16px; } .ds-toggle { display:flex; align-items:center; gap:8px; min-height:76px; padding:10px 8px 10px 16px; color:#FFFFFF; cursor:pointer; } .ds-toggle-words { display:flex; flex:1; flex-direction:column; gap:5px; } .ds-toggle-title { font:400 17px sans-serif; } .ds-toggle-detail { color:#EEE5DE; font:400 13px sans-serif; } .ds-toggle-input { position:absolute; opacity:0; width:1px; height:1px; } .ds-toggle-target { display:flex; align-items:center; justify-content:center; min-width:56px; min-height:48px; border-radius:24px; } .ds-toggle-track { display:flex; align-items:center; width:48px; height:28px; padding:2px; border:2px solid #93877D; border-radius:18px; background:#292724; } .ds-toggle-thumb { width:20px; height:20px; border-radius:50%; background:#93877D; } .ds-toggle-input:checked + .ds-toggle-target .ds-toggle-track { background:#E9CBB6; border-color:#E9CBB6; justify-content:flex-end; } .ds-toggle-input:checked + .ds-toggle-target .ds-toggle-thumb { width:28px; height:28px; background:#352E2A; } .ds-toggle:hover .ds-toggle-target, .ds-toggle-input:focus-visible + .ds-toggle-target, .ds-toggle:active .ds-toggle-target { background:#FFFFFF28; }"
     },
     {
@@ -237,6 +237,14 @@
       "description": "Illustrative native translation. Schematic short-window rail showing available Latin sections and a final hash. Cyrillic initials use the first Latin letter of ICU4J Russian-Latin/BGN transliteration, including Яндекс → Yandeks → Y; numbers, symbols and initials without Latin transliteration use #. Runtime is one continuous accessible control with finger-following Canvas geometry, not individual letter buttons.",
       "html": "<div class=\"ds-rail-stage\"><div class=\"ds-rail\" role=\"slider\" tabindex=\"0\" aria-label=\"Алфавит приложений\" aria-valuemin=\"0\" aria-valuemax=\"6\" aria-valuenow=\"2\" aria-valuetext=\"D\"><span>★</span><span>C</span><span class=\"ds-rail-selected\">D</span><span>F</span><span>M</span><span>P</span><span>#</span></div></div>",
       "css": ".ds-rail-stage { background:#352E2A; padding:16px; } .ds-rail { width:92px; padding:24px 0; color:#FFFFFFE6; cursor:ns-resize; } .ds-rail span { display:block; width:48px; margin-left:36px; text-align:center; min-height:23px; font:500 11px sans-serif; } .ds-rail .ds-rail-selected { color:#FFFFFF; } .ds-rail:hover .ds-rail-selected, .ds-rail:focus-visible .ds-rail-selected, .ds-rail:active .ds-rail-selected { transform:translateX(-24px); font-size:18px; } .ds-rail:focus-visible { outline:none; }"
+    },
+    {
+      "name": "Wallpaper dimming slider",
+      "kind": "custom",
+      "refersTo": "setting-row",
+      "description": "Illustrative translation. Runtime uses a native Material Slider from 0 to 100 with 1% steps, a persistent percentage, immediate saving, and keyboard/accessibility input.",
+      "html": "<div class=\"ds-dimming\"><label for=\"ds-dimming-value\">Затемнение обоев</label><output>20%</output><input id=\"ds-dimming-value\" type=\"range\" min=\"0\" max=\"100\" step=\"1\" value=\"20\"/></div>",
+      "css": ".ds-dimming { display:grid; grid-template-columns:1fr 60px; gap:8px; padding:10px 16px; background:#292724; color:#FFFFFF; font:400 17px sans-serif; } .ds-dimming output { text-align:right; color:#EEE5DE; } .ds-dimming input { grid-column:1 / -1; width:100%; min-height:48px; accent-color:#E9CBB6; }"
     }
   ],
   "narrative": {
@@ -251,7 +259,7 @@
     "rules": [
       {
         "name": "The Readable Wallpaper Rule",
-        "body": "The system wallpaper keeps a base black scrim with opacity (0.61); the optional dim setting adds (0.06) instead of removing that contrast floor. These are current rendering values, not proof of legibility for every wallpaper or device.",
+        "body": "A native Material slider controls black scrim opacity from 0% (fully visible wallpaper) to 100% (black background), in 1% steps. The default is 20%, with no mandatory contrast floor. The inline percentage updates and saves immediately; the slider supports keyboard and accessibility input. Lower dimming can reduce white-text contrast on bright wallpapers. Legacy enabled dimming maps to 20%, disabled dimming to 0%; an explicitly saved percentage takes precedence.",
         "section": "colors"
       },
       {
@@ -278,7 +286,7 @@
     "dos": [
       "**Do** preserve the user's Niagara-style vertical lists and alphabetical navigation.",
       "**Do** keep app rows transparent and use installed app icons and actual system data.",
-      "**Do** retain wallpaper contrast floors and warm secondary text.",
+      "**Do** respect the selected wallpaper dimming percentage and retain warm secondary text.",
       "**Do** keep scrolling home content separate from persistent footer actions.",
       "**Do** let text rows grow with font scale and preserve keyboard and accessibility alternatives.",
       "**Do** use native Material 3 controls within the existing dark theme."
