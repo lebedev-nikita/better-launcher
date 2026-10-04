@@ -19,3 +19,7 @@ The widget page inherits the wallpaper, white type, and native controls. Its hea
 Releasing an active gesture below the letters selects the final section even without a final MOVE. After cancellation, a late release does not restart navigation.
 
 Adding a widget opens a sheet with a fixed title/Close, a recycled list of widget labels, application names and 144dp provider previews, plus the shared alphabet control on the right. Provider preview layouts take precedence over images; missing previews are explicitly labeled. The star jumps to the start, Cyrillic labels share Latin sections, and # is last. The list reserves 72dp for the rail; small sheets and larger fonts use only available sections. Previews are inert, rows are accessible choices, and browsing allocates no widget IDs. Dismissal cancels resource loading; choosing a row continues the existing binding/configuration flow.
+
+## App name editing
+
+Tapping the long-press menu title switches the same dialog to a rename form. The icon and “Переименовать …” heading sit above a full-width outlined field with the current name selected. A single centered “Сохранить” action sits above the IME; IME Done also saves. Empty input restores the installed app label. Dismissal through Back, outside touch, or HOME discards an unsaved name.

@@ -30,8 +30,12 @@ class AppMenuTest {
             node { it.contentDescription == "Дополнительно" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             node { it.contentDescription == "Скрыть приложение" }
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Переименовать" })
+            val menu = currentDialog(activity)
             node { it.contentDescription == "Переименовать $initialLabel" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Renamed app")
+            assertSame("Editing must keep the original app menu", menu, currentDialog(activity))
+            node { it.text == "Переименовать $initialLabel" }
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Скрыть приложение" })
             node { it.text == "Сохранить" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             node { it.text == "Renamed app" }
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
@@ -50,7 +54,13 @@ class AppMenuTest {
             openMenu("Renamed app")
             node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("")
-            node { it.text == "Сохранить" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            instrumentation.runOnMainSync {
+                val dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(activity) as android.app.Dialog
+                fun inputs(view: android.view.View): List<android.widget.EditText> =
+                    if (view is android.widget.EditText) listOf(view) else if (view is android.view.ViewGroup)
+                        (0 until view.childCount).flatMap { inputs(view.getChildAt(it)) } else emptyList()
+                inputs(dialog.window!!.decorView).single().onEditorAction(android.view.inputmethod.EditorInfo.IME_ACTION_DONE)
+            }
             node { it.text == entry.originalLabel }
             assertNull(LauncherStore(instrumentation.targetContext).alias(entry.id))
         } finally {
@@ -63,6 +73,13 @@ class AppMenuTest {
         }
     }
 
+    private fun currentDialog(activity: MainActivity): Any? {
+        var dialog: Any? = null
+        instrumentation.runOnMainSync {
+            dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(activity)
+        }
+        return dialog
+    }
     private fun openMenu(label: String) {
         // HOME can replace the Activity; act on the currently visible row.
         var row: AccessibilityNodeInfo? = node { it.text?.toString() == label }
