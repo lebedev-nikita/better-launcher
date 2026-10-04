@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T12:21:06.390718+00:00",
+  "title": "Design System: Better Launcher",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Peach accent",
+        "tonalRamp": [
+          "oklch(15.00% 0.0443 57.08)",
+          "oklch(26.43% 0.0443 57.08)",
+          "oklch(37.86% 0.0443 57.08)",
+          "oklch(49.29% 0.0443 57.08)",
+          "oklch(60.71% 0.0443 57.08)",
+          "oklch(72.14% 0.0443 57.08)",
+          "oklch(83.57% 0.0443 57.08)",
+          "oklch(95.00% 0.0443 57.08)"
+        ]
+      },
+      "on-primary": {
+        "role": "neutral",
+        "displayName": "Dark brown on accent",
+        "tonalRamp": [
+          "oklch(15.00% 0.0124 51.71)",
+          "oklch(26.43% 0.0124 51.71)",
+          "oklch(37.86% 0.0124 51.71)",
+          "oklch(49.29% 0.0124 51.71)",
+          "oklch(60.71% 0.0124 51.71)",
+          "oklch(72.14% 0.0124 51.71)",
+          "oklch(83.57% 0.0124 51.71)",
+          "oklch(95.00% 0.0124 51.71)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Muted peach",
+        "tonalRamp": [
+          "oklch(15.00% 0.0469 59.51)",
+          "oklch(26.43% 0.0469 59.51)",
+          "oklch(37.86% 0.0469 59.51)",
+          "oklch(49.29% 0.0469 59.51)",
+          "oklch(60.71% 0.0469 59.51)",
+          "oklch(72.14% 0.0469 59.51)",
+          "oklch(83.57% 0.0469 59.51)",
+          "oklch(95.00% 0.0469 59.51)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Warm charcoal",
+        "tonalRamp": [
+          "oklch(15.00% 0.0062 78.22)",
+          "oklch(26.43% 0.0062 78.22)",
+          "oklch(37.86% 0.0062 78.22)",
+          "oklch(49.29% 0.0062 78.22)",
+          "oklch(60.71% 0.0062 78.22)",
+          "oklch(72.14% 0.0062 78.22)",
+          "oklch(83.57% 0.0062 78.22)",
+          "oklch(95.00% 0.0062 78.22)"
+        ]
+      },
+      "on-surface": {
+        "role": "neutral",
+        "displayName": "White foreground",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
+        ]
+      },
+      "on-surface-variant": {
+        "role": "neutral",
+        "displayName": "Warm pale text",
+        "tonalRamp": [
+          "oklch(15.00% 0.0136 60.56)",
+          "oklch(26.43% 0.0136 60.56)",
+          "oklch(37.86% 0.0136 60.56)",
+          "oklch(49.29% 0.0136 60.56)",
+          "oklch(60.71% 0.0136 60.56)",
+          "oklch(72.14% 0.0136 60.56)",
+          "oklch(83.57% 0.0136 60.56)",
+          "oklch(95.00% 0.0136 60.56)"
+        ]
+      },
+      "outline": {
+        "role": "neutral",
+        "displayName": "Warm gray outline",
+        "tonalRamp": [
+          "oklch(15.00% 0.0207 62.27)",
+          "oklch(26.43% 0.0207 62.27)",
+          "oklch(37.86% 0.0207 62.27)",
+          "oklch(49.29% 0.0207 62.27)",
+          "oklch(60.71% 0.0207 62.27)",
+          "oklch(72.14% 0.0207 62.27)",
+          "oklch(83.57% 0.0207 62.27)",
+          "oklch(95.00% 0.0207 62.27)"
+        ]
+      },
+      "touch-ripple": {
+        "role": "neutral",
+        "displayName": "White touch wash",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 0.00 / 0.157)",
+          "oklch(26.43% 0.0000 0.00 / 0.157)",
+          "oklch(37.86% 0.0000 0.00 / 0.157)",
+          "oklch(49.29% 0.0000 0.00 / 0.157)",
+          "oklch(60.71% 0.0000 0.00 / 0.157)",
+          "oklch(72.14% 0.0000 0.00 / 0.157)",
+          "oklch(83.57% 0.0000 0.00 / 0.157)",
+          "oklch(95.00% 0.0000 0.00 / 0.157)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "app-label": {
+        "displayName": "App names",
+        "purpose": "Regular installed app and folder labels; family follows the Android appearance setting."
+      },
+      "app-label-large": {
+        "displayName": "Larger app names",
+        "purpose": "User-selected enlarged app labels; native sp also follows system font scaling."
+      },
+      "title": {
+        "displayName": "Sheet title",
+        "purpose": "Titles in native bottom sheets."
+      },
+      "setting-title": {
+        "displayName": "Settings label",
+        "purpose": "Primary settings labels and the home date."
+      },
+      "body": {
+        "displayName": "Body and actions",
+        "purpose": "Repeated native action and body text."
+      },
+      "label": {
+        "displayName": "Secondary label",
+        "purpose": "Settings sections, footer copy, and supporting information."
+      },
+      "detail": {
+        "displayName": "Description",
+        "purpose": "Settings descriptions and notification previews."
+      }
+    },
+    "shadows": [
+      {
+        "name": "transient-message",
+        "value": "Android View.elevation = 6dp",
+        "purpose": "The only explicit native elevation in MainActivity; no CSS shadow equivalent is normative."
+      }
+    ],
+    "motion": [
+      {
+        "name": "native-touch-feedback",
+        "value": "RippleDrawable; platform timing",
+        "purpose": "Native feedback for clickable actions and rows; panel hover/focus fills are illustrative translations."
+      },
+      {
+        "name": "alphabet-finger-wave",
+        "value": "Immediate Canvas redraw; Gaussian finger-distance displacement",
+        "purpose": "The continuous rail follows touch events without a custom animator; haptic tick on section change."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "short-window-height",
+        "value": "viewport height < 500dp"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Text action",
+      "kind": "button",
+      "refersTo": "action",
+      "description": "Illustrative native translation. Native action uses a minimum 52dp touch height and a white ripple; preview state fills approximate native feedback.",
+      "html": "<div class=\"ds-action-stage\"><button class=\"ds-action\">Выбрать приложения</button></div>",
+      "css": ".ds-action-stage { background:#292724; padding:12px; } .ds-action { background:transparent; color:#FFFFFF; border:0; border-radius:12px; padding:8px 16px; min-height:52px; font:400 16px sans-serif; text-align:left; cursor:pointer; } .ds-action:hover, .ds-action:focus-visible, .ds-action:active { background:#FFFFFF28; outline:none; }"
+    },
+    {
+      "name": "Search icon button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "Illustrative native translation. 48dp native target with a Canvas-drawn search path. The preview SVG translates the same geometry.",
+      "html": "<div class=\"ds-icon-stage\"><button class=\"ds-icon\" aria-label=\"Все приложения и поиск\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"M15.5 15.5L21 21\"/></svg></button></div>",
+      "css": ".ds-icon-stage { background:#292724; padding:12px; } .ds-icon { display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; padding:0; border:0; border-radius:12px; background:transparent; color:#FFFFFF; cursor:pointer; } .ds-icon svg { width:22.08px; height:22.08px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; } .ds-icon:hover, .ds-icon:focus-visible, .ds-icon:active { background:#FFFFFF28; outline:none; }"
+    },
+    {
+      "name": "App search field",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Illustrative native translation. Transparent single-line EditText with a warm hint. Filtering and IME launch remain native runtime behavior.",
+      "html": "<div class=\"ds-search-stage\"><input class=\"ds-search\" type=\"search\" placeholder=\"Поиск приложений\" aria-label=\"Поиск приложений\"/></div>",
+      "css": ".ds-search-stage { background:#292724; padding:12px; } .ds-search { width:100%; height:56px; padding:0; border:0; background:transparent; color:#FFFFFF; caret-color:#E9CBB6; font:400 19px sans-serif; } .ds-search::placeholder { color:#EEE5DE; opacity:1; } .ds-search:hover, .ds-search:focus-visible, .ds-search:active { outline:none; }"
+    },
+    {
+      "name": "Settings destination row",
+      "kind": "button",
+      "refersTo": "setting-row",
+      "description": "Illustrative native translation. A growing label-description row with a native chevron and a minimum 76dp height.",
+      "html": "<div class=\"ds-setting-stage\"><button class=\"ds-setting\"><span class=\"ds-setting-words\"><span class=\"ds-setting-title\">Обои</span><span class=\"ds-setting-detail\">Дюны</span></span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 6L15 12L9 18\"/></svg></button></div>",
+      "css": ".ds-setting-stage { background:#292724; padding:16px; } .ds-setting { display:flex; align-items:center; gap:16px; width:100%; min-height:76px; padding:10px 0 10px 16px; border:0; border-radius:12px; background:transparent; color:#FFFFFF; text-align:left; cursor:pointer; } .ds-setting-words { display:flex; flex:1; flex-direction:column; gap:5px; } .ds-setting-title { font:400 17px sans-serif; } .ds-setting-detail { color:#EEE5DE; font:400 13px sans-serif; } .ds-setting svg { width:22.08px; height:22.08px; margin:12.96px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; } .ds-setting:hover, .ds-setting:focus-visible, .ds-setting:active { background:#FFFFFF28; outline:none; }"
+    },
+    {
+      "name": "Material toggle row",
+      "kind": "custom",
+      "refersTo": "material-switch",
+      "description": "Illustrative native translation. Runtime uses MaterialSwitch 1.13.0 with library-resolved states. This CSS control shows theme roles only; track geometry and state rendering are approximate.",
+      "html": "<div class=\"ds-toggle-stage\"><label class=\"ds-toggle\"><span class=\"ds-toggle-words\"><span class=\"ds-toggle-title\">Затемнять обои</span><span class=\"ds-toggle-detail\">Для читаемости текста</span></span><input class=\"ds-toggle-input\" type=\"checkbox\" checked aria-label=\"Затемнять обои\"/><span class=\"ds-toggle-target\" aria-hidden=\"true\"><span class=\"ds-toggle-track\"><span class=\"ds-toggle-thumb\"></span></span></span></label></div>",
+      "css": ".ds-toggle-stage { background:#292724; padding:16px; } .ds-toggle { display:flex; align-items:center; gap:8px; min-height:76px; padding:10px 8px 10px 16px; color:#FFFFFF; cursor:pointer; } .ds-toggle-words { display:flex; flex:1; flex-direction:column; gap:5px; } .ds-toggle-title { font:400 17px sans-serif; } .ds-toggle-detail { color:#EEE5DE; font:400 13px sans-serif; } .ds-toggle-input { position:absolute; opacity:0; width:1px; height:1px; } .ds-toggle-target { display:flex; align-items:center; justify-content:center; min-width:56px; min-height:48px; border-radius:24px; } .ds-toggle-track { display:flex; align-items:center; width:48px; height:28px; padding:2px; border:2px solid #93877D; border-radius:18px; background:#292724; } .ds-toggle-thumb { width:20px; height:20px; border-radius:50%; background:#93877D; } .ds-toggle-input:checked + .ds-toggle-target .ds-toggle-track { background:#E9CBB6; border-color:#E9CBB6; justify-content:flex-end; } .ds-toggle-input:checked + .ds-toggle-target .ds-toggle-thumb { width:28px; height:28px; background:#352E2A; } .ds-toggle:hover .ds-toggle-target, .ds-toggle-input:focus-visible + .ds-toggle-target, .ds-toggle:active .ds-toggle-target { background:#FFFFFF28; }"
+    },
+    {
+      "name": "Bottom sheet",
+      "kind": "card",
+      "refersTo": "bottom-sheet",
+      "description": "Illustrative native translation. A dark rounded native Dialog with a scrollable body, close target, and 30% native backdrop dim. This preview does not reproduce window behavior.",
+      "html": "<div class=\"ds-sheet-stage\"><section class=\"ds-sheet\" aria-label=\"Избранное\"><header class=\"ds-sheet-header\"><span class=\"ds-sheet-title\">Избранное</span><button class=\"ds-sheet-close\" aria-label=\"Закрыть\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6L18 18M6 18L18 6\"/></svg></button></header><button class=\"ds-sheet-action\">Выбрать приложения</button><button class=\"ds-sheet-action\">Создать папку</button></section></div>",
+      "css": ".ds-sheet-stage { background:#352E2A; padding:24px 0 0; } .ds-sheet { background:#292724; color:#FFFFFF; border-radius:24px; padding:8px 20px 24px; } .ds-sheet-header { display:flex; align-items:center; margin-bottom:12px; } .ds-sheet-title { flex:1; font:400 23px sans-serif; } .ds-sheet-close { display:flex; align-items:center; justify-content:center; width:48px; height:48px; padding:0; border:0; border-radius:12px; background:transparent; color:#FFFFFF; cursor:pointer; } .ds-sheet-close svg { width:22.08px; height:22.08px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; } .ds-sheet-action { display:block; width:100%; min-height:52px; padding:8px 16px; border:0; border-radius:12px; background:transparent; color:#FFFFFF; font:400 16px sans-serif; text-align:left; cursor:pointer; } .ds-sheet-action:hover, .ds-sheet-action:focus-visible, .ds-sheet-action:active, .ds-sheet-close:hover, .ds-sheet-close:focus-visible, .ds-sheet-close:active { background:#FFFFFF28; outline:none; }"
+    },
+    {
+      "name": "App row with icons hidden",
+      "kind": "custom",
+      "refersTo": "app-row",
+      "description": "Illustrative native translation. The implemented hide-icons option keeps only app names. Default runtime rows use real installed application icons; this preview does not substitute invented artwork.",
+      "html": "<div class=\"ds-app-stage\"><button class=\"ds-app\"><span class=\"ds-app-label\">Phone</span></button><button class=\"ds-app\"><span class=\"ds-app-label\">Messages</span></button></div>",
+      "css": ".ds-app-stage { background:#352E2A; padding:16px 28px; } .ds-app { display:flex; align-items:center; width:100%; min-height:62px; padding:0; border:0; border-radius:12px; background:transparent; color:#FFFFFF; text-align:left; cursor:pointer; } .ds-app-label { padding:8px 0; font:400 21px sans-serif; } .ds-app:hover, .ds-app:focus-visible, .ds-app:active { background:#FFFFFF28; outline:none; }"
+    },
+    {
+      "name": "Alphabet rail",
+      "kind": "nav",
+      "refersTo": "alphabet-rail",
+      "description": "Illustrative native translation. Schematic short-window rail showing available sections. Runtime is one continuous accessible control with finger-following Canvas geometry, not individual letter buttons.",
+      "html": "<div class=\"ds-rail-stage\"><div class=\"ds-rail\" role=\"slider\" tabindex=\"0\" aria-label=\"Алфавит приложений\" aria-valuemin=\"0\" aria-valuemax=\"5\" aria-valuenow=\"2\" aria-valuetext=\"D\"><span>★</span><span>C</span><span class=\"ds-rail-selected\">D</span><span>F</span><span>M</span><span>P</span></div></div>",
+      "css": ".ds-rail-stage { background:#352E2A; padding:16px; } .ds-rail { width:92px; padding:24px 0; color:#FFFFFFE6; cursor:ns-resize; } .ds-rail span { display:block; width:48px; margin-left:36px; text-align:center; min-height:23px; font:500 11px sans-serif; } .ds-rail .ds-rail-selected { color:#FFFFFF; } .ds-rail:hover .ds-rail-selected, .ds-rail:focus-visible .ds-rail-selected, .ds-rail:active .ds-rail-selected { transform:translateX(-24px); font-size:18px; } .ds-rail:focus-visible { outline:none; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Niagara-style native launcher",
+    "overview": "The user selected Niagara's vertical favorites and alphabetical navigation. The current implementation expresses that direction through native Android Views: an open wallpaper surface, white app names, installed app icons, a continuous alphabet control, and dark native sheets. Better Launcher uses original Kotlin source and Canvas wallpaper artwork under its own product name.\n\nSettings use a warm dark Material 3 theme, while the launcher itself stays visually open. This document describes the implemented phone UI, not verified Niagara fidelity or full feature parity. The native source is authoritative: [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt), [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt), and [styles.xml](app/src/main/res/values/styles.xml). Review evidence comprises the six current captures in `.impeccable/review/`; the five material corrections have a scoped `ship` verdict in [verification.md](docs/verification.md).",
+    "keyCharacteristics": [
+      "Unboxed app lists over selectable wallpaper.",
+      "White foreground with warm secondary text and restrained peach settings accents.",
+      "Native controls, content-driven row heights, and persistent bottom actions.",
+      "A continuous alphabet rail with touch, keyboard, and accessibility alternatives."
+    ],
+    "rules": [
+      {
+        "name": "The Readable Wallpaper Rule",
+        "body": "Every wallpaper mode keeps the implemented base scrim; the optional dim setting adds darkness instead of removing that contrast floor. Base opacity is Dune (0.48), Forest (0.40), Night (0.08), and System (0.61), with an additional (0.06) when dimming is enabled. These are current rendering values, not proof of legibility for every wallpaper or device.",
+        "section": "colors"
+      },
+      {
+        "name": "The Grow With Text Rule",
+        "body": "App and settings rows use minimum heights, not fixed text containers; preserve wrapping when Android font scale grows. The fixed footer remains outside the scrolling home content.",
+        "section": "typography"
+      },
+      {
+        "name": "The Separate Footer Rule",
+        "body": "Keep bottom navigation outside the scrolling favorite list so long lists and larger text cannot cover its actions.",
+        "section": "layout"
+      },
+      {
+        "name": "The Open List Rule",
+        "body": "Keep launcher app rows unboxed at rest; reserve opaque containers for sheets, settings, notification detail, and transient feedback, as the current build does.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** preserve the user's Niagara-style vertical lists and alphabetical navigation.",
+      "**Do** keep app rows transparent and use installed app icons and actual system data.",
+      "**Do** retain wallpaper contrast floors and warm secondary text.",
+      "**Do** keep scrolling home content separate from persistent footer actions.",
+      "**Do** let text rows grow with font scale and preserve keyboard and accessibility alternatives.",
+      "**Do** use native Material 3 controls within the existing dark theme."
+    ],
+    "donts": [
+      "**Don't** replace the selected launcher composition with a card grid or a new brand metaphor.",
+      "**Don't** copy the raw ripple-mask radius as a density-aware spacing or shape token.",
+      "**Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.",
+      "**Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build."
+    ]
+  }
+}

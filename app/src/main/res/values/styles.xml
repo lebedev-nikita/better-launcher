@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.BetterLauncher" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#E9CBB6</item>
+        <item name="colorOnPrimary">#352E2A</item>
+        <item name="colorSecondary">#D4B69F</item>
+        <item name="colorSurface">#292724</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnSurfaceVariant">#EEE5DE</item>
+        <item name="colorOutline">#93877D</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorAccent">#E9CBB6</item>
+        <item name="android:windowSplashScreenBackground">#352E2A</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+    </style>
+</resources>

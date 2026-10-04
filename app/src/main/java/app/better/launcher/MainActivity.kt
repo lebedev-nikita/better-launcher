@@ -1,0 +1,744 @@
+package app.better.launcher
+
+import android.Manifest
+import android.app.*
+import android.app.role.RoleManager
+import android.content.*
+import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Typeface
+import android.media.MediaMetadata
+import android.media.session.MediaController
+import android.media.session.MediaSessionManager
+import android.media.session.PlaybackState
+import android.net.Uri
+import android.os.*
+import android.provider.CalendarContract
+import android.provider.Settings
+import android.service.notification.StatusBarNotification
+import android.text.*
+import android.view.*
+import android.view.inputmethod.InputMethodManager
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.OnBackPressedCallback
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.materialswitch.MaterialSwitch
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.Executors
+
+class MainActivity : AppCompatActivity() {
+    lateinit var store: LauncherStore
+    lateinit var catalog: AppCatalog
+    lateinit var widgets: WidgetController
+    val secondary: Int get() = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurfaceVariant, "Better Launcher")
+    val surface: Int get() = MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurface, "Better Launcher")
+    private val executor = Executors.newFixedThreadPool(2)
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var root: FrameLayout
+    private lateinit var wallpaper: WallpaperView
+    private lateinit var screen: FrameLayout
+    private lateinit var rail: AlphabetRail
+    private var page = "home"
+    private var allScroll: ScrollView? = null
+    private var homeScroll: ScrollView? = null
+    private var allList: LinearLayout? = null
+    private var search: EditText? = null
+    private var clock: TextView? = null
+    private var date: TextView? = null
+    private var weatherText: TextView? = null
+    private var weather: Weather? = null
+    private var weatherLoading = false
+    private var weatherError = false
+    private var weatherUpdated = 0L
+    private var currentDialog: Dialog? = null
+    private val sectionViews = mutableMapOf<String, View>()
+    private var loadingApps = false
+    private var refreshQueued = false
+    private var resumed = false
+    private var notificationRefreshPending = false
+    private val ticker = object : Runnable {
+        override fun run() { updateClock(); refreshWeather(); handler.postDelayed(this, 30_000) }
+    }
+    private val packageCallback = object : LauncherApps.Callback() {
+        override fun onPackageAdded(packageName: String, user: UserHandle) = refreshApps()
+        override fun onPackageRemoved(packageName: String, user: UserHandle) = refreshApps()
+        override fun onPackageChanged(packageName: String, user: UserHandle) = refreshApps()
+        override fun onPackagesAvailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) = refreshApps()
+        override fun onPackagesUnavailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) = refreshApps()
+    }
+    private val timeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) { updateClock() }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        store = LauncherStore(this); catalog = AppCatalog(this, store); widgets = WidgetController(this, store)
+        window.setDecorFitsSystemWindows(false)
+        window.statusBarColor = Color.TRANSPARENT; window.navigationBarColor = Color.TRANSPARENT
+        window.isNavigationBarContrastEnforced = false
+        root = FrameLayout(this)
+        wallpaper = WallpaperView(this)
+        root.addView(wallpaper, FrameLayout.LayoutParams(-1, -1))
+        screen = FrameLayout(this)
+        root.addView(screen, FrameLayout.LayoutParams(-1, -1))
+        rail = AlphabetRail(this)
+        rail.onSelect = { letter ->
+            when (letter) {
+                "★" -> { if (page != "home") showHome() }
+                else -> { if (page != "apps") showApps(false); jumpTo(letter) }
+            }
+        }
+        root.addView(rail, FrameLayout.LayoutParams(dp(92), -1, Gravity.END))
+        root.setOnApplyWindowInsetsListener { _, insets ->
+            val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+            val ime = insets.getInsets(WindowInsets.Type.ime())
+            screen.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
+            rail.setPadding(0, bars.top, 0, bars.bottom)
+            insets
+        }
+        setContentView(root)
+        catalog.launcherApps.registerCallback(packageCallback, handler)
+        val filter = IntentFilter().apply { addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED); addAction(Intent.ACTION_DATE_CHANGED) }
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(timeReceiver, filter, RECEIVER_NOT_EXPORTED)
+        else registerReceiver(timeReceiver, filter)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() { handleBack() }
+        })
+        applyAppearance(); showHome(); refreshApps()
+    }
+
+    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); currentDialog?.dismiss(); hideKeyboard(); showHome() }
+    override fun onStart() { super.onStart(); widgets.start() }
+    override fun onStop() { widgets.stop(); super.onStop() }
+    override fun onResume() {
+        super.onResume(); resumed = true
+        NotificationHub.onChanged = {
+            if (page == "home" && resumed) {
+                if (currentDialog == null) refreshHomePreservingScroll() else notificationRefreshPending = true
+            }
+        }
+        handler.post(ticker); applyAppearance(); refreshApps(); refreshWeather()
+    }
+    override fun onPause() { resumed = false; handler.removeCallbacks(ticker); NotificationHub.onChanged = null; super.onPause() }
+    override fun onDestroy() {
+        catalog.launcherApps.unregisterCallback(packageCallback); unregisterReceiver(timeReceiver)
+        handler.removeCallbacksAndMessages(null); executor.shutdownNow(); currentDialog?.dismiss(); super.onDestroy()
+    }
+    private fun handleBack() { if (page != "home") { hideKeyboard(); showHome() } else if (currentDialog != null) currentDialog?.dismiss() }
+
+    private fun refreshApps() {
+        if (loadingApps) { refreshQueued = true; return }
+        loadingApps = true
+        executor.execute {
+            val result = runCatching { catalog.load(); catalog.seedFavorites() }
+            handler.post {
+                if (isDestroyed) return@post
+                loadingApps = false; updateAlphabet()
+                if (result.isFailure) message("Не удалось прочитать список приложений")
+                when (page) { "home" -> refreshHomePreservingScroll(); "apps" -> populateApps(search?.text?.toString().orEmpty()) }
+                if (refreshQueued) { refreshQueued = false; refreshApps() }
+            }
+        }
+    }
+
+    fun text(value: String, size: Float = 16f, color: Int = Color.WHITE): TextView = TextView(this).apply {
+        text = value; textSize = size; setTextColor(color); gravity = Gravity.CENTER_VERTICAL
+        typeface = Typeface.create(store.string("font", "sans-serif"), Typeface.NORMAL)
+        includeFontPadding = false
+    }
+    fun vertical() = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+    fun horizontal() = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+    fun iconButton(glyph: Glyph, label: String, action: () -> Unit): View = GlyphView(this, glyph).apply {
+        contentDescription = label; isFocusable = true; background = touchBackground()
+        layoutParams = LinearLayout.LayoutParams(dp(48), dp(48)); setOnClickListener { action() }
+    }
+    fun action(label: String, action: () -> Unit): TextView = text(label, 16f).apply {
+        minHeight = dp(52); setPadding(dp(16), dp(8), dp(16), dp(8)); background = touchBackground(); isFocusable = true
+        setOnClickListener { action() }
+    }
+    fun gap(height: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
+    private fun clearScreen(newPage: String) {
+        page = newPage; screen.removeAllViews(); allScroll = null; homeScroll = null; allList = null; search = null; clock = null; date = null; weatherText = null
+        rail.visibility = if (newPage == "settings") View.GONE else View.VISIBLE
+    }
+    private fun contentMargins(): Pair<Int, Int> = if (store.bool("leftHanded")) dp(84) to dp(28) else dp(28) to dp(84)
+    private fun applyAppearance() {
+        wallpaper.style = store.string("wallpaper", "dune")
+        // Contrast floor for the brightest color in each built-in and for white system wallpaper.
+        val baseShade = when (wallpaper.style) { "night" -> .08f; "forest" -> .40f; "system" -> .61f; else -> .48f }
+        wallpaper.shade = baseShade + if (store.bool("dimWallpaper", true)) .06f else 0f
+        rail.leftHanded = store.bool("leftHanded")
+        rail.layoutParams = FrameLayout.LayoutParams(dp(92), -1, if (rail.leftHanded) Gravity.START else Gravity.END)
+        if (store.bool("hideStatus")) window.insetsController?.hide(WindowInsets.Type.statusBars()) else window.insetsController?.show(WindowInsets.Type.statusBars())
+        window.insetsController?.setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)
+    }
+    private fun updateAlphabet() {
+        val sections = catalog.visible().map { AppListRules.section(catalog.label(it)) }.toSet()
+        rail.activeLetters = sections
+        rail.letters = if (resources.displayMetrics.heightPixels / resources.displayMetrics.density < 500) {
+            listOf("★") + sections.sortedBy(AppListRules::sectionOrder)
+        } else listOf("★") + ('A'..'Z').map(Char::toString) + sections.filter { it.first() in 'А'..'Я' }.sortedBy(AppListRules::sectionOrder) + "#"
+    }
+    private fun refreshHomePreservingScroll() {
+        val y = homeScroll?.scrollY ?: 0
+        showHome(); homeScroll?.post { homeScroll?.scrollTo(0, y) }
+    }
+
+    fun showHome() {
+        clearScreen("home"); rail.selected = "★"; notificationRefreshPending = false
+        val homeLayout = vertical()
+        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; clipToPadding = false }
+        homeScroll = scroll
+        val content = vertical()
+        val (start, end) = contentMargins()
+        val viewportDp = resources.displayMetrics.heightPixels / resources.displayMetrics.density
+        val shortWindow = viewportDp < 500
+        content.setPadding(start, if (shortWindow) dp(24) else dp((viewportDp * .14f).coerceIn(36f, 126f)), end, dp(24))
+        clock = text("", if (shortWindow) 52f else if (store.bool("smallClock")) 58f else 76f).apply {
+            typeface = Typeface.create("sans-serif-light", Typeface.NORMAL); letterSpacing = -.035f
+            contentDescription = "Часы"; setOnClickListener { safeStart(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS)) }
+            isFocusable = true
+        }
+        content.addView(clock, LinearLayout.LayoutParams(-1, -2))
+        date = text("", 17f).apply { minHeight = dp(40); background = touchBackground(); isFocusable = true; setOnClickListener { showAgenda() } }
+        content.addView(date)
+        if (store.string("weatherCity").isNotBlank()) {
+            val line = horizontal()
+            line.addView(GlyphView(this, Glyph.SUN), LinearLayout.LayoutParams(dp(24), dp(32)))
+            weatherText = text(weatherLabel(), 14f, secondary).apply { setPadding(dp(8), 0, 0, 0) }
+            line.addView(weatherText)
+            line.minimumHeight = dp(48); line.isFocusable = true; line.background = touchBackground()
+            line.setOnClickListener { showWeather() }; content.addView(line)
+        }
+        val widgetBox = vertical(); widgets.render(widgetBox)
+        if (widgetBox.childCount > 0) { content.addView(gap(14)); content.addView(widgetBox) }
+        mediaView()?.let { content.addView(gap(12)); content.addView(it) }
+        content.addView(gap(if (shortWindow) 18 else 30))
+        val favorites = store.favorites.filter { catalog.find(it) != null || store.folder(it) != null }
+        if (favorites.isEmpty()) {
+            content.addView(text(if (loadingApps) "Загружаем приложения…" else "Ваши приложения, всегда под рукой", 20f))
+            content.addView(gap(12)); content.addView(action("Выбрать избранные") { editFavorites() })
+        }
+        favorites.forEach { id ->
+            val folder = store.folder(id)
+            if (folder != null) content.addView(folderRow(folder)) else catalog.find(id)?.let { content.addView(appRow(it, true)) }
+        }
+        content.addView(gap(14))
+        if (!store.bool("gesturesLearned")) {
+            content.addView(text("Проведите по алфавиту, чтобы найти приложение", 12f, secondary).apply { setPadding(0, dp(8), dp(6), dp(8)) })
+        }
+        scroll.addView(content); homeLayout.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        val gesture = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDown(e: MotionEvent) = true
+            override fun onSingleTapUp(e: MotionEvent): Boolean { content.performClick(); return true }
+            override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+                if (e1 != null && e1.y - e2.y > dp(80) && kotlin.math.abs(velocityY) > kotlin.math.abs(velocityX)) { showApps(true); return true }; return false
+            }
+            override fun onLongPress(e: MotionEvent) { showSettings() }
+        })
+        content.setOnTouchListener { _, event -> gesture.onTouchEvent(event) }
+        content.isLongClickable = true; content.setOnLongClickListener { showSettings(); true }
+        val footer = horizontal().apply { setPadding(dp(22), dp(7), dp(22), dp(7)); minimumHeight = dp(66) }
+        val appsButton = horizontal().apply { background = touchBackground(); isFocusable = true; contentDescription = "Все приложения и поиск"; setOnClickListener { showApps(true) } }
+        appsButton.addView(GlyphView(this, Glyph.SEARCH), LinearLayout.LayoutParams(dp(48), dp(52)))
+        appsButton.addView(text("Все приложения", 14f, secondary), LinearLayout.LayoutParams(-2, dp(52)))
+        footer.addView(appsButton)
+        footer.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+        footer.addView(iconButton(Glyph.SETTINGS, "Настройки лаунчера") { showSettings() })
+        homeLayout.addView(footer, LinearLayout.LayoutParams(-1, -2))
+        screen.addView(homeLayout, FrameLayout.LayoutParams(-1, -1))
+        updateClock()
+    }
+
+    private fun appRow(app: AppEntry, favorite: Boolean): View {
+        val row = horizontal().apply {
+            minimumHeight = dp(if (store.bool("compact")) 54 else 62)
+            background = touchBackground(); isFocusable = true
+        }
+        if (!store.bool("hideIcons")) {
+            val icon = ImageView(this).apply { setImageDrawable(app.icon); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }
+            row.addView(icon, LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
+        }
+        val labels = vertical().apply { setPadding(0, dp(8), 0, dp(8)) }
+        labels.addView(text(catalog.label(app), if (store.bool("largeText")) 25f else 21f).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END })
+        val notifications = if (store.bool("notifications", true)) NotificationHub.notifications(app.packageName, app.user) else emptyList()
+        if (favorite && notifications.isNotEmpty()) {
+            val notification = notifications.first().notification
+            val preview = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+                ?: notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
+            labels.addView(text(preview.ifBlank { "${notifications.size} уведомл." }, 13f, secondary).apply {
+                maxLines = 1; ellipsize = TextUtils.TruncateAt.END
+                setOnClickListener { showAppPopup(app) }; isFocusable = true
+                contentDescription = "Уведомления ${catalog.label(app)}: $preview"
+            })
+        }
+        row.addView(labels, LinearLayout.LayoutParams(0, -2, 1f))
+        if (favorite && (notifications.isNotEmpty() || store.popUp(app.id).isNotEmpty())) {
+            row.addView(iconButton(Glyph.CHEVRON, "Открыть меню ${catalog.label(app)}") { showAppPopup(app) })
+        }
+        row.setOnClickListener { launch(app) }
+        row.setOnLongClickListener { showAppMenu(app); true }
+        var downX = 0f; var downY = 0f; var swiped = false
+        // Unconsumed taps are dispatched by LinearLayout to its standard performClick.
+        @Suppress("ClickableViewAccessibility")
+        row.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> { downX = event.x; downY = event.y; swiped = false }
+                MotionEvent.ACTION_MOVE -> if (kotlin.math.abs(event.x - downX) > dp(32) && kotlin.math.abs(event.y - downY) < dp(28)) { swiped = true; view.parent.requestDisallowInterceptTouchEvent(true); view.isPressed = false }
+                MotionEvent.ACTION_UP -> if (swiped) { showAppPopup(app); return@setOnTouchListener true }
+            }; swiped
+        }
+        return row
+    }
+    private fun folderRow(folder: AppFolder): View = horizontal().apply {
+        minimumHeight = dp(62); background = touchBackground(); isFocusable = true
+        addView(GlyphView(this@MainActivity, Glyph.FOLDER), LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
+        addView(text(folder.name, 21f), LinearLayout.LayoutParams(0, -2, 1f))
+        addView(iconButton(Glyph.CHEVRON, "Открыть ${folder.name}") { showFolder(folder) })
+        setOnClickListener { showFolder(folder) }; setOnLongClickListener { editFolder(folder); true }
+    }
+    private fun launch(app: AppEntry) {
+        try { catalog.launch(app); hideKeyboard(); currentDialog?.dismiss() }
+        catch (_: Exception) { message("Не удалось открыть ${catalog.label(app)}. Возможно, приложение отключено."); refreshApps() }
+    }
+
+    private fun showApps(keyboard: Boolean) {
+        clearScreen("apps"); store.set("gesturesLearned", true)
+        val column = vertical()
+        val (start, end) = contentMargins(); column.setPadding(start - dp(8), dp(12), end, dp(12))
+        val toolbar = horizontal()
+        toolbar.addView(iconButton(Glyph.BACK, "На главный экран") { hideKeyboard(); showHome() })
+        search = EditText(this).apply {
+            hint = "Поиск приложений"; setHintTextColor(secondary); setTextColor(Color.WHITE); textSize = 19f
+            background = null; isSingleLine = true; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_GO
+            setSelectAllOnFocus(true)
+            addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { populateApps(s?.toString().orEmpty()) }
+                override fun afterTextChanged(s: Editable?) {}
+            })
+            setOnEditorActionListener { _, _, _ -> catalog.visible(text.toString()).firstOrNull()?.let { launch(it) }; true }
+        }
+        toolbar.addView(search, LinearLayout.LayoutParams(0, dp(56), 1f))
+        toolbar.addView(iconButton(Glyph.CLOSE, "Очистить поиск") { search?.setText("") })
+        column.addView(toolbar)
+        allScroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false }
+        allList = vertical().apply { setPadding(dp(8), dp(18), 0, dp(40)) }
+        allScroll!!.addView(allList); column.addView(allScroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        screen.addView(column, FrameLayout.LayoutParams(-1, -1)); populateApps("")
+        if (keyboard) search?.let { input -> input.requestFocus(); input.postDelayed({ (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT) }, 180) }
+    }
+    private fun populateApps(query: String) {
+        val list = allList ?: return
+        val y = allScroll?.scrollY ?: 0
+        list.removeAllViews(); sectionViews.clear()
+        val apps = catalog.visible(query)
+        var previous = ""
+        apps.forEach { app ->
+            val section = AppListRules.section(catalog.label(app))
+            if (query.isBlank() && previous != section) {
+                val heading = text(section, 16f, secondary).apply { setPadding(0, dp(18), 0, dp(8)) }
+                list.addView(heading); sectionViews[section] = heading; previous = section
+            }
+            list.addView(appRow(app, false))
+        }
+        if (apps.isEmpty()) {
+            list.addView(text(if (query.isBlank()) "Приложений пока нет" else "Ничего не найдено", 22f))
+            list.addView(gap(12))
+            list.addView(text(if (query.isBlank()) "Скрытые приложения доступны в настройках." else "Попробуйте другое название", 15f, secondary))
+            if (query.isNotBlank()) list.addView(action("Искать в интернете") { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${Uri.encode(query)}"))) })
+        }
+        allScroll?.post { allScroll?.scrollTo(0, y) }
+    }
+    private fun jumpTo(letter: String) {
+        if (search?.text?.isNotBlank() == true) search?.setText("")
+        hideKeyboard()
+        val section = sectionViews.keys.firstOrNull { AppListRules.sectionOrder(it) >= AppListRules.sectionOrder(letter) }
+            ?: sectionViews.keys.lastOrNull() ?: return
+        allList?.post { sectionViews[section]?.let { allScroll?.scrollTo(0, it.top) } }
+    }
+    private fun updateClock() {
+        val pattern = if (store.bool("clock24", android.text.format.DateFormat.is24HourFormat(this))) "HH:mm" else "h:mm"
+        clock?.text = SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
+        date?.text = SimpleDateFormat("EEEE, d MMMM", Locale.forLanguageTag("ru")).format(Date()).replaceFirstChar { it.titlecase() }
+    }
+
+    fun sheet(title: String, build: (LinearLayout, Dialog) -> Unit): Dialog {
+        currentDialog?.dismiss(); hideKeyboard()
+        val dialog = Dialog(this)
+        val body = vertical().apply { setPadding(dp(20), dp(8), dp(20), dp(24)); background = rounded(surface, dp(24).toFloat()) }
+        val header = horizontal()
+        header.addView(text(title, 23f), LinearLayout.LayoutParams(0, -2, 1f))
+        header.addView(iconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
+        body.addView(header); body.addView(gap(12))
+        build(body, dialog)
+        val scroll = ScrollView(this).apply { isFillViewport = false; isVerticalScrollBarEnabled = false; addView(body) }
+        dialog.setContentView(scroll)
+        dialog.window?.apply {
+            setBackgroundDrawableResource(android.R.color.transparent); addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(.3f); setGravity(Gravity.BOTTOM); setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        }
+        dialog.setOnDismissListener {
+            if (currentDialog == dialog) {
+                currentDialog = null
+                if (notificationRefreshPending && page == "home" && resumed) refreshHomePreservingScroll()
+            }
+        }
+        currentDialog = dialog; dialog.show()
+        dialog.window?.setLayout(-1, -2)
+        scroll.post { val limit = (resources.displayMetrics.heightPixels * .85f).toInt(); if (scroll.height > limit) dialog.window?.setLayout(-1, limit) }
+        return dialog
+    }
+    fun choose(title: String, options: List<String>, selected: Int = -1, action: (Int) -> Unit) {
+        sheet(title) { body, dialog ->
+            if (options.isEmpty()) body.addView(text("Нет доступных вариантов", 16f, secondary))
+            options.forEachIndexed { index, option ->
+                val row = horizontal(); row.addView(this.action(option) { dialog.dismiss(); action(index) }, LinearLayout.LayoutParams(0, -2, 1f))
+                if (index == selected) row.addView(GlyphView(this, Glyph.CHECK), LinearLayout.LayoutParams(dp(48), dp(48)))
+                body.addView(row)
+            }
+        }
+    }
+    private fun editText(title: String, current: String, hint: String = "Название", onSave: (String) -> Unit) {
+        sheet(title) { body, dialog ->
+            val input = EditText(this).apply { setText(current); setTextColor(Color.WHITE); setHintTextColor(secondary); this.hint = hint; isSingleLine = true; selectAll() }
+            body.addView(input, LinearLayout.LayoutParams(-1, dp(56)))
+            body.addView(action("Сохранить") { onSave(input.text.toString().trim()); dialog.dismiss() })
+            input.requestFocus(); input.postDelayed({ (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT) }, 200)
+        }
+    }
+    private fun showAppMenu(app: AppEntry) {
+        val favorite = app.id in store.favorites
+        val items = listOf(if (favorite) "Убрать из избранного" else "В избранное", "Уведомления и быстрые действия", "Переименовать", "Приложения во всплывающем меню", "Скрыть приложение", "О приложении", "Удалить приложение")
+        choose(catalog.label(app), items) { choice -> when (choice) {
+            0 -> { store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id; showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное") }
+            1 -> showAppPopup(app)
+            2 -> editText("Переименовать", catalog.label(app)) { store.rename(app.id, it); updateAlphabet(); showHome() }
+            3 -> selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() }
+            4 -> { store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome(); message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - app.id; if (favorite) store.favorites = store.favorites + app.id; showHome() } }
+            5 -> runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
+            6 -> if (app.user == Process.myUserHandle()) safeStart(Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))) else message("Удалите приложение через настройки рабочего профиля")
+        } }
+    }
+    private fun showAppPopup(app: AppEntry) {
+        sheet(catalog.label(app)) { body, dialog ->
+            val notifications = NotificationHub.notifications(app.packageName, app.user)
+            notifications.forEach { body.addView(notificationView(it)) }
+            val shortcuts = catalog.shortcuts(app)
+            shortcuts.filter { it.isEnabled }.forEach { shortcut ->
+                body.addView(action(shortcut.shortLabel?.toString() ?: "Быстрое действие") {
+                    runCatching { catalog.launcherApps.startShortcut(app.packageName, shortcut.id, null, null, app.user); dialog.dismiss() }.onFailure { message("Не удалось открыть быстрое действие") }
+                })
+            }
+            store.popUp(app.id).mapNotNull(catalog::find).forEach { body.addView(appRow(it, false)) }
+            if (notifications.isEmpty() && shortcuts.isEmpty() && store.popUp(app.id).isEmpty()) body.addView(text("Здесь появятся уведомления и быстрые действия приложения.", 16f, secondary))
+            body.addView(gap(8)); body.addView(action("Добавить приложения") { dialog.dismiss(); selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } })
+            body.addView(action("Открыть ${catalog.label(app)}") { launch(app) })
+        }
+    }
+    private fun notificationView(sbn: StatusBarNotification): View {
+        val n = sbn.notification
+        val box = vertical().apply { setPadding(dp(14), dp(12), dp(14), dp(12)); background = rounded(0xFF373430.toInt(), dp(16).toFloat()) }
+        box.addView(text(n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty(), 16f))
+        box.addView(gap(6)); box.addView(text((n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: n.extras.getCharSequence(Notification.EXTRA_TEXT))?.toString().orEmpty(), 14f, secondary))
+        box.isFocusable = true; box.setOnClickListener { runCatching { n.contentIntent?.send(); currentDialog?.dismiss() }.onFailure { message("Уведомление больше недоступно") } }
+        val actions = horizontal()
+        actions.addView(action("Скрыть") { NotificationHub.service?.cancelNotification(sbn.key); box.visibility = View.GONE })
+        n.actions?.take(3)?.forEach { notificationAction ->
+            actions.addView(action(notificationAction.title.toString()) {
+                val inputs = notificationAction.remoteInputs?.filter { it.allowFreeFormInput }
+                if (!inputs.isNullOrEmpty()) {
+                    editText("Ответить", "", "Сообщение") { reply -> if (reply.isNotBlank()) {
+                        val intent = Intent(); val bundle = Bundle(); inputs.forEach { bundle.putCharSequence(it.resultKey, reply) }
+                        RemoteInput.addResultsToIntent(inputs.toTypedArray(), intent, bundle)
+                        runCatching { notificationAction.actionIntent.send(this, 0, intent) }.onSuccess { message("Ответ отправлен") }.onFailure { message("Не удалось отправить ответ") }
+                    } }
+                } else runCatching { notificationAction.actionIntent.send() }.onFailure { message("Действие больше недоступно") }
+            })
+        }
+        val horizontal = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(actions) }
+        box.addView(horizontal)
+        return vertical().apply { addView(box); addView(gap(8)) }
+    }
+    private fun showFolder(folder: AppFolder) {
+        sheet(folder.name) { body, dialog ->
+            val apps = folder.apps.mapNotNull(catalog::find)
+            apps.forEach { body.addView(appRow(it, false)) }
+            if (apps.isEmpty()) body.addView(text("В папке пока нет приложений", 16f, secondary))
+            body.addView(action("Изменить папку") { dialog.dismiss(); editFolder(folder) })
+        }
+    }
+    private fun editFolder(folder: AppFolder) {
+        choose(folder.name, listOf("Выбрать приложения", "Переименовать", "Удалить папку")) { choice -> when (choice) {
+            0 -> selectApps(folder.name, folder.apps) { store.saveFolder(folder.copy(apps = it)); showHome() }
+            1 -> editText("Название папки", folder.name) { if (it.isNotBlank()) store.saveFolder(folder.copy(name = it)); showHome() }
+            2 -> { store.removeFolder(folder.id); showHome() }
+        } }
+    }
+    private fun selectApps(title: String, initial: List<String>, onSave: (List<String>) -> Unit) {
+        val selected = initial.toMutableList()
+        sheet(title) { body, dialog ->
+            body.addView(text("Выберите приложения; порядок выбора сохраняется.", 14f, secondary))
+            val input = EditText(this).apply { hint = "Поиск"; isSingleLine = true; setTextColor(Color.WHITE); setHintTextColor(secondary) }
+            body.addView(input, LinearLayout.LayoutParams(-1, dp(52)))
+            val list = vertical()
+            val scroll = ScrollView(this).apply { addView(list) }
+            body.addView(scroll, LinearLayout.LayoutParams(-1, dp(320)))
+            fun populate(query: String) {
+                list.removeAllViews()
+                catalog.apps.filter { AppListRules.matches(query, catalog.label(it), it.originalLabel) }.forEach { app ->
+                    val check = CheckBox(this).apply {
+                        text = catalog.label(app); textSize = 17f; setTextColor(Color.WHITE); minHeight = dp(52); isChecked = app.id in selected
+                        buttonTintList = android.content.res.ColorStateList.valueOf(0xFFE9CBB6.toInt())
+                        setOnCheckedChangeListener { _, checked -> if (checked && app.id !in selected) selected.add(app.id) else if (!checked) selected.remove(app.id) }
+                    }; list.addView(check)
+                }
+            }
+            input.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { populate(s.toString()) }
+                override fun afterTextChanged(s: Editable?) {}
+            })
+            populate("")
+            body.addView(action("Готово") { onSave(selected); dialog.dismiss() })
+        }
+    }
+    private fun editFavorites() {
+        sheet("Избранное") { body, dialog ->
+            store.favorites.forEach { id ->
+                val label = store.folder(id)?.name ?: catalog.find(id)?.let(catalog::label) ?: return@forEach
+                val line = horizontal()
+                line.addView(text(label, 17f), LinearLayout.LayoutParams(0, dp(56), 1f))
+                line.addView(iconButton(Glyph.UP, "Переместить $label вверх") { store.favorites = AppListRules.move(store.favorites, id, -1); editFavorites(); showHome() })
+                line.addView(iconButton(Glyph.DOWN, "Переместить $label вниз") { store.favorites = AppListRules.move(store.favorites, id, 1); editFavorites(); showHome() })
+                line.addView(iconButton(Glyph.CLOSE, "Убрать $label из избранного") { store.favorites = store.favorites - id; editFavorites(); showHome() })
+                body.addView(line)
+            }
+            body.addView(action("Выбрать приложения") { dialog.dismiss(); selectApps("Избранные приложения", store.favorites.filterNot { it.startsWith("folder:") }) { store.favorites = it + store.favorites.filter { id -> id.startsWith("folder:") }; showHome() } })
+            body.addView(action("Создать папку") { dialog.dismiss(); editText("Новая папка", "", "Название папки") { name -> if (name.isNotBlank()) selectApps(name, emptyList()) { store.createFolder(name, it); showHome() } } })
+        }
+    }
+
+    // The settings and optional integrations below use the same native surfaces as the launcher.
+    private fun showSettings() {
+        clearScreen("settings"); hideKeyboard()
+        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; background = rounded(surface, 0f) }
+        val body = vertical().apply { setPadding(dp(16), dp(10), dp(16), dp(30)) }
+        val header = horizontal(); header.addView(iconButton(Glyph.BACK, "На главный экран") { showHome() })
+        header.addView(text("Настройки", 26f), LinearLayout.LayoutParams(0, dp(64), 1f)); body.addView(header)
+        body.addView(setting("Домашний экран", if (isDefaultHome()) "Better Launcher установлен по умолчанию" else "Выбрать Better Launcher по умолчанию") { requestHomeRole() })
+        body.addView(setting("Избранные приложения", "Порядок, приложения и папки") { editFavorites() })
+        body.addView(setting("Виджеты", "${store.widgets.size} из 4 · переключение в стопке") { widgets.add() })
+        section(body, "Внешний вид")
+        body.addView(setting("Обои", when (store.string("wallpaper", "dune")) { "dune" -> "Дюны"; "forest" -> "Лес"; "night" -> "Сумерки"; else -> "Системные обои" }) {
+            choose("Обои", listOf("Дюны", "Лес", "Сумерки", "Системные обои", "Выбрать системные обои")) { choice ->
+                if (choice == 4) { store.set("wallpaper", "system"); safeStart(Intent(Intent.ACTION_SET_WALLPAPER)) }
+                else store.set("wallpaper", listOf("dune", "forest", "night", "system")[choice])
+                applyAppearance(); showSettings()
+            }
+        })
+        body.addView(setting("Шрифт", when (store.string("font", "sans-serif")) { "sans-serif-light" -> "Лёгкий"; "sans-serif-condensed" -> "Компактный"; "serif" -> "С засечками"; else -> "Системный" }) {
+            val names = listOf("sans-serif", "sans-serif-light", "sans-serif-condensed", "serif")
+            choose("Шрифт", listOf("Системный", "Лёгкий", "Компактный", "С засечками"), names.indexOf(store.string("font", "sans-serif"))) { store.set("font", names[it]); showSettings() }
+        })
+        body.addView(toggle("Затемнять обои", "Для читаемости текста", "dimWallpaper", true) { applyAppearance() })
+        body.addView(toggle("Скрыть значки", "Оставить только названия приложений", "hideIcons"))
+        body.addView(toggle("Крупные названия", "Увеличить текст приложений", "largeText"))
+        body.addView(toggle("Компактный список", "Уменьшить расстояние между приложениями", "compact"))
+        body.addView(toggle("Алфавит слева", "Для использования левой рукой", "leftHanded") { applyAppearance() })
+        body.addView(toggle("Скрыть строку состояния", "Больше места на главном экране", "hideStatus") { applyAppearance() })
+        section(body, "Часы и информация")
+        body.addView(toggle("24-часовой формат", "Формат времени", "clock24", android.text.format.DateFormat.is24HourFormat(this)))
+        body.addView(toggle("Небольшие часы", "Уменьшить размер часов", "smallClock"))
+        body.addView(setting("Погода", store.string("weatherCity").ifBlank { "Выбрать город · Open-Meteo" }) { chooseWeatherCity() })
+        body.addView(setting("Календарь", if (checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) "Просмотр ближайших событий" else "Разрешить показ событий") { showAgenda() })
+        section(body, "Уведомления")
+        body.addView(setting("Доступ к уведомлениям", if (notificationAccess()) "Разрешён" else "Разрешить в настройках Android") { safeStart(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) })
+        body.addView(toggle("Показывать уведомления", "Предпросмотр под избранными приложениями", "notifications", true))
+        body.addView(setting("Скрытые приложения", "${store.hidden.size} скрыто · показать снова") {
+            val hidden = catalog.apps.filter { it.id in store.hidden }
+            selectApps("Скрытые приложения", hidden.map { it.id }) { store.hidden = it.toSet(); updateAlphabet(); showSettings() }
+        })
+        section(body, "Резервная копия")
+        body.addView(setting("Экспорт настроек", "Сохранить избранное, папки и оформление") { safeStartForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE, "better-launcher.json"), 51) })
+        body.addView(setting("Импорт настроек", "Восстановить из файла; текущие настройки заменятся") { safeStartForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE), 52) })
+        body.addView(gap(22)); body.addView(text("Better Launcher 0.1.0", 14f, secondary).apply { setPadding(dp(16), 0, 0, 0) })
+        scroll.addView(body); screen.addView(scroll, FrameLayout.LayoutParams(-1, -1))
+    }
+    private fun section(body: LinearLayout, label: String) {
+        body.addView(gap(20)); body.addView(text(label, 14f, 0xFFE9CBB6.toInt()).apply { setPadding(dp(16), dp(8), 0, dp(8)) })
+    }
+    private fun setting(label: String, description: String, onClick: () -> Unit): View = horizontal().apply {
+        minimumHeight = dp(76); setPadding(dp(16), dp(10), 0, dp(10)); background = touchBackground(); isFocusable = true
+        val words = vertical(); words.addView(text(label, 17f)); words.addView(gap(5)); words.addView(text(description, 13f, secondary))
+        addView(words, LinearLayout.LayoutParams(0, -2, 1f)); addView(GlyphView(this@MainActivity, Glyph.CHEVRON), LinearLayout.LayoutParams(dp(48), dp(48)))
+        setOnClickListener { onClick() }
+    }
+    private fun toggle(label: String, description: String, key: String, default: Boolean = false, changed: () -> Unit = {}): View = horizontal().apply {
+        minimumHeight = dp(76); setPadding(dp(16), dp(10), dp(8), dp(10))
+        val words = vertical(); words.addView(text(label, 17f)); words.addView(gap(5)); words.addView(text(description, 13f, secondary))
+        addView(words, LinearLayout.LayoutParams(0, -2, 1f))
+        val switch = MaterialSwitch(this@MainActivity).apply {
+            isChecked = store.bool(key, default); minHeight = dp(48); minWidth = dp(56); contentDescription = label
+            setOnCheckedChangeListener { _, enabled -> store.set(key, enabled); changed() }
+        }; addView(switch); setOnClickListener { switch.isChecked = !switch.isChecked }
+    }
+    private fun isDefaultHome() = getSystemService(RoleManager::class.java).isRoleHeld(RoleManager.ROLE_HOME)
+    private fun requestHomeRole() {
+        val roles = getSystemService(RoleManager::class.java)
+        if (roles.isRoleAvailable(RoleManager.ROLE_HOME)) safeStartForResult(roles.createRequestRoleIntent(RoleManager.ROLE_HOME), 31)
+        else safeStart(Intent(Settings.ACTION_HOME_SETTINGS))
+    }
+    private fun notificationAccess(): Boolean = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")?.split(':')?.contains(ComponentName(this, LauncherNotificationService::class.java).flattenToString()) == true
+
+    private fun showAgenda() {
+        if (checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            sheet("События календаря") { body, dialog ->
+                body.addView(text("Разрешите чтение календаря, чтобы видеть ближайшие события. Данные остаются на устройстве.", 16f, secondary))
+                body.addView(action("Разрешить") { dialog.dismiss(); requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 61) })
+                body.addView(action("Открыть календарь") { dialog.dismiss(); openCalendar() })
+            }; return
+        }
+        executor.execute {
+            data class Event(val id: Long, val title: String, val time: Long, val allDay: Boolean)
+            val result = runCatching {
+                val now = System.currentTimeMillis()
+                val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also { ContentUris.appendId(it, now); ContentUris.appendId(it, now + 7 * 86_400_000L) }.build()
+                contentResolver.query(uri, arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN, CalendarContract.Instances.ALL_DAY), null, null, CalendarContract.Instances.BEGIN + " ASC")?.use { cursor ->
+                    buildList { while (cursor.moveToNext() && size < 12) add(Event(cursor.getLong(0), cursor.getString(1).orEmpty(), cursor.getLong(2), cursor.getInt(3) == 1)) }
+                }.orEmpty()
+            }
+            handler.post { if (!isDestroyed) sheet("Ближайшие события") { body, dialog ->
+                val events = result.getOrDefault(emptyList())
+                if (result.isFailure) body.addView(text("Не удалось прочитать календарь", 16f, secondary))
+                else if (events.isEmpty()) body.addView(text("На ближайшие 7 дней событий нет", 16f, secondary))
+                events.forEach { event ->
+                    body.addView(setting(event.title.ifBlank { "Без названия" }, SimpleDateFormat(if (event.allDay) "EEE, d MMM · весь день" else "EEE, d MMM · HH:mm", Locale("ru")).format(Date(event.time))) { dialog.dismiss(); safeStart(Intent(Intent.ACTION_VIEW, ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id))) })
+                }
+                body.addView(action("Открыть календарь") { dialog.dismiss(); openCalendar() })
+            } }
+        }
+    }
+    private fun openCalendar() = safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("content://com.android.calendar/time/${System.currentTimeMillis()}")))
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 61) { if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) showAgenda() else message("Доступ не разрешён. Календарь можно открыть нажатием на дату.") }
+    }
+
+    private fun mediaView(): View? {
+        if (!notificationAccess()) return null
+        val sessions = runCatching { getSystemService(MediaSessionManager::class.java).getActiveSessions(ComponentName(this, LauncherNotificationService::class.java)) }.getOrDefault(emptyList())
+        val session = sessions.firstOrNull { it.metadata != null && it.playbackState?.state in listOf(PlaybackState.STATE_PLAYING, PlaybackState.STATE_PAUSED, PlaybackState.STATE_BUFFERING) } ?: return null
+        val row = horizontal().apply { background = rounded(0x38352E2A, dp(16).toFloat()); setPadding(dp(12), dp(4), dp(4), dp(4)) }
+        val titles = vertical()
+        titles.addView(text(session.metadata?.getString(MediaMetadata.METADATA_KEY_TITLE).orEmpty(), 15f).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })
+        titles.addView(text(session.metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST).orEmpty(), 12f, secondary).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END })
+        row.addView(titles, LinearLayout.LayoutParams(0, -2, 1f))
+        row.addView(iconButton(if (session.playbackState?.state == PlaybackState.STATE_PLAYING) Glyph.PAUSE else Glyph.PLAY, "Воспроизвести или приостановить") {
+            if (session.playbackState?.state == PlaybackState.STATE_PLAYING) session.transportControls.pause() else session.transportControls.play()
+            handler.postDelayed({ if (page == "home") refreshHomePreservingScroll() }, 300)
+        })
+        row.addView(iconButton(Glyph.NEXT, "Следующий трек") { session.transportControls.skipToNext(); handler.postDelayed({ if (page == "home") refreshHomePreservingScroll() }, 300) })
+        return row
+    }
+    private fun weatherLabel(): String = weather?.let { "${it.temperature}° · ${it.description}" }
+        ?: if (weatherError) "Погода недоступна · повторить" else "Загружаем погоду…"
+    private fun refreshWeather(force: Boolean = false) {
+        val cityName = store.string("weatherCity")
+        if (cityName.isBlank() || weatherLoading || (!force && System.currentTimeMillis() - weatherUpdated < 30 * 60_000)) return
+        val lat = store.string("weatherLat").toDoubleOrNull() ?: return
+        val lon = store.string("weatherLon").toDoubleOrNull() ?: return
+        weatherLoading = true
+        executor.execute {
+            val result = runCatching { WeatherRepository.current(WeatherCity(cityName, lat, lon)) }
+            handler.post {
+                weatherLoading = false; weatherError = result.isFailure; weatherUpdated = System.currentTimeMillis()
+                if (store.string("weatherCity") == cityName) weather = result.getOrNull()
+                weatherText?.text = weatherLabel()
+            }
+        }
+    }
+    private fun chooseWeatherCity() {
+        sheet("Погода") { body, dialog ->
+            body.addView(text("Введите город. Поиск и прогноз загружаются из Open-Meteo; доступ к геолокации не нужен.", 15f, secondary))
+            val input = EditText(this).apply { hint = "Например, Тбилиси"; isSingleLine = true; setTextColor(Color.WHITE); setHintTextColor(secondary) }
+            body.addView(input, LinearLayout.LayoutParams(-1, dp(56)))
+            val resultBox = vertical(); body.addView(resultBox)
+            val button = action("Найти город") {
+                val query = input.text.toString().trim()
+                if (query.length < 2) { input.error = "Введите не меньше двух букв"; return@action }
+                resultBox.removeAllViews(); resultBox.addView(text("Ищем…", 15f, secondary))
+                executor.execute {
+                    val result = runCatching { WeatherRepository.cities(query) }
+                    handler.post { if (dialog.isShowing) {
+                        resultBox.removeAllViews()
+                        if (result.isFailure) resultBox.addView(text("Не удалось загрузить города. Проверьте интернет и повторите.", 14f, secondary))
+                        else if (result.getOrDefault(emptyList()).isEmpty()) resultBox.addView(text("Город не найден. Попробуйте другое название.", 14f, secondary))
+                        result.getOrDefault(emptyList()).forEach { city -> resultBox.addView(action(city.name) {
+                            store.set("weatherCity", city.name); store.set("weatherLat", city.latitude.toString()); store.set("weatherLon", city.longitude.toString())
+                            weather = null; weatherError = false; weatherUpdated = 0; refreshWeather(true); dialog.dismiss(); showHome()
+                        }) }
+                    } }
+                }
+            }; body.addView(button)
+            if (store.string("weatherCity").isNotBlank()) body.addView(action("Убрать погоду") { store.set("weatherCity", ""); weather = null; dialog.dismiss(); showHome() })
+            body.addView(action("О сервисе Open-Meteo") { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://open-meteo.com/"))) })
+        }
+    }
+    private fun showWeather() {
+        refreshWeather(weatherError)
+        sheet(store.string("weatherCity", "Погода")) { body, dialog ->
+            body.addView(text(weatherLabel(), 28f)); body.addView(gap(10))
+            body.addView(text("Прогнозная текущая температура · Open-Meteo", 13f, secondary))
+            body.addView(action("Обновить") { refreshWeather(true); dialog.dismiss() })
+            body.addView(action("Выбрать другой город") { dialog.dismiss(); chooseWeatherCity() })
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (widgets.onResult(requestCode, resultCode)) return
+        if (requestCode == 31) { showSettings(); return }
+        if (resultCode != RESULT_OK) return
+        val uri = data?.data ?: return
+        if (requestCode == 51 || requestCode == 52) executor.execute {
+            val result = runCatching {
+                if (requestCode == 51) contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(store.export()) } ?: error("Файл недоступен")
+                else {
+                    val content = contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                        val builder = StringBuilder(); val buffer = CharArray(4096)
+                        while (true) {
+                            val count = reader.read(buffer)
+                            if (count < 0) break
+                            require(builder.length + count <= 1_000_000) { "Файл слишком большой" }
+                            builder.append(buffer, 0, count)
+                        }
+                        builder.toString()
+                    } ?: error("Файл недоступен")
+                    store.import(content)
+                }
+            }
+            handler.post { if (!isDestroyed) {
+                if (result.isSuccess) { applyAppearance(); updateAlphabet(); showHome(); message(if (requestCode == 51) "Настройки сохранены" else "Настройки восстановлены") }
+                else message("Не удалось ${if (requestCode == 51) "сохранить" else "восстановить"} настройки: ${result.exceptionOrNull()?.message.orEmpty()}")
+            } }
+        }
+    }
+    fun safeStart(intent: Intent) { runCatching { startActivity(intent) }.onFailure { message("На устройстве нет приложения для этого действия") } }
+    fun safeStartForResult(intent: Intent, request: Int, failure: () -> Unit = {}) {
+        runCatching { startActivityForResult(intent, request) }.onFailure { failure(); message("На устройстве нет приложения для этого действия") }
+    }
+    private fun hideKeyboard() { currentFocus?.let { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(it.windowToken, 0) } }
+    fun message(value: String, undo: String? = null, onUndo: () -> Unit = {}) {
+        val bar = horizontal().apply { setPadding(dp(16), dp(8), dp(8), dp(8)); background = rounded(surface, dp(12).toFloat()); elevation = dp(6).toFloat() }
+        bar.addView(text(value, 14f), LinearLayout.LayoutParams(0, -2, 1f))
+        if (undo != null) bar.addView(action(undo) { onUndo(); root.removeView(bar) })
+        root.addView(bar, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { leftMargin = dp(16); rightMargin = dp(16); bottomMargin = dp(84) })
+        handler.postDelayed({ root.removeView(bar) }, if (undo != null) 6000 else 4000)
+    }
+}
