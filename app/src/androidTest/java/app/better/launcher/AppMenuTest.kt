@@ -1,15 +1,79 @@
 package app.better.launcher
 
 import android.content.Intent
+import android.app.Dialog
 import android.os.Bundle
 import android.os.SystemClock
+import android.provider.Settings
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
 import org.junit.Test
 
 class AppMenuTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
+
+    @Test fun menuStaysAtScreenBottomThroughoutArrival() {
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
+        val bottoms = mutableListOf<Int>()
+        var dialog: Dialog? = null
+        var decor: View? = null
+        var observer: ViewTreeObserver.OnDrawListener? = null
+        var screenBottom = 0
+        var animated = false
+        try {
+            var label: String? = null
+            await(30000) {
+                instrumentation.runOnMainSync {
+                    if (activity.hasWindowFocus()) label = activity.store.favorites.firstNotNullOfOrNull(activity.catalog::find)?.let(activity.catalog::label)
+                }
+                label != null
+            }
+            instrumentation.runOnMainSync {
+                animated = android.animation.ValueAnimator.areAnimatorsEnabled() &&
+                    Settings.Global.getFloat(activity.contentResolver, Settings.Global.WINDOW_ANIMATION_SCALE, 1f) > 0f &&
+                    Settings.Global.getFloat(activity.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
+                fun views(view: View): Sequence<View> = sequence {
+                    yield(view)
+                    if (view is ViewGroup) for (index in 0 until view.childCount) yieldAll(views(view.getChildAt(index)))
+                }
+                var row: View = views(activity.window.decorView).filterIsInstance<TextView>().first { it.text.toString() == label }
+                while (!row.isLongClickable) row = row.parent as View
+                assertTrue(row.performLongClick())
+                dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(activity) as Dialog
+                decor = dialog!!.window!!.decorView
+                screenBottom = activity.windowManager.currentWindowMetrics.bounds.bottom
+                val scroll = views(decor!!).filterIsInstance<ScrollView>().first()
+                observer = ViewTreeObserver.OnDrawListener {
+                    val location = IntArray(2)
+                    scroll.getLocationOnScreen(location)
+                    // Remove the intentional content slide: its bottom anchor must never move.
+                    bottoms.add(location[1] - scroll.translationY.toInt() + scroll.height)
+                }
+                decor!!.viewTreeObserver.addOnDrawListener(observer)
+            }
+            SystemClock.sleep(1200)
+            instrumentation.runOnMainSync {
+                decor!!.viewTreeObserver.removeOnDrawListener(observer)
+                observer = null
+                assertTrue("Menu must render${if (animated) " multiple frames" else " a frame"}", bottoms.size >= if (animated) 3 else 1)
+                assertTrue("Menu bottom moved away from screen bottom $screenBottom: $bottoms",
+                    bottoms.all { kotlin.math.abs(it - screenBottom) <= 1 })
+            }
+        } finally {
+            instrumentation.runOnMainSync {
+                observer?.let { decor?.viewTreeObserver?.removeOnDrawListener(it) }
+                dialog?.dismiss()
+                activity.finish()
+            }
+        }
+    }
 
     @Test fun titleRenamesAppAndEmptyNameRestoresOriginalLabel() {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
@@ -91,8 +155,8 @@ class AppMenuTest {
         await { found = findNode(instrumentation.uiAutomation.rootInActiveWindow, matches); found != null }
         return found!!
     }
-    private fun await(condition: () -> Boolean) {
-        val deadline = SystemClock.uptimeMillis() + 10000
+    private fun await(timeout: Long = 10000, condition: () -> Boolean) {
+        val deadline = SystemClock.uptimeMillis() + timeout
         while (SystemClock.uptimeMillis() < deadline) {
             if (condition()) return
             SystemClock.sleep(50)

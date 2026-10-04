@@ -477,24 +477,40 @@ class MainActivity : AppCompatActivity() {
         return presentSheet(dialog, body, scrollContent = scrollContent)
     }
     private fun presentSheet(dialog: Dialog, body: LinearLayout, appMenu: Boolean = false, scrollContent: Boolean = true): Dialog {
-        val scroll = if (scrollContent) ScrollView(this).apply { isFillViewport = false; isVerticalScrollBarEnabled = false; addView(body) } else null
+        val scroll = if (scrollContent) object : ScrollView(this) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                val height = if (appMenu) MeasureSpec.makeMeasureSpec(
+                    minOf(MeasureSpec.getSize(heightMeasureSpec), (resources.displayMetrics.heightPixels * .85f).toInt()),
+                    MeasureSpec.AT_MOST
+                ) else heightMeasureSpec
+                super.onMeasure(widthMeasureSpec, height)
+            }
+        }.apply { isFillViewport = false; isVerticalScrollBarEnabled = false; isClickable = appMenu; addView(body) } else null
+        // Keep the window fixed while the sheet is measured and animated inside it.
+        // Resizing a bottom-gravity window can reach the compositor a frame after its content.
+        val container = if (appMenu && scroll != null) FrameLayout(this).apply {
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            addView(scroll, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+            setOnClickListener { dialog.dismiss() }
+        } else scroll ?: body
         val windowScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.WINDOW_ANIMATION_SCALE, 1f) else 0f
         val animatorScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) else 0f
         val animateMenu = appMenu && scroll != null && windowScale > 0f && animatorScale > 0f && android.animation.ValueAnimator.areAnimatorsEnabled()
         fun sheetHeight() = minOf(body.height + (scroll?.paddingTop ?: 0), (resources.displayMetrics.heightPixels * .85f).toInt())
         if (animateMenu) scroll?.translationY = resources.displayMetrics.heightPixels.toFloat()
-        dialog.setContentView(scroll ?: body)
+        dialog.setContentView(container)
         dialog.window?.apply {
             setBackgroundDrawableResource(android.R.color.transparent); addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(.3f); setGravity(Gravity.BOTTOM); setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
             if (appMenu) {
+                setLayout(-1, -1)
                 if (!animateMenu) setWindowAnimations(0)
                 WindowCompat.setDecorFitsSystemWindows(this, false)
                 isNavigationBarContrastEnforced = false
-                scroll?.setOnApplyWindowInsetsListener { _, insets ->
+                container.setOnApplyWindowInsetsListener { _, insets ->
                     val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
                     body.setPadding(dp(24) + bars.left, dp(12), dp(24) + bars.right, dp(16) + bars.bottom)
-                    scroll.setPadding(0, bars.top, 0, 0)
+                    container.setPadding(0, bars.top, 0, 0)
                     insets
                 }
             }
@@ -507,21 +523,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         if (appMenu && scroll != null) {
-            var prepared = false
             scroll.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
-                    if (dialog.isShowing) {
-                        val height = sheetHeight()
-                        if (!prepared || dialog.window?.attributes?.height != height) {
-                            prepared = true
-                            dialog.window?.setLayout(-1, height)
-                            scroll.requestLayout()
-                            return false
-                        }
-                    }
                     scroll.viewTreeObserver.removeOnPreDrawListener(this)
                     if (dialog.isShowing && animateMenu) {
-                        // Start only after insets and the window height have settled; never flash the final position.
+                        // Insets and bottom anchoring are resolved in this layout, before the first visible frame.
                         scroll.translationY = scroll.height.toFloat()
                         scroll.animate().translationY(0f).setDuration((300f * windowScale / animatorScale).toLong())
                             .setInterpolator(AnimationUtils.loadInterpolator(this@MainActivity, R.interpolator.app_menu_arrive)).start()
@@ -531,8 +537,8 @@ class MainActivity : AppCompatActivity() {
             })
         }
         currentDialog = dialog; dialog.show()
-        dialog.window?.setLayout(-1, if (scrollContent) -2 else (resources.displayMetrics.heightPixels * .85f).toInt())
-        if (scrollContent) body.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+        if (!appMenu) dialog.window?.setLayout(-1, if (scrollContent) -2 else (resources.displayMetrics.heightPixels * .85f).toInt())
+        if (!appMenu && scrollContent) body.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             val height = sheetHeight()
             if (height > 0 && dialog.window?.attributes?.height != height) dialog.window?.setLayout(-1, height)
         }
