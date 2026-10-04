@@ -104,7 +104,7 @@ class LauncherNavigationTest {
         bounds(activity, label, stage)
     }
     private fun bounds(activity: MainActivity, label: String, stage: String = label): Rect {
-        val deadline = SystemClock.uptimeMillis() + 15000
+        val deadline = SystemClock.uptimeMillis() + 5000
         while (SystemClock.uptimeMillis() < deadline) {
             val bounds = Rect()
             var visible = false
