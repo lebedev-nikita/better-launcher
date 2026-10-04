@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.SystemClock
+import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -51,6 +52,7 @@ class WidgetHostTest {
                 val frame = descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().single()
                 assertEquals("No launcher label or menu row above the widget", 1, (frame.parent as ViewGroup).childCount)
             }
+            await(instrumentation) { activity.hasWindowFocus() && manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) > 0 }
             val oldOptions = manager.getAppWidgetOptions(id)
             val bounds = Rect()
             instrumentation.runOnMainSync {
@@ -59,6 +61,7 @@ class WidgetHostTest {
             val down = SystemClock.uptimeMillis()
             fun touch(action: Int) {
                 val event = MotionEvent.obtain(down, SystemClock.uptimeMillis(), action, bounds.centerX().toFloat(), (bounds.top + 40).toFloat(), 0)
+                event.source = InputDevice.SOURCE_TOUCHSCREEN
                 assertTrue(instrumentation.uiAutomation.injectInputEvent(event, true)); event.recycle()
             }
             touch(MotionEvent.ACTION_DOWN)
