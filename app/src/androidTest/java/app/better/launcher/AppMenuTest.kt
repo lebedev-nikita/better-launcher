@@ -53,6 +53,15 @@ class AppMenuTest {
 
             openMenu("Renamed app")
             node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            setName("Discard with Back")
+            instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
+            // Depending on IME visibility, Back first hides the keyboard.
+            if (currentDialog(activity) != null) instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
+            node { it.text == "Renamed app" }
+            assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
+
+            openMenu("Renamed app")
+            node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("")
             instrumentation.runOnMainSync {
                 val dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(activity) as android.app.Dialog

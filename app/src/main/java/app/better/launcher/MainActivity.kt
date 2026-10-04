@@ -648,7 +648,7 @@ class MainActivity : AppCompatActivity() {
         }
         name.setOnClickListener {
             val label = catalog.label(app)
-            name.text = "Переименовать $label"; name.contentDescription = null; name.tooltipText = null
+            name.text = getString(R.string.rename_app_title, label); name.contentDescription = null; name.tooltipText = null
             name.isClickable = false; name.background = null
             commands.visibility = View.GONE; editor.visibility = View.VISIBLE
             input.setText(label); input.requestFocus(); input.selectAll()
