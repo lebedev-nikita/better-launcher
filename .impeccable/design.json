@@ -203,7 +203,7 @@
       "kind": "button",
       "refersTo": "setting-row",
       "description": "Illustrative native translation. A growing label-description row with a native chevron and a minimum 76dp height.",
-      "html": "<div class=\"ds-setting-stage\"><button class=\"ds-setting\"><span class=\"ds-setting-words\"><span class=\"ds-setting-title\">Обои</span><span class=\"ds-setting-detail\">Дюны</span></span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 6L15 12L9 18\"/></svg></button></div>",
+      "html": "<div class=\"ds-setting-stage\"><button class=\"ds-setting\"><span class=\"ds-setting-words\"><span class=\"ds-setting-title\">Обои</span><span class=\"ds-setting-detail\">Выбрать системные обои</span></span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 6L15 12L9 18\"/></svg></button></div>",
       "css": ".ds-setting-stage { background:#292724; padding:16px; } .ds-setting { display:flex; align-items:center; gap:16px; width:100%; min-height:76px; padding:10px 0 10px 16px; border:0; border-radius:12px; background:transparent; color:#FFFFFF; text-align:left; cursor:pointer; } .ds-setting-words { display:flex; flex:1; flex-direction:column; gap:5px; } .ds-setting-title { font:400 17px sans-serif; } .ds-setting-detail { color:#EEE5DE; font:400 13px sans-serif; } .ds-setting svg { width:22.08px; height:22.08px; margin:12.96px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; } .ds-setting:hover, .ds-setting:focus-visible, .ds-setting:active { background:#FFFFFF28; outline:none; }"
     },
     {
@@ -241,9 +241,9 @@
   ],
   "narrative": {
     "northStar": "Niagara-style native launcher",
-    "overview": "The user selected Niagara's vertical favorites and alphabetical navigation. The current implementation expresses that direction through native Android Views: an open wallpaper surface, white app names, installed app icons, a continuous alphabet control, and dark native sheets. Better Launcher uses original Kotlin source and Canvas wallpaper artwork under its own product name.\n\nSettings use a warm dark Material 3 theme, while the launcher itself stays visually open. This document describes the implemented phone UI, not verified Niagara fidelity or full feature parity. The native source is authoritative: [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt), [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt), and [styles.xml](app/src/main/res/values/styles.xml). Review evidence comprises the six current captures in `.impeccable/review/`; the five material corrections have a scoped `ship` verdict in [verification.md](docs/verification.md).",
+    "overview": "The user selected Niagara's vertical favorites and alphabetical navigation. The current implementation expresses that direction through native Android Views: an open wallpaper surface, white app names, installed app icons, a continuous alphabet control, and dark native sheets. Better Launcher uses original Kotlin source under its own product name and displays the system wallpaper.\n\nSettings use a warm dark Material 3 theme, while the launcher itself stays visually open. This document describes the implemented phone UI, not verified Niagara fidelity or full feature parity. The native source is authoritative: [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt), [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt), and [styles.xml](app/src/main/res/values/styles.xml). Review captures are stored locally in `.impeccable/review/`; the historical five material corrections for 0.1.0 have a scoped `ship` verdict in [verification.md](docs/verification.md).",
     "keyCharacteristics": [
-      "Unboxed app lists over selectable wallpaper.",
+      "Unboxed app lists over the system wallpaper.",
       "White foreground with warm secondary text and restrained peach settings accents.",
       "Native controls, content-driven row heights, and persistent bottom actions.",
       "A continuous alphabet rail with touch, keyboard, and accessibility alternatives."
@@ -251,7 +251,7 @@
     "rules": [
       {
         "name": "The Readable Wallpaper Rule",
-        "body": "Every wallpaper mode keeps the implemented base scrim; the optional dim setting adds darkness instead of removing that contrast floor. Base opacity is Dune (0.48), Forest (0.40), Night (0.08), and System (0.61), with an additional (0.06) when dimming is enabled. These are current rendering values, not proof of legibility for every wallpaper or device.",
+        "body": "The system wallpaper keeps a base black scrim with opacity (0.61); the optional dim setting adds (0.06) instead of removing that contrast floor. These are current rendering values, not proof of legibility for every wallpaper or device.",
         "section": "colors"
       },
       {

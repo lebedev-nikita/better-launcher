@@ -17,42 +17,14 @@ fun Context.dp(value: Int): Int = dp(value.toFloat())
 fun rounded(color: Int, radius: Float): GradientDrawable = GradientDrawable().apply { setColor(color); cornerRadius = radius }
 fun touchBackground(color: Int = 0x00000000): RippleDrawable = RippleDrawable(ColorStateList.valueOf(0x28FFFFFF), rounded(color, 24f), rounded(Color.WHITE, 24f))
 
-/** Original vector wallpaper; the system-wallpaper option leaves this view transparent. */
-class WallpaperView(context: Context) : View(context) {
-    var style = "dune"
-        set(value) { field = value; invalidate() }
-    var shade = 0.16f
+/** Readability overlay; Android draws the actual system wallpaper behind the window. */
+class WallpaperScrimView(context: Context) : View(context) {
+    var shade = 0.61f
         set(value) { field = value; invalidate() }
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     override fun onDraw(canvas: Canvas) {
-        paint.alpha = 255
-        val w = width.toFloat(); val h = height.toFloat()
-        val colors = when (style) {
-            "forest" -> intArrayOf(0xFF9DAFA5.toInt(), 0xFF354C44.toInt(), 0xFF152A23.toInt())
-            "night" -> intArrayOf(0xFF5D6780.toInt(), 0xFF303C55.toInt(), 0xFF141E32.toInt())
-            else -> intArrayOf(0xFFD8B8A1.toInt(), 0xFFB38264.toInt(), 0xFF493A32.toInt())
-        }
-        if (style != "system") {
-            paint.shader = LinearGradient(0f, 0f, w * .4f, h, colors, floatArrayOf(0f, .5f, 1f), Shader.TileMode.CLAMP)
-            canvas.drawRect(0f, 0f, w, h, paint)
-            val path = Path().apply {
-                moveTo(-w * .1f, h * .85f)
-                cubicTo(w * .13f, h * .6f, w * .49f, h * .4f, w * 1.1f, h * .35f)
-                lineTo(w * 1.1f, h * 1.1f); lineTo(-w * .1f, h * 1.1f); close()
-            }
-            paint.shader = LinearGradient(w * .6f, h * .4f, w * .3f, h, colors[0], colors[2], Shader.TileMode.CLAMP)
-            canvas.drawPath(path, paint)
-            val lower = Path().apply {
-                moveTo(-w * .1f, h * .88f)
-                cubicTo(w * .38f, h * .72f, w * .8f, h * .8f, w * 1.1f, h * .66f)
-                lineTo(w * 1.1f, h * 1.1f); lineTo(-w * .1f, h * 1.1f); close()
-            }
-            paint.shader = LinearGradient(0f, h * .7f, w, h, colors[1], colors[2], Shader.TileMode.CLAMP)
-            canvas.drawPath(lower, paint)
-        }
-        paint.shader = null
         paint.color = Color.argb((shade * 255).toInt(), 0, 0, 0)
-        canvas.drawRect(0f, 0f, w, h, paint)
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
     }
 }
 

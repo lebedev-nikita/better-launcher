@@ -61,6 +61,7 @@ class LauncherStore(context: Context) {
         // Validate completely before mutating persisted state.
         val accepted = mutableMapOf<String, Any>()
         val booleanKeys = setOf("initialized", "gesturesLearned", "dimWallpaper", "hideIcons", "largeText", "compact", "leftHanded", "hideStatus", "clock24", "smallClock", "notifications")
+        // Keep the ignored legacy wallpaper key compatible with version 1 backups.
         val stringKeys = setOf("favorites", "widgets", "font", "wallpaper", "weatherCity", "weatherLat", "weatherLon")
         values.keys().forEach { key ->
             val value = values.get(key)

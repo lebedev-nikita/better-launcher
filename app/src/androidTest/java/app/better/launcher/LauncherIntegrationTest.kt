@@ -34,6 +34,7 @@ class LauncherIntegrationTest {
         val folder = store.createFolder("Работа", listOf("b", "c"))
         store.setPopUp("a", listOf("b"))
         store.widgets = listOf(42)
+        store.set("wallpaper", "dune") // Legacy version 1 backups remain importable.
         val backup = store.export()
         assertFalse(backup.contains("\"widgets\""))
         store.favorites = emptyList(); store.rename("a", "Другое")
@@ -45,6 +46,7 @@ class LauncherIntegrationTest {
         assertEquals(listOf("b"), reloaded.popUp("a"))
         assertEquals(setOf("c"), reloaded.hidden)
         assertEquals(listOf(42), reloaded.widgets)
+        assertEquals("dune", reloaded.string("wallpaper"))
     }
     @Test fun corruptedBackupDoesNotOverwriteCurrentState() = isolated { store ->
         store.favorites = listOf("keep-me")

@@ -93,13 +93,13 @@ components:
 
 **Creative North Star: "Niagara-style native launcher"**
 
-The user selected Niagara's vertical favorites and alphabetical navigation. The current implementation expresses that direction through native Android Views: an open wallpaper surface, white app names, installed app icons, a continuous alphabet control, and dark native sheets. Better Launcher uses original Kotlin source and Canvas wallpaper artwork under its own product name.
+The user selected Niagara's vertical favorites and alphabetical navigation. The current implementation expresses that direction through native Android Views: an open wallpaper surface, white app names, installed app icons, a continuous alphabet control, and dark native sheets. Better Launcher uses original Kotlin source under its own product name and displays the system wallpaper.
 
-Settings use a warm dark Material 3 theme, while the launcher itself stays visually open. This document describes the implemented phone UI, not verified Niagara fidelity or full feature parity. The native source is authoritative: [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt), [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt), and [styles.xml](app/src/main/res/values/styles.xml). Review evidence comprises the six current captures in `.impeccable/review/`; the five material corrections have a scoped `ship` verdict in [verification.md](docs/verification.md).
+Settings use a warm dark Material 3 theme, while the launcher itself stays visually open. This document describes the implemented phone UI, not verified Niagara fidelity or full feature parity. The native source is authoritative: [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt), [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt), and [styles.xml](app/src/main/res/values/styles.xml). Review captures are stored locally in `.impeccable/review/`; the historical five material corrections for 0.1.0 have a scoped `ship` verdict in [verification.md](docs/verification.md).
 
 **Key Characteristics:**
 
-- Unboxed app lists over selectable wallpaper.
+- Unboxed app lists over the system wallpaper.
 - White foreground with warm secondary text and restrained peach settings accents.
 - Native controls, content-driven row heights, and persistent bottom actions.
 - A continuous alphabet rail with touch, keyboard, and accessibility alternatives.
@@ -125,9 +125,9 @@ Warm dark neutrals support a small peach accent; wallpaper palettes supply the b
 - **Warm gray outline** (`outline`): outline role supplied to Material 3 controls.
 - **White touch wash** (`touch-ripple`): repeated native `RippleDrawable` feedback on actions and clickable rows. The frontmatter uses CSS RGBA ordering; the Kotlin source uses Android ARGB ordering.
 
-The built-in Dune, Forest, and Night wallpapers each draw a three-color gradient and two curved paths. These are original Canvas assets, not raster imports. System wallpaper mode leaves the artwork transparent and draws only its readability scrim. Wallpaper colors are local artwork palettes rather than a shared UI accent ramp.
+Android supplies the wallpaper behind the transparent launcher window, including live wallpapers. Better Launcher draws only a translucent black readability scrim; it has no built-in wallpaper artwork. The wallpaper settings row opens the system wallpaper picker directly. Legacy wallpaper selections in preferences or version 1 backups are accepted for compatibility and ignored when rendering.
 
-**The Readable Wallpaper Rule.** Every wallpaper mode keeps the implemented base scrim; the optional dim setting adds darkness instead of removing that contrast floor. Base opacity is Dune (0.48), Forest (0.40), Night (0.08), and System (0.61), with an additional (0.06) when dimming is enabled. These are current rendering values, not proof of legibility for every wallpaper or device.
+**The Readable Wallpaper Rule.** The system wallpaper keeps a base black scrim with opacity (0.61); the optional dim setting adds (0.06) instead of removing that contrast floor. These are current rendering values, not proof of legibility for every wallpaper or device.
 
 ## Typography
 
@@ -163,7 +163,7 @@ Root content respects system bars, display cutouts, and the larger of navigation
 
 ## Elevation & Depth
 
-Depth comes primarily from wallpaper artwork, opaque dark settings, and bottom sheets over a native dimmed backdrop (0.30). App rows are transparent at rest. There is no shared CSS shadow vocabulary. Transient messages alone set explicit native elevation (6dp); sheet and Material widget effects are resolved by the Android theme. Native ripples communicate touch state without introducing permanent row cards.
+Depth comes primarily from the system wallpaper, opaque dark settings, and bottom sheets over a native dimmed backdrop (0.30). App rows are transparent at rest. There is no shared CSS shadow vocabulary. Transient messages alone set explicit native elevation (6dp); sheet and Material widget effects are resolved by the Android theme. Native ripples communicate touch state without introducing permanent row cards.
 
 **The Open List Rule.** Keep launcher app rows unboxed at rest; reserve opaque containers for sheets, settings, notification detail, and transient feedback, as the current build does.
 

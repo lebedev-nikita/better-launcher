@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     private val executor = Executors.newFixedThreadPool(2)
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
-    private lateinit var wallpaper: WallpaperView
+    private lateinit var wallpaperScrim: WallpaperScrimView
     private lateinit var screen: FrameLayout
     private lateinit var rail: AlphabetRail
     private var page = "home"
@@ -81,8 +81,8 @@ class MainActivity : AppCompatActivity() {
         window.statusBarColor = Color.TRANSPARENT; window.navigationBarColor = Color.TRANSPARENT
         window.isNavigationBarContrastEnforced = false
         root = FrameLayout(this)
-        wallpaper = WallpaperView(this)
-        root.addView(wallpaper, FrameLayout.LayoutParams(-1, -1))
+        wallpaperScrim = WallpaperScrimView(this)
+        root.addView(wallpaperScrim, FrameLayout.LayoutParams(-1, -1))
         screen = FrameLayout(this)
         root.addView(screen, FrameLayout.LayoutParams(-1, -1))
         rail = AlphabetRail(this)
@@ -167,10 +167,8 @@ class MainActivity : AppCompatActivity() {
     }
     private fun contentMargins(): Pair<Int, Int> = if (store.bool("leftHanded")) dp(84) to dp(28) else dp(28) to dp(84)
     private fun applyAppearance() {
-        wallpaper.style = store.string("wallpaper", "dune")
-        // Contrast floor for the brightest color in each built-in and for white system wallpaper.
-        val baseShade = when (wallpaper.style) { "night" -> .08f; "forest" -> .40f; "system" -> .61f; else -> .48f }
-        wallpaper.shade = baseShade + if (store.bool("dimWallpaper", true)) .06f else 0f
+        // Contrast floor for white system wallpaper; legacy artwork preferences are ignored.
+        wallpaperScrim.shade = .61f + if (store.bool("dimWallpaper", true)) .06f else 0f
         rail.leftHanded = store.bool("leftHanded")
         rail.layoutParams = FrameLayout.LayoutParams(dp(92), -1, if (rail.leftHanded) Gravity.START else Gravity.END)
         if (store.bool("hideStatus")) window.insetsController?.hide(WindowInsets.Type.statusBars()) else window.insetsController?.show(WindowInsets.Type.statusBars())
@@ -535,13 +533,7 @@ class MainActivity : AppCompatActivity() {
         body.addView(setting("Избранные приложения", "Порядок, приложения и папки") { editFavorites() })
         body.addView(setting("Виджеты", "${store.widgets.size} из 4 · переключение в стопке") { widgets.add() })
         section(body, "Внешний вид")
-        body.addView(setting("Обои", when (store.string("wallpaper", "dune")) { "dune" -> "Дюны"; "forest" -> "Лес"; "night" -> "Сумерки"; else -> "Системные обои" }) {
-            choose("Обои", listOf("Дюны", "Лес", "Сумерки", "Системные обои", "Выбрать системные обои")) { choice ->
-                if (choice == 4) { store.set("wallpaper", "system"); safeStart(Intent(Intent.ACTION_SET_WALLPAPER)) }
-                else store.set("wallpaper", listOf("dune", "forest", "night", "system")[choice])
-                applyAppearance(); showSettings()
-            }
-        })
+        body.addView(setting("Обои", "Выбрать системные обои") { safeStart(Intent(Intent.ACTION_SET_WALLPAPER)) })
         body.addView(setting("Шрифт", when (store.string("font", "sans-serif")) { "sans-serif-light" -> "Лёгкий"; "sans-serif-condensed" -> "Компактный"; "serif" -> "С засечками"; else -> "Системный" }) {
             val names = listOf("sans-serif", "sans-serif-light", "sans-serif-condensed", "serif")
             choose("Шрифт", listOf("Системный", "Лёгкий", "Компактный", "С засечками"), names.indexOf(store.string("font", "sans-serif"))) { store.set("font", names[it]); showSettings() }
