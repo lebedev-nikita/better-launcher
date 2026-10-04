@@ -482,6 +482,8 @@ class MainActivity : AppCompatActivity() {
             setBackgroundDrawableResource(android.R.color.transparent); addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(.3f); setGravity(Gravity.BOTTOM); setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
             if (appMenu) {
+                // WindowManager animates the sheet and dim layer together, without per-frame layout.
+                if (!android.animation.ValueAnimator.areAnimatorsEnabled()) setWindowAnimations(0)
                 WindowCompat.setDecorFitsSystemWindows(this, false)
                 isNavigationBarContrastEnforced = false
                 scroll.setOnApplyWindowInsetsListener { _, insets ->
@@ -541,7 +543,15 @@ class MainActivity : AppCompatActivity() {
             setImageDrawable(app.icon); setPadding(dp(8), dp(8), dp(8), dp(8))
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
-        header.addView(text(catalog.label(app), 23f, foreground).apply { isAccessibilityHeading = true }, LinearLayout.LayoutParams(0, -2, 1f))
+        header.addView(text(catalog.label(app), 23f, foreground).apply {
+            isAccessibilityHeading = true; isFocusable = true; minHeight = dp(48)
+            gravity = Gravity.CENTER_VERTICAL; background = touchBackground()
+            contentDescription = "Переименовать ${catalog.label(app)}"; tooltipText = "Переименовать"
+            setOnClickListener {
+                dialog.dismiss()
+                editText("Переименовать", catalog.label(app)) { store.rename(app.id, it); updateAlphabet(); showHome() }
+            }
+        }, LinearLayout.LayoutParams(0, -2, 1f))
         body.addView(header); body.addView(gap(4))
         fun menuAction(container: LinearLayout, glyph: Glyph, label: String, dismiss: Boolean = true, action: () -> Unit): LinearLayout {
             val row = horizontal().apply {
@@ -574,7 +584,6 @@ class MainActivity : AppCompatActivity() {
             expand.getChildAt(0).rotation = if (expanded) 180f else 0f
         }
         expand.stateDescription = "Свёрнуто"
-        menuAction(extra, Glyph.EDIT, "Переименовать") { editText("Переименовать", catalog.label(app)) { store.rename(app.id, it); updateAlphabet(); showHome() } }
         menuAction(extra, Glyph.FOLDER, "Приложения во всплывающем меню") { selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } }
         menuAction(extra, Glyph.HIDE, "Скрыть приложение") {
             store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome()
