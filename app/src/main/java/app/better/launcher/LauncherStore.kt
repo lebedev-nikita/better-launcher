@@ -59,6 +59,12 @@ class LauncherStore(context: Context) {
             set("homeWidgetId", value?.toString().orEmpty())
         }
     val pageWidgets: List<Int> get() { val home = homeWidgetId; return widgets.filter { it != home } }
+    var wallpaperDimming: Int
+        get() = prefs.getInt("wallpaperDimming", if (bool("dimWallpaper", true)) 20 else 0).coerceIn(0, 100)
+        set(value) {
+            require(value in 0..100)
+            prefs.edit { putInt("wallpaperDimming", value) }
+        }
     fun bool(key: String, default: Boolean = false) = prefs.getBoolean(key, default)
     fun string(key: String, default: String = "") = prefs.getString(key, default) ?: default
     fun set(key: String, value: Boolean) { prefs.edit().putBoolean(key, value).apply() }
@@ -83,6 +89,7 @@ class LauncherStore(context: Context) {
             val value = values.get(key)
             require(key.length <= 300)
             when {
+                key == "wallpaperDimming" && value is Int && value in 0..100 -> accepted[key] = value
                 key == "hidden" && value is JSONArray -> accepted[key] = List(value.length()) { value.getString(it) }.toSet()
                 key in booleanKeys && value is Boolean -> accepted[key] = value
                 (key in stringKeys || key.startsWith("alias:") || key.startsWith("folder:") || key.startsWith("popup:")) && value is String -> accepted[key] = value
@@ -118,6 +125,7 @@ class LauncherStore(context: Context) {
             clear()
             localWidgets.forEach { (key, value) -> putString(key, value as String) }
             accepted.forEach { (key, value) -> when (value) {
+                is Int -> putInt(key, value)
                 is Boolean -> putBoolean(key, value)
                 is String -> putString(key, value)
                 is Set<*> -> putStringSet(key, value.filterIsInstance<String>().toSet())
