@@ -131,8 +131,14 @@ size = adb("shell", "wm", "size")
 width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
 x = int(width - 30 * density)  # clear the OS Back gesture edge
-adb("shell", "input", "swipe", str(x), str(int(height * .4)), str(x), str(int(height * .75)), "600")
+adb("shell", "input", "swipe", str(x), str(int(height * .4)), str(x), str(int(height * .94)), "600")
 wait_for("Поиск приложений")
+tree = hierarchy()
+assert any(n.get("content-desc", "").startswith("Алфавит приложений, #.") for n in tree.iter("node"))
+# The default English emulator catalog starts with Camera and ends after C.
+# Moving below the final rail entry must not bring that first app back onscreen.
+assert not any(n.get("text") == "Camera" for n in tree.iter("node"))
+print("PASS: dragging below the alphabet keeps the app list at the final section")
 adb("shell", "input", "keyevent", "4")
 home()
 print("PASS: alphabet gesture opens the app list")

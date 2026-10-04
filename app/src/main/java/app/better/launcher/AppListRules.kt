@@ -22,7 +22,8 @@ object AppListRules {
     fun terms(query: String): List<String> = normalized(query).split(whitespace).filter(String::isNotEmpty)
 
     fun sectionOrder(section: String): Int = when (val c = section.first()) {
-        '#' -> 0
+        // Match the rail: numbers and symbols follow Latin and Cyrillic letters.
+        '#' -> 99
         in 'A'..'Z' -> 1 + (c - 'A')
         in 'А'..'Я' -> 27 + (c - 'А')
         else -> 100
