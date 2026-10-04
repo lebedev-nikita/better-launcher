@@ -1,6 +1,7 @@
 package app.better.launcher
 
 import android.appwidget.AppWidgetHost
+import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -24,12 +25,14 @@ class WidgetHostTest {
         val provider = ComponentName(instrumentation.context, LayoutPreviewProvider::class.java)
         val previousWidgets = activity.store.widgets
         val previousHome = activity.store.homeWidgetId
+        var grantedUser: Int? = null
         try {
-            instrumentation.uiAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BIND_APPWIDGET)
-            try {
+            if (!manager.bindAppWidgetIdIfAllowed(id, provider)) {
+                // appwidget does not resolve the special USER_CURRENT value on Android 12/16.
+                val user = shell(instrumentation, "am get-current-user").trim().toInt()
+                shell(instrumentation, "appwidget grantbind --package ${activity.packageName} --user $user")
+                grantedUser = user
                 assertTrue("Test provider must bind to the real host", manager.bindAppWidgetIdIfAllowed(id, provider))
-            } finally {
-                instrumentation.uiAutomation.dropShellPermissionIdentity()
             }
             instrumentation.runOnMainSync {
                 activity.store.widgets = previousWidgets + id
@@ -37,7 +40,7 @@ class WidgetHostTest {
                 activity.showWidgets()
             }
             await(instrumentation) {
-                descendants(activity.window.decorView).filterIsInstance<TextView>().any { it.text.toString() == "Layout preview content" }
+                hasWidgetText(activity, id, "Layout preview content")
             }
             // Updates must reach the view registered by the real WidgetController host.
             val resources = instrumentation.context.resources
@@ -49,18 +52,18 @@ class WidgetHostTest {
                 setInt(textId, "setBackgroundResource", android.R.color.transparent)
             })
             await(instrumentation) {
-                descendants(activity.window.decorView).filterIsInstance<TextView>().any { it.text.toString() == "Live widget update" }
+                hasWidgetText(activity, id, "Live widget update")
             }
             instrumentation.runOnMainSync {
                 activity.store.homeWidgetId = id
                 activity.showHome()
             }
             await(instrumentation) {
-                descendants(activity.window.decorView).filterIsInstance<TextView>().any { it.text.toString() == "Live widget update" }
+                hasWidgetText(activity, id, "Live widget update")
             }
             instrumentation.runOnMainSync { activity.showWidgets(); activity.store.homeWidgetId = null; activity.showWidgets() }
             await(instrumentation) {
-                descendants(activity.window.decorView).filterIsInstance<TextView>().any { it.text.toString() == "Live widget update" }
+                hasWidgetText(activity, id, "Live widget update")
             }
         } finally {
             instrumentation.runOnMainSync {
@@ -69,7 +72,16 @@ class WidgetHostTest {
                 activity.store.homeWidgetId = previousHome
                 activity.finish()
             }
+            grantedUser?.let { shell(instrumentation, "appwidget revokebind --package ${activity.packageName} --user $it") }
         }
+    }
+    private fun shell(instrumentation: android.app.Instrumentation, command: String): String =
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command))
+            .bufferedReader().use { it.readText() }
+    private fun hasWidgetText(activity: MainActivity, id: Int, text: String): Boolean {
+        val view = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>()
+            .firstOrNull { it.appWidgetId == id } ?: return false
+        return descendants(view).filterIsInstance<TextView>().any { it.text.toString() == text }
     }
     private fun descendants(view: View): List<View> = listOf(view) + if (view is ViewGroup)
         (0 until view.childCount).flatMap { descendants(view.getChildAt(it)) } else emptyList()
