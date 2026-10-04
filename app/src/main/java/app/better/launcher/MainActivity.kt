@@ -19,6 +19,7 @@ import android.provider.Settings
 import android.service.notification.StatusBarNotification
 import android.text.*
 import android.view.*
+import android.view.animation.AnimationUtils
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -477,13 +478,17 @@ class MainActivity : AppCompatActivity() {
     }
     private fun presentSheet(dialog: Dialog, body: LinearLayout, appMenu: Boolean = false): Dialog {
         val scroll = ScrollView(this).apply { isFillViewport = false; isVerticalScrollBarEnabled = false; addView(body) }
+        val windowScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.WINDOW_ANIMATION_SCALE, 1f) else 0f
+        val animatorScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) else 0f
+        val animateMenu = appMenu && windowScale > 0f && animatorScale > 0f && android.animation.ValueAnimator.areAnimatorsEnabled()
+        fun sheetHeight() = minOf(body.height + scroll.paddingTop, (resources.displayMetrics.heightPixels * .85f).toInt())
+        if (animateMenu) scroll.translationY = resources.displayMetrics.heightPixels.toFloat()
         dialog.setContentView(scroll)
         dialog.window?.apply {
             setBackgroundDrawableResource(android.R.color.transparent); addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(.3f); setGravity(Gravity.BOTTOM); setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
             if (appMenu) {
-                // WindowManager animates the sheet and dim layer together, without per-frame layout.
-                if (!android.animation.ValueAnimator.areAnimatorsEnabled()) setWindowAnimations(0)
+                if (!animateMenu) setWindowAnimations(0)
                 WindowCompat.setDecorFitsSystemWindows(this, false)
                 isNavigationBarContrastEnforced = false
                 scroll.setOnApplyWindowInsetsListener { _, insets ->
@@ -495,16 +500,40 @@ class MainActivity : AppCompatActivity() {
             }
         }
         dialog.setOnDismissListener {
+            if (appMenu) scroll.animate().cancel()
             if (currentDialog == dialog) {
                 currentDialog = null
                 if (notificationRefreshPending && page == "home" && resumed) refreshHomePreservingScroll()
             }
         }
+        if (appMenu) {
+            var prepared = false
+            scroll.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    if (dialog.isShowing) {
+                        val height = sheetHeight()
+                        if (!prepared || dialog.window?.attributes?.height != height) {
+                            prepared = true
+                            dialog.window?.setLayout(-1, height)
+                            scroll.requestLayout()
+                            return false
+                        }
+                    }
+                    scroll.viewTreeObserver.removeOnPreDrawListener(this)
+                    if (dialog.isShowing && animateMenu) {
+                        // Start only after insets and the window height have settled; never flash the final position.
+                        scroll.translationY = scroll.height.toFloat()
+                        scroll.animate().translationY(0f).setDuration((300f * windowScale / animatorScale).toLong())
+                            .setInterpolator(AnimationUtils.loadInterpolator(this@MainActivity, R.interpolator.app_menu_arrive)).start()
+                    }
+                    return true
+                }
+            })
+        }
         currentDialog = dialog; dialog.show()
         dialog.window?.setLayout(-1, -2)
         body.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            val limit = (resources.displayMetrics.heightPixels * .85f).toInt()
-            val height = minOf(body.height + scroll.paddingTop, limit)
+            val height = sheetHeight()
             if (height > 0 && dialog.window?.attributes?.height != height) dialog.window?.setLayout(-1, height)
         }
         return dialog

@@ -117,7 +117,11 @@ class AlphabetRail(context: Context) : View(context) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> { parent.requestDisallowInterceptTouchEvent(true); dragging = true; selectAt(event.y, true) }
             MotionEvent.ACTION_MOVE -> selectAt(event.y)
-            MotionEvent.ACTION_UP -> { dragging = false; performClick(); invalidate() }
+            MotionEvent.ACTION_UP -> {
+                // The release may carry a newer coordinate than the final MOVE.
+                if (dragging && event.y >= top() + letters.size * spacing()) selectAt(event.y)
+                dragging = false; performClick(); invalidate()
+            }
             MotionEvent.ACTION_CANCEL -> { dragging = false; invalidate() }
         }
         return true
