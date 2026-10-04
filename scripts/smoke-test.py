@@ -154,14 +154,15 @@ wait_for("Все приложения и поиск")
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 tap("Переименовать Phone")
-wait_for("Переименовать")
+wait_for("Переименовать Phone")
 wait_for("Сохранить")
+assert not any(n.get("content-desc") == "Дополнительно" for n in hierarchy().iter("node"))
 assert any(n.get("class") == "android.widget.EditText" and n.get("text") == "Phone"
            for n in hierarchy().iter("node"))
 # HOME cancels editing and must preserve the current app name.
 home()
 wait_for("Phone")
-print("PASS: tapping the app title opens rename; HOME cancels without changing the name")
+print("PASS: app title switches the same menu to rename; HOME cancels without changing the name")
 
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
 rail = next(n for n in hierarchy().iter("node")

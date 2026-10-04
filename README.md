@@ -17,6 +17,7 @@
 | [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
 | [docs/releases/0.2.0-rc.7.md](docs/releases/0.2.0-rc.7.md) | Симметричные кнопки и оптимизированный release APK |
 | [docs/releases/0.1.8.md](docs/releases/0.1.8.md) | Исправление нижней границы алфавитного ползунка |
+| [docs/releases/0.2.0-rc.15.md](docs/releases/0.2.0-rc.15.md) | Редактор имени в том же меню и результаты проверок |
 | [docs/releases/0.2.0-rc.11.md](docs/releases/0.2.0-rc.11.md) | Исправление загрузки RemoteViews и проверки нового кандидата |
 | [docs/releases/0.1.9.md](docs/releases/0.1.9.md) | Превью виджетов, алфавит выбора и результаты проверки |
 | [docs/releases/0.2.0-rc.14.md](docs/releases/0.2.0-rc.14.md) | Релиз-кандидат выбора виджетов после rebase на main |
