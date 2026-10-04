@@ -293,7 +293,7 @@ class MainActivity : AppCompatActivity() {
             content.addView(gap(24))
             content.addView(text("Все нужные виджеты — здесь", 23f))
             content.addView(gap(12))
-            content.addView(text("Добавьте виджеты. Через меню виджета можно выбрать один для главного экрана.", 16f, secondary))
+            content.addView(text("Добавьте виджеты. Удерживайте виджет, чтобы изменить размер или перенести его на главный экран.", 16f, secondary))
             content.addView(gap(16))
             content.addView(action("Добавить виджет") { widgets.add() })
         }

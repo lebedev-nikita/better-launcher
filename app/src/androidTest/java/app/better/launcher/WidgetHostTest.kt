@@ -6,6 +6,11 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.SystemClock
+import android.view.MotionEvent
+import android.view.KeyEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import android.os.Bundle
+import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RemoteViews
@@ -42,6 +47,48 @@ class WidgetHostTest {
             await(instrumentation) {
                 hasWidgetText(activity, id, "Layout preview content")
             }
+            instrumentation.runOnMainSync {
+                val frame = descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().single()
+                assertEquals("No launcher label or menu row above the widget", 1, (frame.parent as ViewGroup).childCount)
+            }
+            val oldOptions = manager.getAppWidgetOptions(id)
+            val bounds = Rect()
+            instrumentation.runOnMainSync {
+                descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>().single { it.appWidgetId == id }.getGlobalVisibleRect(bounds)
+            }
+            val down = SystemClock.uptimeMillis()
+            fun touch(action: Int) {
+                val event = MotionEvent.obtain(down, SystemClock.uptimeMillis(), action, bounds.centerX().toFloat(), (bounds.top + 40).toFloat(), 0)
+                assertTrue(instrumentation.uiAutomation.injectInputEvent(event, true)); event.recycle()
+            }
+            touch(MotionEvent.ACTION_DOWN)
+            await(instrumentation) { activeNode("Изменить размер") != null }
+            touch(MotionEvent.ACTION_UP)
+            assertTrue(activeNode("Изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { activeNode("Ширина") != null }
+            fun progress(label: String, value: Float) {
+                val arguments = Bundle().apply { putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, value) }
+                fun adjustable(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+                    if (node.actionList.any { it.id == android.R.id.accessibilityActionSetProgress }) return node
+                    for (index in 0 until node.childCount) node.getChild(index)?.let { adjustable(it)?.let { found -> return found } }
+                    return null
+                }
+                val slider = adjustable(activeNode(label)!!) ?: error("Missing adjustable thumb for $label")
+                assertTrue(slider.performAction(android.R.id.accessibilityActionSetProgress, arguments))
+            }
+            progress("Ширина", 180f)
+            progress("Высота", 320f)
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 320) }
+            await(instrumentation) {
+                manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) > oldOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
+            }
+            assertTrue(manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) < oldOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH))
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            instrumentation.runOnMainSync { activity.showWidgets() }
+            await(instrumentation) {
+                val widget = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>().single { it.appWidgetId == id }
+                widget.width == activity.dp(180) && widget.height == activity.dp(320)
+            }
             // Updates must reach the view registered by the real WidgetController host.
             val resources = instrumentation.context.resources
             val layout = resources.getIdentifier("widget_preview", "layout", instrumentation.context.packageName)
@@ -65,6 +112,33 @@ class WidgetHostTest {
             await(instrumentation) {
                 hasWidgetText(activity, id, "Live widget update")
             }
+            fun openControls() {
+                instrumentation.runOnMainSync {
+                    assertTrue(descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().single()
+                        .performAccessibilityAction(AccessibilityNodeInfo.ACTION_LONG_CLICK, null))
+                }
+                await(instrumentation) { activeNode("Изменить размер") != null }
+            }
+            openControls()
+            assertTrue(activeNode("На главный экран")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { activity.store.homeWidgetId == id }
+            instrumentation.runOnMainSync { activity.showHome() }
+            await(instrumentation) { hasWidgetText(activity, id, "Live widget update") }
+            assertEquals(WidgetSize(180, 320), activity.store.widgetSize(id))
+            openControls()
+            assertTrue(activeNode("Изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { activeNode("Сбросить размер") != null }
+            assertTrue(activeNode("Сбросить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { activity.store.widgetSize(id) == null }
+            instrumentation.waitForIdleSync()
+            openControls()
+            assertTrue(activeNode("На экран виджетов")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { activity.store.homeWidgetId == null }
+            instrumentation.runOnMainSync { activity.showWidgets() }
+            await(instrumentation) { hasWidgetText(activity, id, "Live widget update") }
+            openControls()
+            assertTrue(activeNode("Удалить виджет")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { id !in activity.store.widgets }
         } finally {
             instrumentation.runOnMainSync {
                 host.deleteAppWidgetId(id)
@@ -75,6 +149,15 @@ class WidgetHostTest {
             grantedUser?.let { shell(instrumentation, "appwidget revokebind --package ${activity.packageName} --user $it") }
         }
     }
+    private fun activeNode(label: String): AccessibilityNodeInfo? {
+        fun find(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            if (node.text?.toString() == label || node.contentDescription?.toString() == label) return node
+            for (index in 0 until node.childCount) node.getChild(index)?.let { find(it)?.let { found -> return found } }
+            return null
+        }
+        return instrumentationRoot()?.let(::find)
+    }
+    private fun instrumentationRoot() = InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow
     private fun shell(instrumentation: android.app.Instrumentation, command: String): String =
         android.os.ParcelFileDescriptor.AutoCloseInputStream(instrumentation.uiAutomation.executeShellCommand(command))
             .bufferedReader().use { it.readText() }

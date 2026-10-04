@@ -6,6 +6,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
+data class WidgetSize(val width: Int, val height: Int)
+
 data class AppFolder(val id: String, val name: String, val apps: List<String>)
 
 class LauncherStore(context: Context) {
@@ -49,6 +51,9 @@ class LauncherStore(context: Context) {
             prefs.edit {
                 putString("widgets", JSONArray(value.distinct().map(Int::toString)).toString())
                 putString("homeWidgetId", home?.takeIf { it in value }?.toString().orEmpty())
+                val sizes = JSONObject(string("widgetSizes", "{}"))
+                sizes.keys().asSequence().toList().filter { it.toIntOrNull() !in value }.forEach(sizes::remove)
+                putString("widgetSizes", sizes.toString())
             }
         }
     var homeWidgetId: Int?
@@ -59,6 +64,18 @@ class LauncherStore(context: Context) {
             set("homeWidgetId", value?.toString().orEmpty())
         }
     val pageWidgets: List<Int> get() { val home = homeWidgetId; return widgets.filter { it != home } }
+    fun widgetSize(id: Int): WidgetSize? = runCatching {
+        val size = JSONObject(string("widgetSizes", "{}")).getJSONObject(id.toString())
+        WidgetSize(size.getInt("width"), size.getInt("height"))
+    }.getOrNull()
+    fun setWidgetSize(id: Int, size: WidgetSize?) {
+        require(id in widgets)
+        require(size == null || size.width in 0..1600 && size.height in 32..1600)
+        val sizes = JSONObject(string("widgetSizes", "{}"))
+        if (size == null) sizes.remove(id.toString())
+        else sizes.put(id.toString(), JSONObject().put("width", size.width).put("height", size.height))
+        set("widgetSizes", sizes.toString())
+    }
     var wallpaperDimming: Int
         get() = prefs.getInt("wallpaperDimming", if (bool("dimWallpaper", true)) 20 else 0).coerceIn(0, 100)
         set(value) {
@@ -118,6 +135,15 @@ class LauncherStore(context: Context) {
             (accepted[key] as? String)?.let { require(it.isEmpty() && key == "homeWidgetId" || it.toIntOrNull()?.let { id -> id > 0 } == true) }
         }
         (accepted["pendingWidgetDestination"] as? String)?.let { require(it == "home" || it == "widgets") }
+        (accepted["widgetSizes"] as? String)?.let { value ->
+            val sizes = JSONObject(value)
+            sizes.keys().forEach { key ->
+                require(key.toIntOrNull()?.let { it > 0 } == true)
+                val size = sizes.getJSONObject(key)
+                require(size.length() == 2 && size.get("width") is Int && size.get("height") is Int)
+                require(size.getInt("width") in 0..1600 && size.getInt("height") in 32..1600)
+            }
+        }
         // Widget ids belong to this device and this host, never to a portable backup.
         localWidgetKeys.forEach(accepted::remove)
         val localWidgets = prefs.all.filterKeys { it in localWidgetKeys }
@@ -132,5 +158,5 @@ class LauncherStore(context: Context) {
             } }
         }.apply()
     }
-    private val localWidgetKeys = setOf("widgets", "homeWidgetId", "pendingWidgetId", "pendingWidgetDestination")
+    private val localWidgetKeys = setOf("widgets", "homeWidgetId", "pendingWidgetId", "pendingWidgetDestination", "widgetSizes")
 }
