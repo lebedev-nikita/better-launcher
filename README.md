@@ -4,9 +4,9 @@
 
 Версия **0.1.8** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
 
-[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.8 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.8) · [Релиз-кандидат 0.2.0-rc.4](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.4). Репозиторий приватный: для скачивания нужен доступ к организации.
+[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.8 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.8) · [Релиз-кандидат 0.2.0-rc.6](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.6). Репозиторий приватный: для скачивания нужен доступ к организации.
 
-Релиз-кандидат **0.2.0-rc.4** добавляет компактный алфавит внизу только с непустыми разделами. Стабильный выпуск остаётся 0.1.8.
+Релиз-кандидат **0.2.0-rc.6** размещает кнопку «Сохранить» справа в форме переименования и сохраняет компактный алфавит внизу только с непустыми разделами. Стабильный выпуск остаётся 0.1.8.
 
 ## Документация проекта
 
@@ -17,6 +17,7 @@
 | [DESIGN.md](DESIGN.md) | Изменения интерфейса, размеров, цветов, типографики и поведения при масштабировании |
 | [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
 | [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
+| [docs/releases/0.2.0-rc.6.md](docs/releases/0.2.0-rc.6.md) | Кнопка сохранения справа, release APK и проверки релиз-кандидата |
 | [docs/releases/0.2.0-rc.4.md](docs/releases/0.2.0-rc.4.md) | Компактный алфавит, release APK и проверки нового релиз-кандидата |
 | [docs/releases/0.1.8.md](docs/releases/0.1.8.md) | Исправление нижней границы алфавитного ползунка |
 | [docs/releases/0.1.7.md](docs/releases/0.1.7.md) | Уменьшенный release APK и результаты проверки |
