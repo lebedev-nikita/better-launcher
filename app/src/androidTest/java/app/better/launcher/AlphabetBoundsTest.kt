@@ -35,9 +35,9 @@ class AlphabetBoundsTest {
                     list.layout(0, 0, context.dp(360), context.dp(140))
                 }
                 adapter.submit(index.apps, true); layout()
-                for (short in listOf(false, true)) for (left in listOf(false, true)) for (finalMove in listOf(false, true)) {
+                for (left in listOf(false, true)) for (finalMove in listOf(false, true)) {
                     val rail = AlphabetRail(context).apply {
-                        letters = AppListRules.railLetters(index.sections, short)
+                        letters = AppListRules.railLetters(index.sections)
                         leftHanded = left
                     }
                     rail.layout(0, 0, context.dp(92), context.dp(1000))
@@ -48,7 +48,7 @@ class AlphabetBoundsTest {
                         adapter.sectionPosition(section)?.let { list.setSelectionFromTop(it, 0) }
                         layout()
                     }
-                    val step = context.dp(16) * context.resources.configuration.fontScale.coerceAtLeast(1f)
+                    val step = context.dp(22) * context.resources.configuration.fontScale.coerceAtLeast(1f)
                     val start = rail.height - context.dp(24) - rail.letters.size * step
                     val x = context.dp(if (left) 32 else 60).toFloat()
                     fun touch(action: Int, y: Float) {
@@ -61,7 +61,7 @@ class AlphabetBoundsTest {
                     touch(MotionEvent.ACTION_MOVE, z + step * .1f)
                     if (finalMove) touch(MotionEvent.ACTION_MOVE, below)
                     touch(MotionEvent.ACTION_UP, below)
-                    assertEquals("symbols=$symbols, short=$short, left=$left, finalMove=$finalMove", listOf("Z", "#"), selections)
+                    assertEquals("symbols=$symbols, left=$left, finalMove=$finalMove", listOf("Z", "#"), selections)
                     assertEquals(adapter.count - 1, list.lastVisiblePosition)
                     assertTrue("Overflow must not return to the first apps", list.firstVisiblePosition > 0)
                     touch(MotionEvent.ACTION_DOWN, z)

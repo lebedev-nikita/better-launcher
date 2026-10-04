@@ -210,8 +210,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateAlphabet() {
         val sections = catalog.sections()
         rail.activeLetters = sections
-        rail.letters = AppListRules.railLetters(sections,
-            shortWindow = resources.displayMetrics.heightPixels / resources.displayMetrics.density < 500)
+        rail.letters = AppListRules.railLetters(sections)
     }
     private fun refreshHomePreservingScroll() {
         val y = homeScroll?.scrollY ?: 0

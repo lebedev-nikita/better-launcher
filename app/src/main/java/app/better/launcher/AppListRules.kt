@@ -33,8 +33,8 @@ object AppListRules {
         return if (first in 'A'..'Z') first.toString() else "#"
     }
 
-    fun railLetters(sections: Set<String>, shortWindow: Boolean): List<String> =
-        listOf("★") + ('A'..'Z').map(Char::toString).filter { !shortWindow || it in sections } + "#"
+    fun railLetters(sections: Set<String>): List<String> =
+        listOf("★") + ('A'..'Z').map(Char::toString).filter { it in sections } + "#"
 
     fun matches(query: String, vararg labels: String): Boolean {
         val terms = terms(query)

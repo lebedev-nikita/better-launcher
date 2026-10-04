@@ -89,7 +89,7 @@ components:
     backgroundColor: "transparent"
     textColor: "{colors.on-surface}"
     width: "92dp"
-    letter-step: "16dp × font scale (minimum 1)"
+    letter-step: "22dp × font scale (minimum 1)"
     bottom-gap: "24dp"
   material-switch:
     backgroundColor: "{colors.primary}"
@@ -154,7 +154,7 @@ Android supplies the wallpaper behind the transparent launcher window, including
 - **Secondary labels:** `label`, including section labels and footer text.
 - **Details:** `detail`, including settings descriptions and notification previews.
 - **Search:** unboxed native `EditText` (19sp).
-- **Alphabet:** native `sans-serif-medium`; resting letters (11sp) grow by up to (7sp) near the finger, with a selected bubble label (27sp).
+- **Alphabet:** native `sans-serif-medium`; resting letters (16sp) grow by up to (7sp) near the finger; letter sizes are capped by the available step in short windows, with a selected bubble label (27sp).
 
 **The Grow With Text Rule.** App and settings rows use minimum heights, not fixed text containers; preserve wrapping when Android font scale grows. The fixed footer remains outside the scrolling home content.
 
@@ -162,9 +162,9 @@ Android supplies the wallpaper behind the transparent launcher window, including
 
 The phone UI uses one vertical content column. Home content and the app list reserve space for the alphabet: normal content margins are (28dp) at the start and (84dp) at the end; left-handed mode reverses these. The rail occupies a (92dp) overlay, while its resting letter center stays (32dp) inside the screen edge. Its touch corridor is (48dp), between (24dp) and (72dp) from the usable edge. Horizontal system-bar and cutout insets shift the rail inward, including side navigation bars in landscape.
 
-The alphabet forms a compact column anchored 24dp above the bottom of its inset-safe area (above the home footer). Letter centers are 16dp apart at default font scale; the step grows with larger system fonts and shrinks only to fit short windows with 24dp top/bottom clearance. Drawing and touch selection share this geometry, on either side of the screen.
+The alphabet forms a compact column anchored 24dp above the bottom of its inset-safe area (above the home footer). Letter centers are 22dp apart at default font scale; the step grows with larger system fonts and shrinks only to fit short windows with 24dp top/bottom clearance. Drawing and touch selection share this geometry, on either side of the screen.
 
-The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Home top padding is 14% of viewport height, clamped to (36–126dp). Below a viewport height (500dp), it becomes (24dp), the optional information-to-list gap decreases, and the alphabet shows only available Latin app sections plus favorites and a final hash. This is a height adaptation; no width breakpoint or tablet layout is implemented.
+The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Home top padding is 14% of viewport height, clamped to (36–126dp). Below a viewport height (500dp), it becomes (24dp), the optional information-to-list gap decreases, while the alphabet always shows only populated Latin app sections plus favorites and a final hash. The smaller home padding is a height adaptation; no width breakpoint or tablet layout is implemented.
 
 Home has no built-in clock or date. When no weather, widget, or media content is present, favorites start directly after the top padding; otherwise an (18dp) short-window or (30dp) normal gap separates that content from favorites. Calendar events remain available from settings.
 
@@ -212,7 +212,7 @@ Settings are label-description rows on an opaque dark surface. Destination rows 
 
 ### Navigation
 
-The footer provides app search on the left, then a widget-page button and settings on the right. The search label wraps within the remaining space at large font sizes. The alphabet rail reserves system/IME insets and the measured home footer height so it cannot cover or intercept footer actions. The app list has back and clear controls; Android Back returns to home. Settings and the widget page hide the alphabet rail. Favorites navigation uses the star entry; the normal rail contains only A–Z, with a final hash for numbers, symbols, and initials without a Latin transliteration. Cyrillic app names use the first Latin letter from Android ICU Russian-Latin/BGN transliteration: B/Б, V/В, Y/Я/Ю/Й, Z/Ж. Multi-letter equivalents participate by their first letter (Яндекс → Yandeks → Y); hard/soft signs use the hash. The hash remains last in short windows and in the app list.
+The footer provides app search on the left, then a widget-page button and settings on the right. The search label wraps within the remaining space at large font sizes. The alphabet rail reserves system/IME insets and the measured home footer height so it cannot cover or intercept footer actions. The app list has back and clear controls; Android Back returns to home. Settings and the widget page hide the alphabet rail. Favorites navigation uses the star entry; the rail shows only populated A–Z sections from visible apps, with a final hash for numbers, symbols, and initials without a Latin transliteration. Cyrillic app names use the first Latin letter from Android ICU Russian-Latin/BGN transliteration: B/Б, V/В, Y/Я/Ю/Й, Z/Ж. Multi-letter equivalents participate by their first letter (Яндекс → Yandeks → Y); hard/soft signs use the hash. The hash remains last in short windows and in the app list.
 
 ### Widgets
 
@@ -222,7 +222,7 @@ The widget page uses the same wallpaper, type, and native actions. Its header ha
 
 The provider picker keeps its heading and Close outside a recycled `ListView` in an 85%-height sheet. Each unboxed row has a wrapping 18sp widget label, a 13sp application name, and a 144dp preview area that fits images without cropping and scales static layouts proportionally. `previewLayout` takes precedence over `previewImage`; a missing or broken preview falls back to the image, then an application icon with the explicit “Превью недоступно” label. No widget IDs are allocated while browsing.
 
-The picker reuses `AlphabetRail` on the right, reserves 72dp in the list, and leaves the outer system Back edge free. The star jumps to the start; Latin sections use the same Cyrillic transliteration and final hash as apps. Short sheets or font scale above 1.1 show available sections, star, and hash. The selected letter follows the first visible row; keyboard and accessibility actions jump to sections. Preview content is inert and excluded from accessibility: the whole row announces adding the named widget and its application. Catalog/resource work uses a background executor, recycled rows cancel stale loads, and dismissal cancels all work. Selecting a row immediately starts the existing Android binding/configuration flow.
+The picker reuses `AlphabetRail` on the right, reserves 72dp in the list, and leaves the outer system Back edge free. The star jumps to the start; Latin sections use the same Cyrillic transliteration and final hash as apps. All sheet sizes show only populated provider sections, star, and hash. The selected letter follows the first visible row; keyboard and accessibility actions jump to sections. Preview content is inert and excluded from accessibility: the whole row announces adding the named widget and its application. Catalog/resource work uses a background executor, recycled rows cancel stale loads, and dismissal cancels all work. Selecting a row immediately starts the existing Android binding/configuration flow.
 
 ### App Rows and Alphabet Rail
 

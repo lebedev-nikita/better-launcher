@@ -201,11 +201,19 @@ class LauncherIntegrationTest {
         assertEquals(labels.size, apps.size)
         apps.zip(labels).forEach { (app, label) -> store.rename(app.id, label) }
         val ids = apps.map { it.id }.toSet()
+        val otherIds = catalog.apps.filter { it.id !in ids }.map { it.id }.toSet()
+        store.hidden = otherIds
+        assertEquals(listOf("★", "B", "V", "Y", "Z", "#"), AppListRules.railLetters(catalog.sections()))
         val sections = catalog.visible().filter { it.id in ids }.map { AppListRules.section(catalog.label(it)) }
         assertEquals(listOf("B", "B", "V", "Y", "Z", "#"), sections)
-        store.hidden = setOf(apps[2].id)
+        store.hidden = otherIds + apps[2].id
         assertFalse(catalog.visible().any { it.id == apps[2].id })
         assertEquals(setOf("B", "Y", "Z", "#"), catalog.visible().filter { it.id in ids }
             .map { AppListRules.section(catalog.label(it)) }.toSet())
+        assertEquals(listOf("★", "B", "Y", "Z", "#"), AppListRules.railLetters(catalog.sections()))
+        store.rename(apps[0].id, "Alpha")
+        assertEquals(listOf("★", "A", "B", "Y", "Z", "#"), AppListRules.railLetters(catalog.sections()))
+        store.hidden = otherIds
+        assertEquals(listOf("★", "A", "B", "V", "Y", "Z", "#"), AppListRules.railLetters(catalog.sections()))
     }
 }

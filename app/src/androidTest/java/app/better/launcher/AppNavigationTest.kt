@@ -30,7 +30,7 @@ class AppNavigationTest {
                 }
             }
             val parent = android.widget.FrameLayout(context).apply { addView(rail) }
-            val step = 16f * context.resources.configuration.fontScale.coerceAtLeast(1f)
+            val step = 22f * context.resources.configuration.fontScale.coerceAtLeast(1f)
             val start = 400f - 24f - rail.letters.size * step
             val a = start + 1.5f * step
             val b = start + 2.5f * step
