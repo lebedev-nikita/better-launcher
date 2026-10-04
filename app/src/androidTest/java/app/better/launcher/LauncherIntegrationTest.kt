@@ -114,6 +114,34 @@ class LauncherIntegrationTest {
             assertEquals(before, store.prefs.all)
         }
     }
+    @Test fun widgetSizesStayLocalSurviveImportAndAreRemovedWithWidget() = isolated { store ->
+        store.widgets = listOf(41, 42)
+        store.setWidgetSize(42, WidgetSize(180, 320))
+        assertEquals(WidgetSize(180, 320), LauncherStore(context).widgetSize(42))
+        val backup = store.export()
+        assertFalse(backup.contains("widgetSizes"))
+        store.import(backup)
+        assertEquals(WidgetSize(180, 320), store.widgetSize(42))
+        store.import("""{"version":1,"preferences":{"widgetSizes":"{\"42\":{\"width\":100,\"height\":100}}"}}""")
+        assertEquals(WidgetSize(180, 320), store.widgetSize(42))
+        val before = store.prefs.all
+        listOf(
+            """{"widgetSizes":true}""",
+            """{"widgetSizes":"broken"}""",
+            """{"widgetSizes":"{\"42\":{\"width\":-1,\"height\":100}}"}""",
+            """{"widgetSizes":"{\"42\":{\"width\":100,\"height\":1.5}}"}""",
+            """{"widgetSizes":"{\"bad\":{\"width\":100,\"height\":100}}"}"""
+        ).forEach { invalid ->
+            assertTrue(runCatching { store.import("""{"version":1,"preferences":$invalid}""") }.isFailure)
+            assertEquals(before, store.prefs.all)
+        }
+        store.homeWidgetId = 42
+        assertEquals(WidgetSize(180, 320), store.widgetSize(42))
+        store.widgets = listOf(41)
+        assertNull(store.widgetSize(42))
+        store.widgets = listOf(41, 42)
+        assertNull(store.widgetSize(42))
+    }
     @Test fun dimmingSurvivesBackupAndRejectsInvalidValuesAtomically() = isolated { store ->
         assertEquals(20, store.wallpaperDimming)
         store.set("dimWallpaper", false)
