@@ -24,7 +24,8 @@ class AppListRulesTest {
     }
 
     @Test fun `number and symbol section follows every alphabet section`() {
-        val letters = ('A'..'Z') + ('А'..'Я')
+        // Catalog supplies Latin sections after ICU transliteration; Android tests cover Cyrillic mapping.
+        val letters = 'A'..'Z'
         for (letter in letters) {
             assertTrue("# must follow $letter as it does on the rail",
                 AppListRules.sectionOrder("#") > AppListRules.sectionOrder(letter.toString()))
