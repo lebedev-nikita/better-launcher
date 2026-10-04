@@ -10,6 +10,8 @@ colors:
   on-surface-variant: "#EEE5DE"
   outline: "#93877D"
   touch-ripple: "#FFFFFF28"
+  app-menu-surface: "#031629"
+  app-menu-foreground: "#BCD7F3"
 typography:
   app-label:
     fontFamily: "sans-serif"
@@ -78,6 +80,11 @@ components:
     textColor: "{colors.on-surface}"
     rounded: "{rounded.sheet}"
     padding: "8dp 20dp 24dp"
+  app-management-sheet:
+    backgroundColor: "{colors.app-menu-surface}"
+    textColor: "{colors.app-menu-foreground}"
+    rounded: "24dp 24dp 0 0"
+    padding: "12dp 24dp 16dp + system insets"
   alphabet-rail:
     backgroundColor: "transparent"
     textColor: "{colors.on-surface}"
@@ -123,6 +130,7 @@ Warm dark neutrals support a small peach accent; wallpaper palettes supply the b
 - **White foreground** (`on-surface`): app names, headings, actions, and programmatically drawn vector icons.
 - **Warm pale text** (`on-surface-variant`): settings descriptions, notification previews, weather information, search hints, and secondary actions.
 - **Warm gray outline** (`outline`): outline role supplied to Material 3 controls.
+- **Deep navy app menu** (`app-menu-surface`) and **pale blue foreground** (`app-menu-foreground`): long-press management sheet, matching the supplied Niagara reference. Settings and other sheets keep the warm Material palette.
 - **White touch wash** (`touch-ripple`): repeated native `RippleDrawable` feedback on actions and clickable rows. The frontmatter uses CSS RGBA ordering; the Kotlin source uses Android ARGB ordering.
 
 Android supplies the wallpaper behind the transparent launcher window, including live wallpapers. Better Launcher draws only a translucent black readability scrim; it has no built-in wallpaper artwork. The wallpaper settings row opens the system wallpaper picker directly. Legacy wallpaper selections in preferences or version 1 backups are accepted for compatibility and ignored when rendering.
@@ -183,6 +191,12 @@ Quiet touch targets on the existing surface. Text actions use `body`, horizontal
 ### Cards / Containers
 
 Bottom sheets have the shared dark surface, sheet radius, and sheet padding. A header combines a title with a close target; content scrolls within the screen-height limit. Notification detail uses a darker tonal container with (16dp) corners, while the media strip uses a translucent brown container with the same radius. Transient messages use the message radius and native elevation; optional undo increases dismissal time from (4000ms) to (6000ms).
+
+### App Management Menu
+
+Long press opens a full-width navy sheet with rounded top corners and a continuous surface behind system navigation. The installed app icon (32dp artwork in a 48dp slot) precedes the 23sp title; there is no close icon. Android Back, tapping outside, and HOME dismiss it. Action rows use authored contour glyphs in 48dp slots, a 16dp gap, 17sp wrapping labels, and a minimum height of 52dp plus content padding. The 24dp horizontal inset aligns the icon column and heading.
+
+Favorites, app details, notifications/shortcuts, and uninstall remain directly available. “Дополнительно” expands rename, attached apps, and hide in the same sheet; its arrow and accessibility state reflect expansion. A thin pale-blue divider separates “Настройки Better Launcher”. The sheet grows with expansion and caps at 85% of display height, scrolling for large fonts and short windows. System bars and cutouts are inset; commands retain keyboard focus and accessible names. No unsupported screen-time or category commands are shown.
 
 ### Inputs / Fields
 

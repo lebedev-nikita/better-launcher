@@ -25,6 +25,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isNotEmpty
 import androidx.core.view.isEmpty
+import androidx.core.view.isGone
+import androidx.core.view.WindowCompat
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
@@ -471,11 +473,24 @@ class MainActivity : AppCompatActivity() {
         header.addView(iconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
         body.addView(header); body.addView(gap(12))
         build(body, dialog)
+        return presentSheet(dialog, body)
+    }
+    private fun presentSheet(dialog: Dialog, body: LinearLayout, appMenu: Boolean = false): Dialog {
         val scroll = ScrollView(this).apply { isFillViewport = false; isVerticalScrollBarEnabled = false; addView(body) }
         dialog.setContentView(scroll)
         dialog.window?.apply {
             setBackgroundDrawableResource(android.R.color.transparent); addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(.3f); setGravity(Gravity.BOTTOM); setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            if (appMenu) {
+                WindowCompat.setDecorFitsSystemWindows(this, false)
+                isNavigationBarContrastEnforced = false
+                scroll.setOnApplyWindowInsetsListener { _, insets ->
+                    val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+                    body.setPadding(dp(24) + bars.left, dp(12), dp(24) + bars.right, dp(16) + bars.bottom)
+                    scroll.setPadding(0, bars.top, 0, 0)
+                    insets
+                }
+            }
         }
         dialog.setOnDismissListener {
             if (currentDialog == dialog) {
@@ -485,7 +500,11 @@ class MainActivity : AppCompatActivity() {
         }
         currentDialog = dialog; dialog.show()
         dialog.window?.setLayout(-1, -2)
-        scroll.post { val limit = (resources.displayMetrics.heightPixels * .85f).toInt(); if (scroll.height > limit) dialog.window?.setLayout(-1, limit) }
+        body.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            val limit = (resources.displayMetrics.heightPixels * .85f).toInt()
+            val height = minOf(body.height + scroll.paddingTop, limit)
+            if (height > 0 && dialog.window?.attributes?.height != height) dialog.window?.setLayout(-1, height)
+        }
         return dialog
     }
     fun choose(title: String, options: List<String>, selected: Int = -1, action: (Int) -> Unit) {
@@ -507,17 +526,65 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun showAppMenu(app: AppEntry) {
+        currentDialog?.dismiss(); hideKeyboard()
         val favorite = app.id in store.favorites
-        val items = listOf(if (favorite) "Убрать из избранного" else "В избранное", "Уведомления и быстрые действия", "Переименовать", "Приложения во всплывающем меню", "Скрыть приложение", "О приложении", "Удалить приложение")
-        choose(catalog.label(app), items) { choice -> when (choice) {
-            0 -> { store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id; showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное") }
-            1 -> showAppPopup(app)
-            2 -> editText("Переименовать", catalog.label(app)) { store.rename(app.id, it); updateAlphabet(); showHome() }
-            3 -> selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() }
-            4 -> { store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome(); message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - app.id; if (favorite) store.favorites = store.favorites + app.id; showHome() } }
-            5 -> runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
-            6 -> if (app.user == Process.myUserHandle()) safeStart(Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))) else message("Удалите приложение через настройки рабочего профиля")
-        } }
+        val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
+        val foreground = getColor(R.color.app_menu_foreground)
+        val body = vertical().apply {
+            setPadding(dp(24), dp(12), dp(24), dp(16))
+            background = rounded(getColor(R.color.app_menu_surface), dp(24).toFloat()).apply {
+                cornerRadii = floatArrayOf(dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), 0f, 0f, 0f, 0f)
+            }
+        }
+        val header = horizontal().apply { minimumHeight = dp(64); setPadding(0, dp(8), 0, dp(8)) }
+        header.addView(ImageView(this).apply {
+            setImageDrawable(app.icon); setPadding(dp(8), dp(8), dp(8), dp(8))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
+        header.addView(text(catalog.label(app), 23f, foreground).apply { isAccessibilityHeading = true }, LinearLayout.LayoutParams(0, -2, 1f))
+        body.addView(header); body.addView(gap(4))
+        fun menuAction(container: LinearLayout, glyph: Glyph, label: String, dismiss: Boolean = true, action: () -> Unit): LinearLayout {
+            val row = horizontal().apply {
+                minimumHeight = dp(52); background = touchBackground(); isFocusable = true
+                setPadding(0, dp(4), dp(8), dp(4)); contentDescription = label
+                setOnClickListener { if (dismiss) dialog.dismiss(); action() }
+            }
+            row.addView(GlyphView(this, glyph, foreground).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
+            row.addView(text(label, 17f, foreground).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(0, -2, 1f))
+            container.addView(row)
+            return row
+        }
+        menuAction(body, Glyph.STAR, if (favorite) "Убрать из избранного" else "В избранное") {
+            store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id
+            showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное")
+        }
+        menuAction(body, Glyph.INFO, "О приложении") {
+            runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
+        }
+        menuAction(body, Glyph.NOTIFICATIONS, "Уведомления и быстрые действия") { showAppPopup(app) }
+        menuAction(body, Glyph.DELETE, "Удалить приложение") {
+            if (app.user == Process.myUserHandle()) safeStart(Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))) else message("Удалите приложение через настройки рабочего профиля")
+        }
+        val extra = vertical().apply { visibility = View.GONE }
+        lateinit var expand: LinearLayout
+        expand = menuAction(body, Glyph.DOWN, "Дополнительно", dismiss = false) {
+            val expanded = extra.isGone
+            extra.isGone = !expanded
+            expand.stateDescription = if (expanded) "Развёрнуто" else "Свёрнуто"
+            expand.getChildAt(0).rotation = if (expanded) 180f else 0f
+        }
+        expand.stateDescription = "Свёрнуто"
+        menuAction(extra, Glyph.EDIT, "Переименовать") { editText("Переименовать", catalog.label(app)) { store.rename(app.id, it); updateAlphabet(); showHome() } }
+        menuAction(extra, Glyph.FOLDER, "Приложения во всплывающем меню") { selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } }
+        menuAction(extra, Glyph.HIDE, "Скрыть приложение") {
+            store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome()
+            message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - app.id; if (favorite) store.favorites = store.favorites + app.id; showHome() }
+        }
+        body.addView(extra); body.addView(gap(16))
+        body.addView(View(this).apply { setBackgroundColor(foreground); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(-1, dp(1)).apply { marginStart = dp(8); marginEnd = dp(8) })
+        body.addView(gap(8))
+        menuAction(body, Glyph.SETTINGS, "Настройки Better Launcher") { showSettings() }
+        presentSheet(dialog, body, appMenu = true)
     }
     private fun showAppPopup(app: AppEntry) {
         sheet(catalog.label(app)) { body, dialog ->

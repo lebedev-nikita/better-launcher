@@ -20,4 +20,10 @@
         <item name="android:windowSplashScreenBackground">#352E2A</item>
         <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
     </style>
+    <style name="Theme.BetterLauncher.AppMenu" parent="Theme.BetterLauncher">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:navigationBarColor">@color/app_menu_surface</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
 </resources>

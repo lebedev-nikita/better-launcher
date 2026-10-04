@@ -115,6 +115,14 @@
           "oklch(83.57% 0.0000 0.00 / 0.157)",
           "oklch(95.00% 0.0000 0.00 / 0.157)"
         ]
+      },
+      "app-menu-surface": {
+        "role": "neutral",
+        "displayName": "Deep navy app menu"
+      },
+      "app-menu-foreground": {
+        "role": "neutral",
+        "displayName": "Pale blue app menu text and icons"
       }
     },
     "typographyMeta": {
@@ -245,6 +253,12 @@
       "description": "Illustrative translation. Runtime uses a native Material Slider from 0 to 100 with 1% steps, a persistent percentage, immediate saving, and keyboard/accessibility input.",
       "html": "<div class=\"ds-dimming\"><label for=\"ds-dimming-value\">Затемнение обоев</label><output>20%</output><input id=\"ds-dimming-value\" type=\"range\" min=\"0\" max=\"100\" step=\"1\" value=\"20\"/></div>",
       "css": ".ds-dimming { display:grid; grid-template-columns:1fr 60px; gap:8px; padding:10px 16px; background:#292724; color:#FFFFFF; font:400 17px sans-serif; } .ds-dimming output { text-align:right; color:#EEE5DE; } .ds-dimming input { grid-column:1 / -1; width:100%; min-height:48px; accent-color:#E9CBB6; }"
+    },
+    {
+      "name": "App management sheet",
+      "kind": "custom",
+      "refersTo": "app-management-sheet",
+      "description": "Native long-press menu: #031629 surface, #BCD7F3 text and contour icons, rounded 24dp top corners, installed app icon/title, growing 17sp action rows with 48dp icon slots and 16dp gap, inline expandable additional actions, divider and Better Launcher settings. System insets and 85% display-height scroll cap. Source: MainActivity.showAppMenu; this metadata does not replace native rendering."
     }
   ],
   "narrative": {

@@ -98,10 +98,11 @@ print("PASS: settings entry and system Back")
 
 tap("Все приложения")
 wait_for("Поиск приложений")
-# Let the IME commit each injected character before sending the next one.
+# Pace injected keys on cold / busy emulators, then wait for the actual query.
 for character in "camera":
     adb("shell", "input", "text", character)
-    time.sleep(.1)
+    time.sleep(.15)
+wait_for("camera")
 wait_for("Camera")
 tree = hierarchy()
 find(tree, "Camera")
@@ -128,7 +129,17 @@ print("PASS: horizontal app swipe opens its pop-up")
 
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
+wait_for("О приложении")
+wait_for("Настройки Better Launcher")
+assert not any(n.get("content-desc") == "Переименовать" for n in hierarchy().iter("node"))
+tap("Дополнительно")
 wait_for("Переименовать")
+# Additional actions can require scrolling on short windows / larger fonts.
+tree = hierarchy()
+if not any(n.get("content-desc") == "Скрыть приложение" for n in tree.iter("node")):
+    size = adb("shell", "wm", "size")
+    width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
+    adb("shell", "input", "swipe", str(width // 2), str(int(height * .8)), str(width // 2), str(int(height * .4)), "400")
 wait_for("Скрыть приложение")
 adb("shell", "input", "keyevent", "4")
 print("PASS: app long press exposes management actions")
