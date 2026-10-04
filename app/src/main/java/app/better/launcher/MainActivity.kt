@@ -269,11 +269,10 @@ class MainActivity : AppCompatActivity() {
         footer.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) updateRailBounds()
         }
-        val appsButton = horizontal().apply { background = touchBackground(); isFocusable = true; contentDescription = "Все приложения и поиск"; setOnClickListener { showApps(true) } }
-        appsButton.addView(GlyphView(this, Glyph.SEARCH), LinearLayout.LayoutParams(dp(48), dp(52)))
-        appsButton.addView(text("Все приложения", 14f, secondary).apply { minHeight = dp(52) }, LinearLayout.LayoutParams(0, -2, 1f))
-        footer.addView(appsButton, LinearLayout.LayoutParams(0, -2, 1f))
+        footer.addView(iconButton(Glyph.SEARCH, "Все приложения и поиск") { showApps(true) })
+        footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
         footer.addView(iconButton(Glyph.WIDGETS, "Экран виджетов") { showWidgets(true) })
+        footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
         footer.addView(iconButton(Glyph.SETTINGS, "Настройки лаунчера") { showSettings() })
         homeLayout.addView(footer, LinearLayout.LayoutParams(-1, -2))
         screen.addView(homeLayout, FrameLayout.LayoutParams(-1, -1))
