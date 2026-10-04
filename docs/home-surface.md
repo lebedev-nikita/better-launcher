@@ -10,6 +10,10 @@ FIRST VIEWPORT: An unboxed vertical favorite list without a launcher clock or da
 FORM: User-pinned Niagara composition; no concept roll replaces an explicit reference. Native implementation, code-led because composition is specified.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
+## Favorites order
+
+The favorite app's long-press menu opens “Изменить порядок” directly; settings and folder editing also reach the same editor. Drag the 48dp ≡ handle to move apps and folders in one list, or use labeled up/down buttons with keyboard or TalkBack. Changes save immediately without closing the sheet or losing its scroll. Rows wrap long names above a separate action line; at screen widths of at least 600dp, controls join the label line to fit short landscape windows; Close, app selection, and folder creation stay outside the scrolling list. Back and HOME dismiss the editor with the saved order intact.
+
 ## Widgets and navigation
 
 The home screen hosts at most one widget. A rightward swipe on wallpaper or other free space opens a separate widget page physically to its left; a leftward swipe on that page returns home. App rows keep their pop-up swipe, hosted widgets keep their touch handling, and the outer 24dp system Back edge is excluded. The footer widget button provides a keyboard/accessibility alternative. The alphabet ends above the measured footer and respects system/IME insets, keeping every footer action reachable at large font sizes.

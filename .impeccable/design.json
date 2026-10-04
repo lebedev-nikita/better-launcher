@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T12:21:06.390718+00:00",
+  "generatedAt": "2026-10-04T17:11:31.833043+00:00",
   "title": "Design System: Better Launcher",
   "extensions": {
     "colorMeta": {
@@ -301,6 +301,11 @@
         "name": "The Separate Widget Page Rule",
         "body": "Home hosts at most one widget. The separate wallpaper-backed page to its left opens with a rightward swipe on free home space or the footer widget button and returns with a leftward swipe, Home, or Android Back. App rows and hosted widget content keep their gestures; the outer 24dp Back edge is reserved. The page hides the alphabet, uses a wrapping 26sp header, 28dp list margins, 24dp widget gaps, and a separate Home footer. Labels grow from 48dp minimum height. A 180ms directional slide/fade honors disabled system animations. The alphabet reserves system/IME insets and the measured home footer height, preserving footer touch targets at large font sizes.",
         "section": "layout"
+      },
+      {
+        "name": "The Favorites Order Rule",
+        "body": "Use one saved order for apps and folders. Keep the sheet heading and bottom actions outside its recycled scrolling list; wrap names above a separate 48dp action line. Drag handles and labeled arrow alternatives save immediately without dismissing the editor or resetting scroll. Retain unavailable app/profile IDs. At screen widths of at least 600dp, place row actions inline to fit more items in short landscape windows.",
+        "section": "components"
       }
     ],
     "dos": [

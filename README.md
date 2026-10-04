@@ -14,11 +14,13 @@
 | [PRODUCT.md](PRODUCT.md) | Требования продукта, выбранная платформа и направление развития |
 | [DESIGN.md](DESIGN.md) | Изменения интерфейса, размеров, цветов, типографики и поведения при масштабировании |
 | [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
+| [docs/favorites-order-verification.md](docs/favorites-order-verification.md) | Проверки сортировки избранного и ограничения smoke-прогонов |
 | [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
 | [docs/releases/0.2.0-rc.7.md](docs/releases/0.2.0-rc.7.md) | Симметричные кнопки и оптимизированный release APK |
 | [docs/releases/0.1.8.md](docs/releases/0.1.8.md) | Исправление нижней границы алфавитного ползунка |
 | [docs/releases/0.2.0-rc.15.md](docs/releases/0.2.0-rc.15.md) | Редактор имени в том же меню и результаты проверок |
 | [docs/releases/0.2.0-rc.11.md](docs/releases/0.2.0-rc.11.md) | Исправление загрузки RemoteViews и проверки нового кандидата |
+| [docs/releases/0.2.0-rc.16.md](docs/releases/0.2.0-rc.16.md) | Сортировка избранного и проверки нового кандидата |
 | [docs/releases/0.1.9.md](docs/releases/0.1.9.md) | Превью виджетов, алфавит выбора и результаты проверки |
 | [docs/releases/0.2.0-rc.14.md](docs/releases/0.2.0-rc.14.md) | Релиз-кандидат выбора виджетов после rebase на main |
 | [docs/releases/0.1.7.md](docs/releases/0.1.7.md) | Уменьшенный release APK и результаты проверки |
@@ -53,6 +55,7 @@
 | JVM target | 17; для сборки подходят JDK 17 и 21 | [app/build.gradle.kts](app/build.gradle.kts) |
 | Android ICU | Системная библиотека Android; Russian-Latin/BGN, без отдельного JAR в APK | [AppListRules.kt](app/src/main/java/app/better/launcher/AppListRules.kt) |
 | Material Components | 1.13.0 | [app/build.gradle.kts](app/build.gradle.kts) |
+| RecyclerView | 1.4.0; редактор порядка с ItemTouchHelper | [app/build.gradle.kts](app/build.gradle.kts) |
 
 Нужны Android SDK Platform 36, Build Tools 35.0.0 и Platform Tools с `adb`. Для интеграционных проверок нужен телефон или Android Emulator; для UI-скрипта также Python 3. Android Studio можно использовать для открытия корня проекта, настройки Gradle JDK и установки SDK через SDK Manager. Версии инструментов задаются Gradle-файлами; при их обновлении обновляйте эту таблицу.
 
@@ -98,6 +101,7 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 | --- | --- |
 | Нажать на приложение | Открыть приложение |
 | Удерживать приложение | Избранное, название, скрытие с отменой, сведения, удаление |
+| Меню избранного приложения → «Изменить порядок» | Перетаскивание приложений и папок за ≡; стрелки для клавиатуры и accessibility |
 | Провести по приложению в сторону | Уведомления, быстрые действия и прикреплённые приложения |
 | Провести по алфавиту | Перейти к разделу списка всех приложений |
 | Нажать на звёздочку в алфавите | Вернуться к избранному |
@@ -114,6 +118,8 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 
 На главном экране нет отдельных часов и даты: время отображается в статус-баре Android. Внизу находятся поиск слева и настройки справа без текстовой подписи, с одинаковыми областями нажатия 48×48dp и отступами 22dp. Кнопка экрана виджетов находится между ними по центру.
 
+Порядок избранного меняется через «Изменить порядок» в меню удержания избранного приложения или через настройки → «Избранные приложения». Перетаскивайте строки за ≡; стрелки вверх/вниз доступны с клавиатуры и экранного диктора. Папки перемещаются вместе с приложениями. Изменения сохраняются сразу, окно и прокрутка сохраняются. Название строки растёт с размером шрифта, кнопки выбора приложений и создания папки остаются под прокручиваемым списком.
+
 В настройках редактируются избранное, порядок и папки. На главном экране можно разместить один виджет; остальные находятся в вертикальном списке на отдельном экране слева. Добавляйте их кнопкой «+» этого экрана, а главный — через «Виджет на главном экране» в настройках. Меню каждого виджета позволяет перенести его между экранами или удалить; новый главный виджет переносит прежний на левый экран. Системная привязка и внешний экран настройки провайдера сохраняются. При обновлении прежней стопки первый виджет остаётся на главном, остальные переходят налево.
 
 ## Архитектура и жизненный цикл
@@ -128,6 +134,7 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 | [AppListAdapter.kt](app/src/main/java/app/better/launcher/AppListAdapter.kt) | Видимые строки списка приложений, переиспользование Views и позиции алфавитных разделов |
 | [AppListRules.kt](app/src/main/java/app/better/launcher/AppListRules.kt) | Правила поиска, нормализации и избранного; алфавитные разделы через системную Android ICU |
 | [LauncherStore.kt](app/src/main/java/app/better/launcher/LauncherStore.kt) | SharedPreferences, папки, aliases, скрытые приложения, JSON-экспорт и проверяемый импорт |
+| [FavoritesOrderEditor.kt](app/src/main/java/app/better/launcher/FavoritesOrderEditor.kt) | Перетаскивание избранного, стрелки и удаление без пересоздания редактора |
 | [PageSwipeLayout.kt](app/src/main/java/app/better/launcher/PageSwipeLayout.kt) | Свайпы между главным экраном и виджетами без перехвата жестов приложений, виджетов и системного Back |
 | [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt) | Затемнение системных обоев, GlyphView, AlphabetRail, вспомогательные функции размеров и фона |
 | [LauncherNotificationService.kt](app/src/main/java/app/better/launcher/LauncherNotificationService.kt) | NotificationListenerService и общий NotificationHub в памяти |
