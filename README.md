@@ -249,18 +249,24 @@ adb -s emulator-5580 logcat -d -s AndroidRuntime:E
 
 Для совместимости обновлений 0.2.0-rc.20 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
 
-Для нового выпуска обновите версию, выполните базовые проверки, connected-тесты системной транслитерации и проверьте подписанный release APK на устройстве. Сравните размер и содержимое с предыдущим APK. Подготовьте `docs/releases/X.Y.Z.md`, указав фактические результаты и ограничения. Используйте путь к своему properties-файлу:
+Для нового выпуска обновите версию, выполните базовые проверки, connected-тесты системной транслитерации и проверьте подписанный release APK на устройстве. Сравните размер и содержимое с предыдущим APK. Подготовьте `docs/releases/X.Y.Z.md`, указав фактические результаты и ограничения.
+
+Перед публикацией релиз-кандидата выполните обязательный порядок из [AGENTS.md](AGENTS.md#документация-и-завершение): влейте рабочую ветку в `main`, запушьте `main` в `origin/main`, затем собирайте APK и ставьте тег на опубликованном коммите. Используйте путь к своему properties-файлу:
 
 ```sh
+# После вливания рабочей ветки и коммита версии/release notes, в чистой main:
+git push origin main
 export BETTER_LAUNCHER_SIGNING_PROPERTIES=/absolute/private/path/release-signing.properties
 ./gradlew :app:assembleRelease :app:lintRelease
 mkdir -p artifacts
 cp app/build/outputs/apk/release/app-release.apk artifacts/better-launcher-X.Y.Z-release.apk
 (cd artifacts && shasum -a 256 better-launcher-X.Y.Z-release.apk > SHA256SUMS.txt)
 # Перед тегом: apksigner verify, aapt dump badging/xmltree, установка и UI-проверка.
+# Для кандидата рабочая ветка уже влита в main и main запушена до сборки APK.
 git tag -a vX.Y.Z -m "Better Launcher X.Y.Z"
-git push origin main
 git push origin vX.Y.Z
+git fetch origin
+git merge-base --is-ancestor 'vX.Y.Z^{}' origin/main && \
 gh release create vX.Y.Z artifacts/better-launcher-X.Y.Z-release.apk artifacts/SHA256SUMS.txt \
   --repo better-launcher/better-launcher --title "Better Launcher X.Y.Z" \
   --notes-file docs/releases/X.Y.Z.md --verify-tag
