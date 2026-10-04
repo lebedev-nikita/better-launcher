@@ -198,6 +198,10 @@ Long press opens a full-width navy sheet with rounded top corners and a continuo
 
 Favorites, app details, notifications/shortcuts, and uninstall remain directly available. “Дополнительно” expands rename, attached apps, and hide in the same sheet; its arrow and accessibility state reflect expansion. A thin pale-blue divider separates “Настройки Better Launcher”. The sheet grows with expansion and caps at 85% of display height, scrolling for large fonts and short windows. System bars and cutouts are inset; commands retain keyboard focus and accessible names. No unsupported screen-time or category commands are shown.
 
+### Favorites Order
+
+Long press on a favorite app exposes “Изменить порядок”; settings retain the same editor. A fixed sheet heading and Close sit above a native RecyclerView, with app selection and folder creation below it. Rows grow with their labels and use a 48dp drag handle plus a separate 48dp action line for up, down, and removal. This keeps long names readable on narrow screens. At screen widths of at least 600dp, actions join the label line so short landscape sheets show more items. Apps and folders share one saved order; unavailable app/profile IDs remain stored. ItemTouchHelper provides vertical dragging and edge scrolling; arrows offer keyboard and accessibility alternatives, with disabled boundary actions. Changes save immediately and update home without recreating the dialog or resetting its scroll. The dragged row uses the existing sheet surface; resting rows remain unboxed.
+
 ### Inputs / Fields
 
 App search uses a transparent, borderless, single-line native `EditText`, warm secondary hint, and white entered text. The toolbar combines back, search, and clear controls. Results filter as text changes, and the IME action launches the first result. Sheet forms retain native `EditText` styling and error behavior; they are not a custom shared outlined-field design.

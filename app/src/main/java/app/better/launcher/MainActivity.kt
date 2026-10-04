@@ -597,6 +597,7 @@ class MainActivity : AppCompatActivity() {
             store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id
             showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное")
         }
+        if (favorite) menuAction(body, Glyph.REORDER, "Изменить порядок") { editFavorites() }
         menuAction(body, Glyph.INFO, "О приложении") {
             runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
         }
@@ -673,10 +674,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun editFolder(folder: AppFolder) {
-        choose(folder.name, listOf("Выбрать приложения", "Переименовать", "Удалить папку")) { choice -> when (choice) {
+        choose(folder.name, listOf("Выбрать приложения", "Переименовать", "Удалить папку", "Изменить порядок избранного")) { choice -> when (choice) {
             0 -> selectApps(folder.name, folder.apps) { store.saveFolder(folder.copy(apps = it)); showHome() }
             1 -> editText("Название папки", folder.name) { if (it.isNotBlank()) store.saveFolder(folder.copy(name = it)); showHome() }
             2 -> { store.removeFolder(folder.id); showHome() }
+            3 -> editFavorites()
         } }
     }
     private fun selectApps(title: String, initial: List<String>, onSave: (List<String>) -> Unit) {
@@ -708,16 +710,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun editFavorites() {
-        sheet("Избранное") { body, dialog ->
-            store.favorites.forEach { id ->
-                val label = store.folder(id)?.name ?: catalog.find(id)?.let(catalog::label) ?: return@forEach
-                val line = horizontal()
-                line.addView(text(label, 17f), LinearLayout.LayoutParams(0, dp(56), 1f))
-                line.addView(iconButton(Glyph.UP, "Переместить $label вверх") { store.favorites = AppListRules.move(store.favorites, id, -1); editFavorites(); showHome() })
-                line.addView(iconButton(Glyph.DOWN, "Переместить $label вниз") { store.favorites = AppListRules.move(store.favorites, id, 1); editFavorites(); showHome() })
-                line.addView(iconButton(Glyph.CLOSE, "Убрать $label из избранного") { store.favorites = store.favorites - id; editFavorites(); showHome() })
-                body.addView(line)
-            }
+        sheet("Избранное", scrollContent = false) { body, dialog ->
+            body.addView(text("Перетаскивайте строки за ≡ или используйте стрелки. Порядок сохраняется сразу.", 14f, secondary))
+            body.addView(FavoritesOrderEditor(this) { showHome() }.view, LinearLayout.LayoutParams(-1, 0, 1f))
             body.addView(action("Выбрать приложения") { dialog.dismiss(); selectApps("Избранные приложения", store.favorites.filterNot { it.startsWith("folder:") }) { store.favorites = it + store.favorites.filter { id -> id.startsWith("folder:") }; showHome() } })
             body.addView(action("Создать папку") { dialog.dismiss(); editText("Новая папка", "", "Название папки") { name -> if (name.isNotBlank()) selectApps(name, emptyList()) { store.createFolder(name, it); showHome() } } })
         }

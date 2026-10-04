@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T12:21:06.390718+00:00",
+  "generatedAt": "2026-10-04T17:11:31.833043+00:00",
   "title": "Design System: Better Launcher",
   "extensions": {
     "colorMeta": {
@@ -226,9 +226,9 @@
       "name": "Bottom sheet",
       "kind": "card",
       "refersTo": "bottom-sheet",
-      "description": "Illustrative native translation. A dark rounded native Dialog with a scrollable body, close target, and 30% native backdrop dim. This preview does not reproduce window behavior.",
-      "html": "<div class=\"ds-sheet-stage\"><section class=\"ds-sheet\" aria-label=\"Избранное\"><header class=\"ds-sheet-header\"><span class=\"ds-sheet-title\">Избранное</span><button class=\"ds-sheet-close\" aria-label=\"Закрыть\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6L18 18M6 18L18 6\"/></svg></button></header><button class=\"ds-sheet-action\">Выбрать приложения</button><button class=\"ds-sheet-action\">Создать папку</button></section></div>",
-      "css": ".ds-sheet-stage { background:#352E2A; padding:24px 0 0; } .ds-sheet { background:#292724; color:#FFFFFF; border-radius:24px; padding:8px 20px 24px; } .ds-sheet-header { display:flex; align-items:center; margin-bottom:12px; } .ds-sheet-title { flex:1; font:400 23px sans-serif; } .ds-sheet-close { display:flex; align-items:center; justify-content:center; width:48px; height:48px; padding:0; border:0; border-radius:12px; background:transparent; color:#FFFFFF; cursor:pointer; } .ds-sheet-close svg { width:22.08px; height:22.08px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; } .ds-sheet-action { display:block; width:100%; min-height:52px; padding:8px 16px; border:0; border-radius:12px; background:transparent; color:#FFFFFF; font:400 16px sans-serif; text-align:left; cursor:pointer; } .ds-sheet-action:hover, .ds-sheet-action:focus-visible, .ds-sheet-action:active, .ds-sheet-close:hover, .ds-sheet-close:focus-visible, .ds-sheet-close:active { background:#FFFFFF28; outline:none; }"
+      "description": "Illustrative native translation. Favorites use a fixed heading/Close, a recycled scrolling order list, and fixed app-selection/folder actions in an 85%-height native Dialog. Drag handles move apps and folders; labeled arrows provide keyboard/accessibility alternatives. Changes save without reopening the dialog. This preview does not implement native gestures or window behavior. At screen widths of at least 600dp, row actions join the label line so short landscape sheets show more items.",
+      "html": "<div class=\"ds-sheet-stage\"><section class=\"ds-sheet\" aria-label=\"Избранное\"><header class=\"ds-sheet-header\"><span class=\"ds-sheet-title\">Избранное</span><button class=\"ds-sheet-close\" aria-label=\"Закрыть\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6L18 18M6 18L18 6\"/></svg></button></header><p class=\"ds-sheet-hint\">Перетаскивайте строки за ≡ или используйте стрелки. Порядок сохраняется сразу.</p><div class=\"ds-order-list\"><div class=\"ds-order-row\"><div class=\"ds-order-heading\"><button class=\"ds-sheet-close\" aria-label=\"Перетащить Camera\">≡</button><span>Camera</span></div><div class=\"ds-order-actions\"><button class=\"ds-sheet-close\" disabled aria-label=\"Переместить Camera вверх\">⌃</button><button class=\"ds-sheet-close\" aria-label=\"Переместить Camera вниз\">⌄</button><button class=\"ds-sheet-close\" aria-label=\"Убрать Camera из избранного\">×</button></div></div></div><button class=\"ds-sheet-action\">Выбрать приложения</button><button class=\"ds-sheet-action\">Создать папку</button></section></div>",
+      "css": ".ds-sheet-stage { background:#352E2A; padding:24px 0 0; } .ds-sheet { background:#292724; color:#FFFFFF; border-radius:24px; padding:8px 20px 24px; } .ds-sheet-header { display:flex; align-items:center; margin-bottom:12px; } .ds-sheet-title { flex:1; font:400 23px sans-serif; } .ds-sheet-close { display:flex; align-items:center; justify-content:center; width:48px; height:48px; padding:0; border:0; border-radius:12px; background:transparent; color:#FFFFFF; cursor:pointer; } .ds-sheet-close svg { width:22.08px; height:22.08px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; } .ds-sheet-action { display:block; width:100%; min-height:52px; padding:8px 16px; border:0; border-radius:12px; background:transparent; color:#FFFFFF; font:400 16px sans-serif; text-align:left; cursor:pointer; } .ds-sheet-action:hover, .ds-sheet-action:focus-visible, .ds-sheet-action:active, .ds-sheet-close:hover, .ds-sheet-close:focus-visible, .ds-sheet-close:active { background:#FFFFFF28; outline:none; } .ds-sheet-hint { color:#EEE5DE; font:400 14px sans-serif; } .ds-order-list { max-height:320px; overflow:auto; } .ds-order-row { padding:4px 0; font:400 17px sans-serif; } .ds-order-heading { display:flex; align-items:center; min-height:48px; } .ds-order-heading span { flex:1; overflow-wrap:anywhere; } .ds-order-actions { display:flex; justify-content:flex-end; } .ds-order-actions button:disabled { opacity:.35; }"
     },
     {
       "name": "App row with icons hidden",
@@ -301,6 +301,11 @@
         "name": "The Separate Widget Page Rule",
         "body": "Home hosts at most one widget. The separate wallpaper-backed page to its left opens with a rightward swipe on free home space or the footer widget button and returns with a leftward swipe, Home, or Android Back. App rows and hosted widget content keep their gestures; the outer 24dp Back edge is reserved. The page hides the alphabet, uses a wrapping 26sp header, 28dp list margins, 24dp widget gaps, and a separate Home footer. Labels grow from 48dp minimum height. A 180ms directional slide/fade honors disabled system animations. The alphabet reserves system/IME insets and the measured home footer height, preserving footer touch targets at large font sizes.",
         "section": "layout"
+      },
+      {
+        "name": "The Favorites Order Rule",
+        "body": "Use one saved order for apps and folders. Keep the sheet heading and bottom actions outside its recycled scrolling list; wrap names above a separate 48dp action line. Drag handles and labeled arrow alternatives save immediately without dismissing the editor or resetting scroll. Retain unavailable app/profile IDs. At screen widths of at least 600dp, place row actions inline to fit more items in short landscape windows.",
+        "section": "components"
       }
     ],
     "dos": [

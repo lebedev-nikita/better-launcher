@@ -23,4 +23,15 @@ class AppListRulesTest {
         assertEquals(listOf("a", "b"), AppListRules.move(listOf("a", "b"), "a", -1))
         assertEquals(listOf("a", "b"), AppListRules.move(listOf("a", "b"), "unknown", 1))
     }
+    @Test fun `dragging across several favorites preserves folders and profile identities`() {
+        val personal = "0:example/.Main"
+        val work = "10:example/.Main"
+        val items = listOf(personal, "folder:work", "unavailable-profile", work)
+        assertEquals(listOf("folder:work", "unavailable-profile", work, personal),
+            AppListRules.move(items, personal, 3))
+        assertEquals(listOf(work, personal, "folder:work", "unavailable-profile"),
+            AppListRules.move(items, work, -3))
+        assertEquals(items, AppListRules.move(items, work, 0))
+        assertEquals(emptyList<String>(), AppListRules.move(emptyList(), personal, 1))
+    }
 }
