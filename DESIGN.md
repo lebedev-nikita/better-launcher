@@ -204,7 +204,7 @@ Favorites, app details, notifications/shortcuts, and uninstall remain directly a
 
 ### Inputs / Fields
 
-App search uses a transparent, borderless, single-line native `EditText`, warm secondary hint, and white entered text. The toolbar combines back, search, and clear controls. Results filter as text changes, and the IME action launches the first result. Sheet forms retain native `EditText` styling and error behavior; they are not a custom shared outlined-field design.
+App search uses a transparent, borderless, single-line native `EditText`, warm secondary hint, and white entered text. The toolbar combines back, search, and clear controls. Results filter as text changes, and the IME action launches the first result. Sheet forms retain native `EditText` styling and error behavior; they are not a custom shared outlined-field design. Name-editing sheets place a content-width Save action at the trailing edge (right in Russian), keeping its (52dp) minimum touch height and (16dp) horizontal padding, including when the alphabet is on the left.
 
 ### Settings and Switches
 

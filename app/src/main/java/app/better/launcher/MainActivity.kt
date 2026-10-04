@@ -551,7 +551,8 @@ class MainActivity : AppCompatActivity() {
         sheet(title) { body, dialog ->
             val input = EditText(this).apply { setText(current); setTextColor(Color.WHITE); setHintTextColor(secondary); this.hint = hint; isSingleLine = true; selectAll() }
             body.addView(input, LinearLayout.LayoutParams(-1, dp(56)))
-            body.addView(action("Сохранить") { onSave(input.text.toString().trim()); dialog.dismiss() })
+            body.addView(action("Сохранить") { onSave(input.text.toString().trim()); dialog.dismiss() },
+                LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.END })
             input.requestFocus(); input.postDelayed({ (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT) }, 200)
         }
     }

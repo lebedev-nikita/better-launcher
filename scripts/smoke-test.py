@@ -63,7 +63,7 @@ def tap(label):
 def home():
     adb("shell", "input", "keyevent", "3")
     time.sleep(.5)
-    wait_for("Все приложения и поиск")
+    wait_for("Все приложения")
 
 
 home()
@@ -81,11 +81,11 @@ wait_for("Виджеты")
 title = wait_for("Виджеты")
 x1, y1, x2, y2 = map(int, re.findall(r"\d+", title.get("bounds")))
 adb("shell", "input", "swipe", str(x2 - 20), str((y1 + y2) // 2), str(x1 + 20), str((y1 + y2) // 2), "350")
-wait_for("Все приложения и поиск")
+wait_for("Все приложения")
 tap("Экран виджетов")
 wait_for("Виджеты")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения и поиск")
+wait_for("Все приложения")
 tap("Экран виджетов")
 home()
 print("PASS: widget page swipe, button, Back and Home navigation")
@@ -93,10 +93,10 @@ print("PASS: widget page swipe, button, Back and Home navigation")
 tap("Настройки лаунчера")
 wait_for("Домашний экран")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения и поиск")
+wait_for("Все приложения")
 print("PASS: settings entry and system Back")
 
-tap("Все приложения и поиск")
+tap("Все приложения")
 wait_for("Поиск приложений")
 # Pace injected keys on cold / busy emulators, then wait for the actual query.
 for character in "camera":
@@ -127,8 +127,6 @@ wait_for("Открыть Phone")
 adb("shell", "input", "keyevent", "4")
 print("PASS: horizontal app swipe opens its pop-up")
 
-# The menu also has a Phone title; wait for the home window before targeting its row.
-wait_for("Все приложения и поиск")
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 wait_for("О приложении")
@@ -145,7 +143,7 @@ if not any(n.get("content-desc") == "Скрыть приложение" for n in
 wait_for("Скрыть приложение")
 adb("shell", "input", "keyevent", "4")
 print("PASS: app long press exposes management actions")
-wait_for("Все приложения и поиск")
+wait_for("Все приложения")
 
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
@@ -160,3 +158,21 @@ wait_for("Phone")
 print("PASS: tapping the app title opens rename; HOME cancels without changing the name")
 
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
+rail = next(n for n in hierarchy().iter("node")
+            if n.get("content-desc", "").startswith("Алфавит приложений,"))
+_, _, rail_right, rail_bottom = map(int, re.findall(r"\d+", rail.get("bounds")))
+x = int(rail_right - 32 * density)  # clear Back and landscape system-bar insets
+# Use the measured rail rather than portrait display dimensions after rotation.
+adb("shell", "input", "swipe", str(x), str(int(rail_bottom - 48 * density)), str(x), str(int(rail_bottom + 48 * density)), "1000")
+wait_for("Поиск приложений")
+tree = hierarchy()
+assert any(n.get("content-desc", "").startswith("Алфавит приложений, #.") for n in tree.iter("node"))
+assert not any(n.get("text") == "Camera" for n in tree.iter("node"))
+print("PASS: release below the alphabet keeps the app list at the final section")
+adb("shell", "input", "keyevent", "4")
+home()
+print("PASS: alphabet gesture opens the app list")
+
+crashes = adb("logcat", "-d", "-s", "AndroidRuntime:E")
+assert "Process: app.better.launcher" not in crashes, crashes
+print("PASS: no Better Launcher runtime crashes")
