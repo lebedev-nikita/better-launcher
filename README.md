@@ -4,7 +4,7 @@
 
 Версия **0.1.9** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева; при выборе виджета доступны превью и алфавит справа. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
 
-[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.9 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.9) · [Релиз-кандидат 0.2.0-rc.1](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.1). Репозиторий приватный: для скачивания нужен доступ к организации.
+[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.9 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.9) · [Релиз-кандидат 0.2.0-rc.9](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.9). Репозиторий приватный: для скачивания нужен доступ к организации.
 
 ## Документация проекта
 
@@ -16,6 +16,7 @@
 | [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
 | [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
 | [docs/releases/0.1.8.md](docs/releases/0.1.8.md) | Исправление нижней границы алфавитного ползунка |
+| [docs/releases/0.2.0-rc.9.md](docs/releases/0.2.0-rc.9.md) | Кандидат исправления алфавита на актуальном main |
 | [docs/releases/0.1.9.md](docs/releases/0.1.9.md) | Превью виджетов, алфавит выбора и результаты проверки |
 | [docs/releases/0.1.7.md](docs/releases/0.1.7.md) | Уменьшенный release APK и результаты проверки |
 | [docs/verification-0.1.3.md](docs/verification-0.1.3.md) | Проверки латинского алфавита и транслитерации |
