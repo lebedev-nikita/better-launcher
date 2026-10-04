@@ -74,9 +74,7 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
 
 /** One continuous control, with scroll accessibility actions and keyboard alternatives. */
 class AlphabetRail(context: Context) : View(context) {
-    var letters = AppListRules.railLetters(emptySet(), shortWindow = false)
-        set(value) { field = value; invalidate() }
-    var activeLetters = emptySet<String>()
+    var letters = AppListRules.railLetters(emptySet())
         set(value) { field = value; invalidate() }
     var onSelect: (String) -> Unit = {}
     var alphabetLabel = "Алфавит приложений"
@@ -88,75 +86,3 @@ class AlphabetRail(context: Context) : View(context) {
     private var finger = -1000f
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL) }
     init { isFocusable = true; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES; selected = "★" }
-    // Anchor the compact alphabet above the footer/insets reserved by its parent.
-    private fun top() = (height - context.dp(24) - letters.size * spacing()).coerceAtLeast(0f)
-    private fun spacing(): Float {
-        val preferred = context.dp(16) * resources.configuration.fontScale.coerceAtLeast(1f)
-        val available = (height - context.dp(48)).coerceAtLeast(1).toFloat() / letters.size
-        return min(preferred, available)
-    }
-    override fun onDraw(canvas: Canvas) {
-        val spacing = spacing(); val start = top()
-        // Keep the grab point inside Android's reserved system Back gesture edge.
-        val edge = if (leftHanded) context.dp(32).toFloat() else width - context.dp(32).toFloat()
-        letters.forEachIndexed { i, letter ->
-            val y = start + (i + .5f) * spacing
-            val distance = (y - finger) / context.dp(58)
-            val wave = if (dragging) exp(-distance * distance).toFloat() else 0f
-            val x = edge + (if (leftHanded) 1 else -1) * context.dp(24) * wave
-            paint.textSize = (11f + wave * 7f) * resources.displayMetrics.scaledDensity
-            paint.color = if (letter == selected) Color.WHITE else if (letter in activeLetters || letter == "★") 0xE6FFFFFF.toInt() else 0x9EFFFFFF.toInt()
-            canvas.drawText(letter, x, y - (paint.ascent() + paint.descent()) / 2f, paint)
-        }
-        if (dragging) {
-            val x = if (leftHanded) width - context.dp(30).toFloat() else context.dp(30).toFloat()
-            val y = finger.coerceIn(context.dp(30).toFloat(), height - context.dp(30).toFloat())
-            paint.color = 0xE6352E2A.toInt(); canvas.drawCircle(x, y, context.dp(25).toFloat(), paint)
-            paint.textSize = 27f * resources.displayMetrics.scaledDensity; paint.color = Color.WHITE
-            canvas.drawText(selected, x, y - (paint.ascent() + paint.descent()) / 2f, paint)
-        }
-    }
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-            val insideEdge = if (leftHanded) event.x >= context.dp(24) && event.x <= context.dp(72)
-                else event.x >= width - context.dp(72) && event.x <= width - context.dp(24)
-            if (!insideEdge || event.y < top() || event.y > top() + letters.size * spacing()) return false
-        }
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> { parent.requestDisallowInterceptTouchEvent(true); dragging = true; selectAt(event.y, true) }
-            MotionEvent.ACTION_MOVE -> selectAt(event.y)
-            MotionEvent.ACTION_UP -> {
-                // The release may carry a newer coordinate than the final MOVE.
-                if (dragging && event.y >= top() + letters.size * spacing()) selectAt(event.y)
-                dragging = false; performClick(); invalidate()
-            }
-            MotionEvent.ACTION_CANCEL -> { dragging = false; invalidate() }
-        }
-        return true
-    }
-    private fun selectAt(y: Float, forceSelection: Boolean = false) {
-        finger = y
-        val next = letters[((y - top()) / spacing()).toInt().coerceIn(letters.indices)]
-        if (selected != next) { selected = next; performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK); onSelect(next) }
-        else if (forceSelection) onSelect(next)
-        invalidate()
-    }
-    override fun performClick(): Boolean { super.performClick(); return true }
-    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
-        super.onInitializeAccessibilityNodeInfo(info); info.className = "android.widget.SeekBar"; info.isScrollable = true
-        info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD)
-        info.addAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD)
-    }
-    override fun performAccessibilityAction(action: Int, arguments: android.os.Bundle?): Boolean {
-        if (action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD || action == AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD) {
-            val index = (letters.indexOf(selected) + if (action == AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) 1 else -1).coerceIn(letters.indices)
-            selected = letters[index]; onSelect(selected); announceForAccessibility(selected); return true
-        }
-        return super.performAccessibilityAction(action, arguments)
-    }
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean = when (keyCode) {
-        KeyEvent.KEYCODE_DPAD_DOWN -> performAccessibilityAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD, null)
-        KeyEvent.KEYCODE_DPAD_UP -> performAccessibilityAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD, null)
-        else -> super.onKeyDown(keyCode, event)
-    }
-}

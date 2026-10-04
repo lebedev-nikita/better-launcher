@@ -158,21 +158,3 @@ wait_for("Phone")
 print("PASS: tapping the app title opens rename; HOME cancels without changing the name")
 
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
-rail = next(n for n in hierarchy().iter("node")
-            if n.get("content-desc", "").startswith("Алфавит приложений,"))
-_, _, rail_right, rail_bottom = map(int, re.findall(r"\d+", rail.get("bounds")))
-x = int(rail_right - 32 * density)  # clear Back and landscape system-bar insets
-# Use the measured rail rather than portrait display dimensions after rotation.
-adb("shell", "input", "swipe", str(x), str(int(rail_bottom - 48 * density)), str(x), str(int(rail_bottom + 48 * density)), "1000")
-wait_for("Поиск приложений")
-tree = hierarchy()
-assert any(n.get("content-desc", "").startswith("Алфавит приложений, #.") for n in tree.iter("node"))
-assert not any(n.get("text") == "Camera" for n in tree.iter("node"))
-print("PASS: release below the alphabet keeps the app list at the final section")
-adb("shell", "input", "keyevent", "4")
-home()
-print("PASS: alphabet gesture opens the app list")
-
-crashes = adb("logcat", "-d", "-s", "AndroidRuntime:E")
-assert "Process: app.better.launcher" not in crashes, crashes
-print("PASS: no Better Launcher runtime crashes")

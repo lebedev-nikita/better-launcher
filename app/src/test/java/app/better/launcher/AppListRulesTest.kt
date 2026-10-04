@@ -10,12 +10,11 @@ class AppListRulesTest {
         assertTrue(AppListRules.matches("google maps", "Google Карты", "Google Maps"))
         assertFalse(AppListRules.matches("maps camera", "Google Maps"))
     }
-    @Test fun `rail keeps hash last even in short windows and empty catalogs`() {
-        val sections = setOf("A", "B", "V", "#")
-        assertEquals(listOf("★") + ('A'..'Z').map(Char::toString) + "#",
-            AppListRules.railLetters(sections, shortWindow = false))
-        assertEquals(listOf("★", "A", "B", "V", "#"), AppListRules.railLetters(sections, shortWindow = true))
-        assertEquals(listOf("★", "#"), AppListRules.railLetters(emptySet(), shortWindow = true))
+    @Test fun `rail shows only available sections in alphabet order with hash last`() {
+        assertEquals(listOf("★", "A", "B", "V", "#"), AppListRules.railLetters(setOf("V", "#", "B", "A")))
+        assertEquals(listOf("★", "C", "Y"), AppListRules.railLetters(setOf("Y", "C")))
+        assertEquals(listOf("★"), AppListRules.railLetters(emptySet()))
+        assertEquals(listOf("★", "#"), AppListRules.railLetters(setOf("#")))
     }
     @Test fun `favorites can move without duplication and stop at boundaries`() {
         assertEquals(listOf("b", "a", "c"), AppListRules.move(listOf("a", "b", "c"), "b", -1))
