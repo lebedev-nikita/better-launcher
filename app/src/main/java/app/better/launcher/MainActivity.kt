@@ -43,9 +43,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var screen: FrameLayout
     private lateinit var rail: AlphabetRail
     private var page = "home"
-    private var allScroll: ScrollView? = null
+    private var allApps: ListView? = null
+    private var appAdapter: AppListAdapter? = null
+    private var appQuery = ""
+    private var emptyApps: LinearLayout? = null
+    private var keyboardRequest: Runnable? = null
     private var homeScroll: ScrollView? = null
-    private var allList: LinearLayout? = null
     private var search: EditText? = null
     private var weatherText: TextView? = null
     private var weather: Weather? = null
@@ -53,7 +56,6 @@ class MainActivity : AppCompatActivity() {
     private var weatherError = false
     private var weatherUpdated = 0L
     private var currentDialog: Dialog? = null
-    private val sectionViews = mutableMapOf<String, View>()
     private var loadingApps = false
     private var refreshQueued = false
     private var resumed = false
@@ -154,7 +156,8 @@ class MainActivity : AppCompatActivity() {
     }
     fun gap(height: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
     private fun clearScreen(newPage: String) {
-        page = newPage; screen.removeAllViews(); allScroll = null; homeScroll = null; allList = null; search = null; weatherText = null
+        keyboardRequest?.let(handler::removeCallbacks); keyboardRequest = null
+        page = newPage; screen.removeAllViews(); allApps = null; appAdapter = null; emptyApps = null; appQuery = ""; homeScroll = null; search = null; weatherText = null
         rail.visibility = if (newPage == "settings") View.GONE else View.VISIBLE
     }
     private fun contentMargins(): Pair<Int, Int> = if (store.bool("leftHanded")) dp(84) to dp(28) else dp(28) to dp(84)
@@ -167,7 +170,7 @@ class MainActivity : AppCompatActivity() {
         window.insetsController?.setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)
     }
     private fun updateAlphabet() {
-        val sections = catalog.visible().map { AppListRules.section(catalog.label(it)) }.toSet()
+        val sections = catalog.sections()
         rail.activeLetters = sections
         rail.letters = if (resources.displayMetrics.heightPixels / resources.displayMetrics.density < 500) {
             listOf("★") + sections.sortedBy(AppListRules::sectionOrder)
@@ -235,45 +238,64 @@ class MainActivity : AppCompatActivity() {
         screen.addView(homeLayout, FrameLayout.LayoutParams(-1, -1))
     }
 
-    private fun appRow(app: AppEntry, favorite: Boolean): View {
-        val row = horizontal().apply {
+    private fun appRow(app: AppEntry, favorite: Boolean): View = AppRow(favorite).apply { bind(app) }
+
+    private inner class AppRow(private val favorite: Boolean) : LinearLayout(this@MainActivity) {
+        private lateinit var app: AppEntry
+        private val icon = ImageView(this@MainActivity)
+        private val labels = vertical().apply { setPadding(0, dp(8), 0, dp(8)) }
+        private val name = text("", if (store.bool("largeText")) 25f else 21f).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
+        private val preview = text("", 13f, secondary).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
+        private val menu: View? = if (favorite) iconButton(Glyph.CHEVRON, "") { showAppPopup(app) } else null
+
+        init {
+            orientation = HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
             minimumHeight = dp(if (store.bool("compact")) 54 else 62)
             background = touchBackground(); isFocusable = true
+            if (!store.bool("hideIcons")) {
+                icon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                addView(icon, LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
+            }
+            labels.addView(name)
+            if (favorite) {
+                labels.addView(preview)
+                preview.setOnClickListener { showAppPopup(app) }; preview.isFocusable = true
+            }
+            addView(labels, LayoutParams(0, -2, 1f))
+            menu?.let { addView(it) }
+            setOnClickListener { launch(app) }
+            setOnLongClickListener { showAppMenu(app); true }
+            var downX = 0f; var downY = 0f; var swiped = false
+            // Unconsumed taps use LinearLayout's standard performClick.
+            @Suppress("ClickableViewAccessibility")
+            setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> { downX = event.x; downY = event.y; swiped = false }
+                    MotionEvent.ACTION_MOVE -> if (kotlin.math.abs(event.x - downX) > dp(32) && kotlin.math.abs(event.y - downY) < dp(28)) { swiped = true; view.parent.requestDisallowInterceptTouchEvent(true); view.isPressed = false }
+                    MotionEvent.ACTION_UP -> if (swiped) { showAppPopup(app); return@setOnTouchListener true }
+                }; swiped
+            }
         }
-        if (!store.bool("hideIcons")) {
-            val icon = ImageView(this).apply { setImageDrawable(app.icon); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }
-            row.addView(icon, LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
+
+        fun bind(entry: AppEntry) {
+            app = entry
+            name.text = catalog.label(app)
+            if (!store.bool("hideIcons")) icon.setImageDrawable(app.icon.constantState?.newDrawable(resources)?.mutate() ?: app.icon)
+            if (!favorite) return
+            val notifications = if (store.bool("notifications", true)) NotificationHub.notifications(app.packageName, app.user) else emptyList()
+            preview.visibility = if (notifications.isEmpty()) View.GONE else View.VISIBLE
+            if (notifications.isNotEmpty()) {
+                val notification = notifications.first().notification
+                val value = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+                    ?: notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
+                preview.text = value.ifBlank { "${notifications.size} уведомл." }
+                preview.contentDescription = "Уведомления ${catalog.label(app)}: $value"
+            }
+            menu?.apply {
+                visibility = if (notifications.isNotEmpty() || store.popUp(app.id).isNotEmpty()) View.VISIBLE else View.GONE
+                contentDescription = "Открыть меню ${catalog.label(app)}"
+            }
         }
-        val labels = vertical().apply { setPadding(0, dp(8), 0, dp(8)) }
-        labels.addView(text(catalog.label(app), if (store.bool("largeText")) 25f else 21f).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END })
-        val notifications = if (store.bool("notifications", true)) NotificationHub.notifications(app.packageName, app.user) else emptyList()
-        if (favorite && notifications.isNotEmpty()) {
-            val notification = notifications.first().notification
-            val preview = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
-                ?: notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
-            labels.addView(text(preview.ifBlank { "${notifications.size} уведомл." }, 13f, secondary).apply {
-                maxLines = 1; ellipsize = TextUtils.TruncateAt.END
-                setOnClickListener { showAppPopup(app) }; isFocusable = true
-                contentDescription = "Уведомления ${catalog.label(app)}: $preview"
-            })
-        }
-        row.addView(labels, LinearLayout.LayoutParams(0, -2, 1f))
-        if (favorite && (notifications.isNotEmpty() || store.popUp(app.id).isNotEmpty())) {
-            row.addView(iconButton(Glyph.CHEVRON, "Открыть меню ${catalog.label(app)}") { showAppPopup(app) })
-        }
-        row.setOnClickListener { launch(app) }
-        row.setOnLongClickListener { showAppMenu(app); true }
-        var downX = 0f; var downY = 0f; var swiped = false
-        // Unconsumed taps are dispatched by LinearLayout to its standard performClick.
-        @Suppress("ClickableViewAccessibility")
-        row.setOnTouchListener { view, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> { downX = event.x; downY = event.y; swiped = false }
-                MotionEvent.ACTION_MOVE -> if (kotlin.math.abs(event.x - downX) > dp(32) && kotlin.math.abs(event.y - downY) < dp(28)) { swiped = true; view.parent.requestDisallowInterceptTouchEvent(true); view.isPressed = false }
-                MotionEvent.ACTION_UP -> if (swiped) { showAppPopup(app); return@setOnTouchListener true }
-            }; swiped
-        }
-        return row
     }
     private fun folderRow(folder: AppFolder): View = horizontal().apply {
         minimumHeight = dp(62); background = touchBackground(); isFocusable = true
@@ -289,7 +311,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showApps(keyboard: Boolean) {
         clearScreen("apps"); store.set("gesturesLearned", true)
-        val column = vertical()
+        val column = vertical().apply { isFocusableInTouchMode = true }
         val (start, end) = contentMargins(); column.setPadding(start - dp(8), dp(12), end, dp(12))
         val toolbar = horizontal()
         toolbar.addView(iconButton(Glyph.BACK, "На главный экран") { hideKeyboard(); showHome() })
@@ -308,40 +330,57 @@ class MainActivity : AppCompatActivity() {
         toolbar.addView(search, LinearLayout.LayoutParams(0, dp(56), 1f))
         toolbar.addView(iconButton(Glyph.CLOSE, "Очистить поиск") { search?.setText("") })
         column.addView(toolbar)
-        allScroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false }
-        allList = vertical().apply { setPadding(dp(8), dp(18), 0, dp(40)) }
-        allScroll!!.addView(allList); column.addView(allScroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        val results = FrameLayout(this)
+        appAdapter = AppListAdapter(catalog::label,
+            { app, recycled -> ((recycled as? AppRow) ?: AppRow(false)).apply { bind(app) } },
+            { section, recycled -> ((recycled as? TextView) ?: text("", 16f, secondary).apply { setPadding(0, dp(18), 0, dp(8)) }).apply { text = section } })
+        allApps = ListView(this).apply {
+            isVerticalScrollBarEnabled = false; divider = null; dividerHeight = 0
+            setPadding(dp(8), dp(18), 0, dp(40)); clipToPadding = false
+            adapter = appAdapter
+        }
+        emptyApps = vertical().apply { setPadding(dp(8), dp(18), 0, dp(40)) }
+        results.addView(allApps, FrameLayout.LayoutParams(-1, -1))
+        results.addView(emptyApps, FrameLayout.LayoutParams(-1, -2))
+        allApps!!.emptyView = emptyApps
+        column.addView(results, LinearLayout.LayoutParams(-1, 0, 1f))
         screen.addView(column, FrameLayout.LayoutParams(-1, -1)); populateApps("")
-        if (keyboard) search?.let { input -> input.requestFocus(); input.postDelayed({ (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT) }, 180) }
+        if (!keyboard) column.requestFocus()
+        if (keyboard) search?.let { input ->
+            input.requestFocus()
+            keyboardRequest = Runnable {
+                keyboardRequest = null
+                if (page == "apps" && search === input) (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+            }.also { handler.postDelayed(it, 180) }
+        }
     }
     private fun populateApps(query: String) {
-        val list = allList ?: return
-        val y = allScroll?.scrollY ?: 0
-        list.removeAllViews(); sectionViews.clear()
+        val list = allApps ?: return
+        val position = list.firstVisiblePosition
+        val top = list.getChildAt(0)?.top ?: list.paddingTop
+        val sameQuery = query == appQuery
+        appQuery = query
         val apps = catalog.visible(query)
-        var previous = ""
-        apps.forEach { app ->
-            val section = AppListRules.section(catalog.label(app))
-            if (query.isBlank() && previous != section) {
-                val heading = text(section, 16f, secondary).apply { setPadding(0, dp(18), 0, dp(8)) }
-                list.addView(heading); sectionViews[section] = heading; previous = section
+        appAdapter?.submit(apps, query.isBlank())
+        emptyApps?.apply {
+            removeAllViews()
+            if (apps.isEmpty()) {
+                addView(text(if (query.isBlank()) "Приложений пока нет" else "Ничего не найдено", 22f))
+                addView(gap(12))
+                addView(text(if (query.isBlank()) "Скрытые приложения доступны в настройках." else "Попробуйте другое название", 15f, secondary))
+                if (query.isNotBlank()) addView(action("Искать в интернете") { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${Uri.encode(query)}"))) })
             }
-            list.addView(appRow(app, false))
         }
-        if (apps.isEmpty()) {
-            list.addView(text(if (query.isBlank()) "Приложений пока нет" else "Ничего не найдено", 22f))
-            list.addView(gap(12))
-            list.addView(text(if (query.isBlank()) "Скрытые приложения доступны в настройках." else "Попробуйте другое название", 15f, secondary))
-            if (query.isNotBlank()) list.addView(action("Искать в интернете") { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${Uri.encode(query)}"))) })
-        }
-        allScroll?.post { allScroll?.scrollTo(0, y) }
+        list.setSelectionFromTop(if (sameQuery) position else 0, if (sameQuery) top - list.paddingTop else 0)
     }
     private fun jumpTo(letter: String) {
         if (search?.text?.isNotBlank() == true) search?.setText("")
-        hideKeyboard()
-        val section = sectionViews.keys.firstOrNull { AppListRules.sectionOrder(it) >= AppListRules.sectionOrder(letter) }
-            ?: sectionViews.keys.lastOrNull() ?: return
-        allList?.post { sectionViews[section]?.let { allScroll?.scrollTo(0, it.top) } }
+        if (keyboardRequest != null || search?.hasFocus() == true) {
+            keyboardRequest?.let(handler::removeCallbacks); keyboardRequest = null
+            hideKeyboard(); search?.clearFocus()
+        }
+        val position = appAdapter?.sectionPosition(letter) ?: return
+        allApps?.setSelectionFromTop(position, 0)
     }
     fun sheet(title: String, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()

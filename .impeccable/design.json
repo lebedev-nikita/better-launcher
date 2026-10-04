@@ -256,7 +256,7 @@
       },
       {
         "name": "The Grow With Text Rule",
-        "body": "App and settings rows use minimum heights, not fixed text containers; preserve wrapping when Android font scale grows. The fixed footer remains outside the scrolling home content.",
+        "body": "App and settings rows use minimum heights, not fixed text containers; preserve wrapping when Android font scale grows. The fixed footer remains outside the scrolling home content. App results use a native ListView that recycles visible rows with content-driven heights.",
         "section": "typography"
       },
       {

@@ -4,8 +4,10 @@ import java.text.Normalizer
 import java.util.Locale
 
 object AppListRules {
+    private val marks = Regex("\\p{M}+")
+    private val whitespace = Regex("\\s+")
     fun normalized(value: String): String = Normalizer.normalize(value, Normalizer.Form.NFD)
-        .replace(Regex("\\p{M}+"), "").lowercase(Locale.ROOT).replace('ё', 'е').trim()
+        .replace(marks, "").lowercase(Locale.ROOT).replace('ё', 'е').trim()
 
     fun section(label: String): String {
         val first = normalized(label).firstOrNull()?.uppercaseChar() ?: return "#"
@@ -13,9 +15,11 @@ object AppListRules {
     }
 
     fun matches(query: String, vararg labels: String): Boolean {
-        val terms = normalized(query).split(Regex("\\s+")).filter(String::isNotEmpty)
+        val terms = terms(query)
         return terms.all { term -> labels.any { normalized(it).contains(term) } }
     }
+
+    fun terms(query: String): List<String> = normalized(query).split(whitespace).filter(String::isNotEmpty)
 
     fun sectionOrder(section: String): Int = when (val c = section.first()) {
         '#' -> 0

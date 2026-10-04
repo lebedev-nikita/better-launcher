@@ -158,7 +158,7 @@ Home has no built-in clock or date. When no weather, widget, or media content is
 
 Normal app rows have a minimum height (62dp); compact mode uses (54dp). Installed app icons are (38dp) with a trailing gap (16dp). Settings rows have a minimum height (76dp), grow with their text, and separate label from description with (5dp). The shared spacing steps in the frontmatter recur across actions, content, and containers; they do not imply an enforced grid.
 
-Root content respects system bars, display cutouts, and the larger of navigation or keyboard bottom insets. Home, app results, and settings scroll independently. Bottom sheets resize for the keyboard and cap their height at 85% of the screen, with scrolling content.
+Root content respects system bars, display cutouts, and the larger of navigation or keyboard bottom insets. Home and settings use independent scrolling containers; app results use a native `ListView` that recycles visible rows while keeping content-driven heights. Alphabet navigation selects the section position directly. Bottom sheets resize for the keyboard and cap their height at 85% of the screen, with scrolling content.
 
 **The Separate Footer Rule.** Keep bottom navigation outside the scrolling favorite list so long lists and larger text cannot cover its actions.
 
@@ -200,7 +200,7 @@ The footer provides app search on the left and settings on the right. The app li
 
 App rows use installed icons and labels, optional single-line notification previews, and a chevron when pop-up content exists. Tap launches, long press opens management, and a horizontal swipe opens the app pop-up. Empty states and weather failures display actual status instead of sample content.
 
-The alphabet is one continuous native control. Its curved displacement follows finger distance immediately; selection grows and appears in a brown bubble while dragging, with a haptic tick on section changes. Accessibility exposes forward/backward scrolling, and keyboard up/down selects sections. The source reserves the outer system Back gesture edge.
+The alphabet is one continuous native control. Its curved displacement follows every finger movement immediately; navigation runs only when the selected letter changes (or a new touch starts on that letter). Selection grows and appears in a brown bubble while dragging, with a haptic tick on section changes. Accessibility exposes forward/backward scrolling, and keyboard up/down selects sections. The source reserves the outer system Back gesture edge.
 
 The sidecar's self-contained HTML/CSS samples are **illustrative translations of native widgets**, using CSS pixels for preview only. They do not implement Android gestures, system font scaling, Material state resolution, dialogs, app data, or wallpaper rendering. Its synthesized tonal strips are panel metadata rather than runtime palette tokens.
 

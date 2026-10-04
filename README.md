@@ -99,6 +99,8 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 | --- | --- |
 | [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt) | Главный экран, список приложений, настройки, диалоги, разрешения, календарь и MediaSession; координация фоновых задач |
 | [AppCatalog.kt](app/src/main/java/app/better/launcher/AppCatalog.kt) | Каталог через LauncherApps по доступным профилям, реальные значки, запуск, shortcuts, первичное избранное |
+| [AppSearchIndex.kt](app/src/main/java/app/better/launcher/AppSearchIndex.kt) | Подготовленные названия и порядок каталога; фильтрация без повторной сортировки |
+| [AppListAdapter.kt](app/src/main/java/app/better/launcher/AppListAdapter.kt) | Видимые строки списка приложений, переиспользование Views и позиции алфавитных разделов |
 | [AppListRules.kt](app/src/main/java/app/better/launcher/AppListRules.kt) | Чистые правила поиска, нормализации, алфавитных разделов и перемещения избранного |
 | [LauncherStore.kt](app/src/main/java/app/better/launcher/LauncherStore.kt) | SharedPreferences, папки, aliases, скрытые приложения, JSON-экспорт и проверяемый импорт |
 | [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt) | Canvas-обои, GlyphView, AlphabetRail, вспомогательные функции размеров и фона |
@@ -108,7 +110,7 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 
 Тема и цветовые роли заданы в [styles.xml](app/src/main/res/values/styles.xml), компоненты и разрешения — в [AndroidManifest.xml](app/src/main/AndroidManifest.xml). [Иконка приложения](app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml) адаптивная. `.impeccable/design.json` содержит вспомогательное представление дизайн-системы; его HTML/CSS-примеры иллюстрируют нативные компоненты, а Android-интерфейс определяется Kotlin и ресурсами.
 
-`MainActivity` имеет `singleTask`. Новый HOME-intent закрывает диалог и клавиатуру и возвращает главный экран. Каталог обновляется по callbacks LauncherApps и при возобновлении Activity. Загрузка каталога, календаря, погоды и файлов выполняется в executor; изменения Views возвращаются через main-thread Handler. Подписки, таймер и executor освобождаются в соответствующих lifecycle callbacks.
+`MainActivity` имеет `singleTask`. Новый HOME-intent закрывает диалог и клавиатуру и возвращает главный экран. Каталог обновляется по callbacks LauncherApps и при возобновлении Activity. Загрузка каталога, календаря, погоды и файлов выполняется в executor; изменения Views возвращаются через main-thread Handler. Каталог заранее подготавливает индекс поиска в фоновой загрузке; переименование, скрытие и импорт настроек обновляют индекс при следующем обращении. Список приложений использует `ListView`: создаются только видимые строки, а переход по алфавиту выбирает позицию раздела без измерения всего каталога. Движение внутри одной буквы обновляет волну без повторных команд навигации. Отложенный запрос клавиатуры отменяется при выходе из поиска или выборе буквы. Подписки, таймер и executor освобождаются в соответствующих lifecycle callbacks.
 
 AppWidgetHost слушает обновления между `onStart` и `onStop`. Обновление уведомлений при открытом диалоге откладывает перестроение главного экрана до закрытия диалога, сохраняя прокрутку. Эти сценарии важны при изменениях навигации и фонового обновления.
 
@@ -152,6 +154,8 @@ AppWidgetHost слушает обновления между `onStart` и `onSto
 | --- | --- |
 | [AppListRulesTest](app/src/test/java/app/better/launcher/AppListRulesTest.kt) | Нормализация латиницы/кириллицы, поиск, порядок разделов и перемещение избранного; `app/build/reports/tests/testDebugUnitTest/index.html` |
 | [LauncherIntegrationTest](app/src/androidTest/java/app/better/launcher/LauncherIntegrationTest.kt) | Сохранение, папки, backup, атомарный отказ импорта, реальный каталог и aliases/hidden; `app/build/reports/androidTests/connected/debug/index.html` |
+| [AppSearchIndexTest](app/src/test/java/app/better/launcher/AppSearchIndexTest.kt) | Подготовленный поиск по aliases/исходным названиям и отсутствие повторного чтения названий |
+| [AppNavigationTest](app/src/androidTest/java/app/better/launcher/AppNavigationTest.kt) | Алфавит без повторных переходов внутри буквы, ограничение создаваемых строк, переиспользование и переход к последнему выбранному разделу |
 | Android lint | `app/build/reports/lint-results-debug.html` |
 | [smoke-test.py](scripts/smoke-test.py) | Отсутствие встроенных часов и даты, шесть UI-сценариев через adb и отсутствие аварий процесса лаунчера |
 

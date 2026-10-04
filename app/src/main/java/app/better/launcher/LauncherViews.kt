@@ -107,18 +107,18 @@ class AlphabetRail(context: Context) : View(context) {
             if (!insideEdge || event.y < top() || event.y > top() + letters.size * spacing()) return false
         }
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> { parent.requestDisallowInterceptTouchEvent(true); dragging = true; selectAt(event.y) }
+            MotionEvent.ACTION_DOWN -> { parent.requestDisallowInterceptTouchEvent(true); dragging = true; selectAt(event.y, true) }
             MotionEvent.ACTION_MOVE -> selectAt(event.y)
             MotionEvent.ACTION_UP -> { dragging = false; performClick(); invalidate() }
             MotionEvent.ACTION_CANCEL -> { dragging = false; invalidate() }
         }
         return true
     }
-    private fun selectAt(y: Float) {
+    private fun selectAt(y: Float, forceSelection: Boolean = false) {
         finger = y
         val next = letters[((y - top()) / spacing()).toInt().coerceIn(letters.indices)]
         if (selected != next) { selected = next; performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK); onSelect(next) }
-        else if (dragging) onSelect(next)
+        else if (forceSelection) onSelect(next)
         invalidate()
     }
     override fun performClick(): Boolean { super.performClick(); return true }

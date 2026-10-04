@@ -68,5 +68,13 @@ class LauncherIntegrationTest {
         assertEquals(app.id, catalog.visible("елка cafe").first().id)
         store.hidden = setOf(app.id)
         assertTrue(catalog.visible("елка cafe").isEmpty())
+        store.hidden = emptySet()
+        assertEquals(app.id, catalog.visible("елка cafe").single().id)
+        store.rename(app.id, "Zebra")
+        assertTrue(catalog.visible("елка cafe").isEmpty())
+        assertEquals(app.id, catalog.visible("zebra").single().id)
+        assertTrue(catalog.sections().contains("Z"))
+        store.rename(app.id, "")
+        assertEquals(app.originalLabel, catalog.label(catalog.visible(app.originalLabel).first { it.id == app.id }))
     }
 }
