@@ -157,11 +157,13 @@ home()
 wait_for("Phone")
 print("PASS: tapping the app title opens rename; HOME cancels without changing the name")
 
-size = adb("shell", "wm", "size")
-width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
-x = int(width - 30 * density)  # clear the OS Back gesture edge
-adb("shell", "input", "swipe", str(x), str(int(height * .4)), str(x), str(int(height * .94)), "1000")
+rail = next(n for n in hierarchy().iter("node")
+            if n.get("content-desc", "").startswith("Алфавит приложений,"))
+_, _, rail_right, rail_bottom = map(int, re.findall(r"\d+", rail.get("bounds")))
+x = int(rail_right - 32 * density)  # clear Back and landscape system-bar insets
+# Use the measured rail rather than portrait display dimensions after rotation.
+adb("shell", "input", "swipe", str(x), str(int(rail_bottom - 48 * density)), str(x), str(int(rail_bottom + 48 * density)), "1000")
 wait_for("Поиск приложений")
 tree = hierarchy()
 assert any(n.get("content-desc", "").startswith("Алфавит приложений, #.") for n in tree.iter("node"))

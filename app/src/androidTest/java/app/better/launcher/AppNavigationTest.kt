@@ -30,14 +30,18 @@ class AppNavigationTest {
                 }
             }
             val parent = android.widget.FrameLayout(context).apply { addView(rail) }
-            touch(MotionEvent.ACTION_DOWN, 95f)
-            touch(MotionEvent.ACTION_MOVE, 96f)
-            touch(MotionEvent.ACTION_MOVE, 97f)
-            touch(MotionEvent.ACTION_MOVE, 118f)
-            touch(MotionEvent.ACTION_UP, 118f)
+            val step = 16f * context.resources.configuration.fontScale.coerceAtLeast(1f)
+            val start = 400f - 24f - rail.letters.size * step
+            val a = start + 1.5f * step
+            val b = start + 2.5f * step
+            touch(MotionEvent.ACTION_DOWN, a)
+            touch(MotionEvent.ACTION_MOVE, a + 1f)
+            touch(MotionEvent.ACTION_MOVE, a + 2f)
+            touch(MotionEvent.ACTION_MOVE, b)
+            touch(MotionEvent.ACTION_UP, b)
             assertEquals(listOf("A", "B"), selections)
-            touch(MotionEvent.ACTION_DOWN, 118f)
-            touch(MotionEvent.ACTION_UP, 118f)
+            touch(MotionEvent.ACTION_DOWN, b)
+            touch(MotionEvent.ACTION_UP, b)
             assertEquals(listOf("A", "B", "B"), selections)
             parent.removeAllViews()
         }

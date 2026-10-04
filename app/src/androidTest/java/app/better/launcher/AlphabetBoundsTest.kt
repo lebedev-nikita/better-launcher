@@ -48,8 +48,8 @@ class AlphabetBoundsTest {
                         adapter.sectionPosition(section)?.let { list.setSelectionFromTop(it, 0) }
                         layout()
                     }
-                    val start = rail.height * .15f
-                    val step = (rail.height * .76f / rail.letters.size).coerceAtMost(context.dp(23).toFloat())
+                    val step = context.dp(16) * context.resources.configuration.fontScale.coerceAtLeast(1f)
+                    val start = rail.height - context.dp(24) - rail.letters.size * step
                     val x = context.dp(if (left) 32 else 60).toFloat()
                     fun touch(action: Int, y: Float) {
                         val now = SystemClock.uptimeMillis()

@@ -88,8 +88,13 @@ class AlphabetRail(context: Context) : View(context) {
     private var finger = -1000f
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL) }
     init { isFocusable = true; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES; selected = "★" }
-    private fun top() = height * .15f
-    private fun spacing() = (height * .76f / letters.size).coerceAtMost(context.dp(23).toFloat())
+    // Anchor the compact alphabet above the footer/insets reserved by its parent.
+    private fun top() = (height - context.dp(24) - letters.size * spacing()).coerceAtLeast(0f)
+    private fun spacing(): Float {
+        val preferred = context.dp(16) * resources.configuration.fontScale.coerceAtLeast(1f)
+        val available = (height - context.dp(48)).coerceAtLeast(1).toFloat() / letters.size
+        return min(preferred, available)
+    }
     override fun onDraw(canvas: Canvas) {
         val spacing = spacing(); val start = top()
         // Keep the grab point inside Android's reserved system Back gesture edge.

@@ -89,6 +89,8 @@ components:
     backgroundColor: "transparent"
     textColor: "{colors.on-surface}"
     width: "92dp"
+    letter-step: "16dp × font scale (minimum 1)"
+    bottom-gap: "24dp"
   material-switch:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
@@ -159,6 +161,8 @@ Android supplies the wallpaper behind the transparent launcher window, including
 ## Layout
 
 The phone UI uses one vertical content column. Home content and the app list reserve space for the alphabet: normal content margins are (28dp) at the start and (84dp) at the end; left-handed mode reverses these. The rail occupies a (92dp) overlay, while its resting letter center stays (32dp) inside the screen edge. Its touch corridor is (48dp), between (24dp) and (72dp) from the usable edge. Horizontal system-bar and cutout insets shift the rail inward, including side navigation bars in landscape.
+
+The alphabet forms a compact column anchored 24dp above the bottom of its inset-safe area (above the home footer). Letter centers are 16dp apart at default font scale; the step grows with larger system fonts and shrinks only to fit short windows with 24dp top/bottom clearance. Drawing and touch selection share this geometry, on either side of the screen.
 
 The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Home top padding is 14% of viewport height, clamped to (36–126dp). Below a viewport height (500dp), it becomes (24dp), the optional information-to-list gap decreases, and the alphabet shows only available Latin app sections plus favorites and a final hash. This is a height adaptation; no width breakpoint or tablet layout is implemented.
 
