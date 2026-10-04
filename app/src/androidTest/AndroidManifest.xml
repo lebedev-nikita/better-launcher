@@ -1,0 +1,24 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:label="Widget preview tests">
+        <receiver android:name="app.better.launcher.LayoutPreviewProvider" android:exported="true" android:label="A00 Layout preview">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/layout_preview_widget" />
+        </receiver>
+        <receiver android:name="app.better.launcher.ImagePreviewProvider" android:exported="true" android:label="B00 Image preview">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/image_preview_widget" />
+        </receiver>
+        <receiver android:name="app.better.launcher.NoPreviewProvider" android:exported="true" android:label="C00 No preview">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/no_preview_widget" />
+        </receiver>
+        <receiver android:name="app.better.launcher.BrokenPreviewProvider" android:exported="true" android:label="D00 Broken layout">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/broken_preview_widget" />
+        </receiver>
+        <receiver android:name="app.better.launcher.NumericPreviewProvider" android:exported="true" android:label="000 Numeric preview">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/image_preview_widget" />
+        </receiver>
+    </application>
+</manifest>

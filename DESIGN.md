@@ -216,6 +216,10 @@ Home hosts at most one widget. A rightward swipe on free home space opens the wi
 
 The widget page uses the same wallpaper, type, and native actions. Its header has Home, a (26sp) wrapping title, and Add; the list has (28dp) side margins and (24dp) gaps between widgets. A Home action stays below the scroll. Provider labels grow above a (48dp) minimum height, and widget widths derive from the measured space after insets. Menus move a widget between screens or delete it. Choosing a new home widget moves the old one left. A (180ms) directional slide/fade honors disabled Android animations.
 
+The provider picker keeps its heading and Close outside a recycled `ListView` in an 85%-height sheet. Each unboxed row has a wrapping 18sp widget label, a 13sp application name, and a 144dp preview area that fits images without cropping and scales static layouts proportionally. `previewLayout` takes precedence over `previewImage`; a missing or broken preview falls back to the image, then an application icon with the explicit “Превью недоступно” label. No widget IDs are allocated while browsing.
+
+The picker reuses `AlphabetRail` on the right, reserves 72dp in the list, and leaves the outer system Back edge free. The star jumps to the start; Latin sections use the same Cyrillic transliteration and final hash as apps. Short sheets or font scale above 1.1 show available sections, star, and hash. The selected letter follows the first visible row; keyboard and accessibility actions jump to sections. Preview content is inert and excluded from accessibility: the whole row announces adding the named widget and its application. Catalog/resource work uses a background executor, recycled rows cancel stale loads, and dismissal cancels all work. Selecting a row immediately starts the existing Android binding/configuration flow.
+
 ### App Rows and Alphabet Rail
 
 App rows use installed icons and labels, optional single-line notification previews, and a chevron when pop-up content exists. Tap launches, long press opens management, and a horizontal swipe opens the app pop-up. Empty states and weather failures display actual status instead of sample content.

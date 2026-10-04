@@ -2,9 +2,9 @@
 
 Нативный Android-лаунчер на Kotlin для **Android 12+ (API 31)**. Направление проекта — воспроизвести интерфейс и сценарии Niagara под собственным именем Better Launcher. Главный экран работает с настоящими установленными приложениями и может быть назначен системным HOME-лаунчером.
 
-Версия **0.1.8** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
+Версия **0.1.9** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева; при выборе виджета доступны превью и алфавит справа. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
 
-[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.8 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.8) · [Релиз-кандидат 0.2.0-rc.1](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.1). Репозиторий приватный: для скачивания нужен доступ к организации.
+[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.9 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.9) · [Релиз-кандидат 0.2.0-rc.1](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.1). Репозиторий приватный: для скачивания нужен доступ к организации.
 
 ## Документация проекта
 
@@ -16,6 +16,7 @@
 | [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
 | [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
 | [docs/releases/0.1.8.md](docs/releases/0.1.8.md) | Исправление нижней границы алфавитного ползунка |
+| [docs/releases/0.1.9.md](docs/releases/0.1.9.md) | Превью виджетов, алфавит выбора и результаты проверки |
 | [docs/releases/0.1.7.md](docs/releases/0.1.7.md) | Уменьшенный release APK и результаты проверки |
 | [docs/verification-0.1.3.md](docs/verification-0.1.3.md) | Проверки латинского алфавита и транслитерации |
 | [docs/releases/0.1.3.md](docs/releases/0.1.3.md) | Латинский алфавит, транслитерация и установка |
@@ -165,6 +166,8 @@ AppWidgetHost слушает обновления между `onStart` и `onSto
 
 Содержимое уведомлений находится только в NotificationHub в памяти, не сохраняется и не передаётся по сети. События календаря читаются на устройстве. Сеть в текущем приложении используется для запросов города и прогноза на `geocoding-api.open-meteo.com` и `api.open-meteo.com`. Погодные запросы имеют connect/read timeouts по 8 секунд; прогноз обновляется с интервалом 30 минут или по явному запросу. Для работы с Open-Meteo в текущей реализации API-ключ не нужен.
 
+Выбор виджета показывает название, приложение и статичное превью провайдера: `previewLayout` имеет приоритет, затем используется `previewImage`. Если оба недоступны, строка явно сообщает «Превью недоступно». Нажатие на строку запускает прежнюю системную привязку/конфигурацию. Алфавит справа использует тот же контроль, что список приложений, включая кириллическую транслитерацию, заключительный «#», клавиатуру и accessibility; звёздочка возвращает к началу списка. Каталог и ресурсы превью загружаются в фоне, строки переиспользуются, закрытие отменяет загрузки. Для списка виджетов не выделяются widget IDs. За превью отвечает [WidgetPickerView](app/src/main/java/app/better/launcher/WidgetPickerView.kt), за размещение — [WidgetController](app/src/main/java/app/better/launcher/WidgetController.kt).
+
 ## Проверки
 
 Для изменений Kotlin, ресурсов или конфигурации Android выполняйте:
@@ -180,6 +183,7 @@ AppWidgetHost слушает обновления между `onStart` и `onSto
 | [SystemTransliterationTest](app/src/androidTest/java/app/better/launcher/SystemTransliterationTest.kt) | Системные правила Russian-Latin/BGN, Яндекс/Y, Й, порядок разделов и поиск по aliases |
 | [AppSearchIndexTest](app/src/test/java/app/better/launcher/AppSearchIndexTest.kt) | Подготовленный поиск по aliases/исходным названиям и отсутствие повторного чтения названий |
 | [AppNavigationTest](app/src/androidTest/java/app/better/launcher/AppNavigationTest.kt) | Алфавит без повторных переходов внутри буквы, ограничение создаваемых строк, переиспользование и переход к последнему выбранному разделу |
+| [WidgetPickerTest](app/src/androidTest/java/app/better/launcher/WidgetPickerTest.kt) | Превью layout/image, отсутствие и повреждение превью, алфавит, выбор провайдера и отсутствие привязки при просмотре |
 | [LauncherNavigationTest](app/src/androidTest/java/app/better/launcher/LauncherNavigationTest.kt) | Кнопки экрана виджетов, отмена выбора, Back и HOME |
 | Android lint | `app/build/reports/lint-results-debug.html` |
 | [smoke-test.py](scripts/smoke-test.py) | Отсутствие встроенных часов и даты, UI-сценарии, включая экран виджетов, через adb и отсутствие аварий процесса лаунчера |
@@ -205,7 +209,7 @@ python3 scripts/smoke-test.py --serial emulator-5580
 
 Команда назначения HOME выше предназначена для тестового эмулятора. Скрипт проверяет отсутствие встроенных часов/даты, настройки/Back, поиск, запуск Camera/HOME, свайп меню, долгое нажатие, алфавит и переходы на экран виджетов; он не проверяет полный набор интеграций. Для UI-изменений отдельно проверяйте портрет, узкий экран с font scale 1.3, горизонтальную ориентацию, клавиатуру и системный Back. Снимки текущей проверки храните в локальной `.impeccable/review/`.
 
-Результаты проверок 0.1.8 записаны в [release notes](docs/releases/0.1.8.md). Результаты проверок 0.1.7 записаны в [release notes](docs/releases/0.1.7.md). Результаты проверок 0.1.5 записаны в [проверке меню](docs/app-menu-verification.md) и [release notes](docs/releases/0.1.5.md). Результаты проверок 0.1.4 записаны в [release notes](docs/releases/0.1.4.md). Результаты проверок 0.1.3 записаны в [отчёте](docs/verification-0.1.3.md). Результаты текущей проверки экрана виджетов записаны в [отчёте](docs/widgets-verification.md). Результаты проверок 0.1.2 записаны в [проверке плавности](docs/app-navigation-verification.md) и [release notes](docs/releases/0.1.2.md). Результаты проверок 0.1.1 записаны в [release notes](docs/releases/0.1.1.md).
+Результаты проверок 0.1.9 записаны в [release notes](docs/releases/0.1.9.md). Результаты проверок 0.1.8 записаны в [release notes](docs/releases/0.1.8.md). Результаты проверок 0.1.7 записаны в [release notes](docs/releases/0.1.7.md). Результаты проверок 0.1.5 записаны в [проверке меню](docs/app-menu-verification.md) и [release notes](docs/releases/0.1.5.md). Результаты проверок 0.1.4 записаны в [release notes](docs/releases/0.1.4.md). Результаты проверок 0.1.3 записаны в [отчёте](docs/verification-0.1.3.md). Результаты текущей проверки экрана виджетов записаны в [отчёте](docs/widgets-verification.md). Результаты проверок 0.1.2 записаны в [проверке плавности](docs/app-navigation-verification.md) и [release notes](docs/releases/0.1.2.md). Результаты проверок 0.1.1 записаны в [release notes](docs/releases/0.1.1.md).
 
 Для 0.1.0 подтверждены 3 unit-теста, 3 интеграционных теста, UI-сценарии на Android 12 и Android 16 и отдельные сценарии уведомлений/виджета Clock на Android 16. Lint того выпуска: 0 ошибок, 35 предупреждений. Проверки физических устройств, Android 13–15, рабочих профилей, TalkBack и остальных провайдеров ещё не завершены. Полный список границ — в [отчёте](docs/verification.md). CI workflow в репозитории пока отсутствует.
 
@@ -231,11 +235,11 @@ adb -s emulator-5580 logcat -d -s AndroidRuntime:E
 
 Основная ветка — `main`, основной remote — `origin` (`https://github.com/better-launcher/better-launcher.git`). В исходной рабочей копии также есть `personal`, указывающий на стартовый репозиторий; он не является целью публикации Better Launcher. Перед коммитом и пушем сверяйте ветку, remote и состав изменений.
 
-Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.8 соответствует `v0.1.8`; main может содержать следующую RC-версию. В GitHub Release публикуются `better-launcher-0.1.8-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
+Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.9 соответствует `v0.1.9`; main может содержать следующую RC-версию. В GitHub Release публикуются `better-launcher-0.1.9-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
 
 Подпись настраивается через `BETTER_LAUNCHER_SIGNING_PROPERTIES`: абсолютный путь к приватному Java properties-файлу вне Git. Поля: `storeFile`, `storePassword`, `keyAlias`, `keyPassword`. `storeFile` задаёт абсолютный путь к keystore. Файл свойств и keystore храните с доступом только владельцу; значения паролей не выводите в логи. Без этих данных release-сборка не подписывается и не проходит проверку подписи Gradle.
 
-Для совместимости обновлений 0.1.7 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
+Для совместимости обновлений 0.1.9 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
 
 Для нового выпуска обновите версию, выполните базовые проверки, connected-тесты системной транслитерации и проверьте подписанный release APK на устройстве. Сравните размер и содержимое с предыдущим APK. Подготовьте `docs/releases/X.Y.Z.md`, указав фактические результаты и ограничения. Используйте путь к своему properties-файлу:
 

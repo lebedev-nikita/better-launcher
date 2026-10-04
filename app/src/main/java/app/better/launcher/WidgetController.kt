@@ -17,8 +17,10 @@ class WidgetController(private val activity: MainActivity, private val store: La
     fun start() { runCatching { host.startListening() } }
     fun stop() { host.stopListening() }
     fun add(toHome: Boolean = false) {
-        val providers = manager.installedProviders.sortedBy { it.loadLabel(activity.packageManager) }
-        activity.choose(if (toHome) "Виджет на главном экране" else "Добавить виджет", providers.map { it.loadLabel(activity.packageManager) }) { position -> bind(providers[position], toHome) }
+        activity.sheet(if (toHome) "Виджет на главном экране" else "Добавить виджет", scrollContent = false) { body, dialog ->
+            body.addView(WidgetPickerView(activity).apply { onChoose = { provider -> dialog.dismiss(); bind(provider, toHome) } },
+                LinearLayout.LayoutParams(-1, 0, 1f))
+        }
     }
     private fun bind(provider: AppWidgetProviderInfo, toHome: Boolean) {
         cleanup()

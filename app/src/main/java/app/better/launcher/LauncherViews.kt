@@ -79,8 +79,10 @@ class AlphabetRail(context: Context) : View(context) {
     var activeLetters = emptySet<String>()
         set(value) { field = value; invalidate() }
     var onSelect: (String) -> Unit = {}
+    var alphabetLabel = "Алфавит приложений"
+        set(value) { field = value; selected = selected }
     var selected = "★"
-        set(value) { field = value; contentDescription = "Алфавит приложений, $value. Проведите вверх или вниз для выбора."; invalidate() }
+        set(value) { field = value; contentDescription = "$alphabetLabel, $value. Проведите вверх или вниз для выбора."; invalidate() }
     var leftHanded = false
     private var dragging = false
     private var finger = -1000f
