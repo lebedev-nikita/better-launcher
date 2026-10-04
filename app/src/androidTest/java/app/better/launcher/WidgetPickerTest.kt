@@ -17,7 +17,17 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
 import org.junit.Test
 
-class LayoutPreviewProvider : AppWidgetProvider()
+class LayoutPreviewProvider : AppWidgetProvider() {
+    override fun onUpdate(context: android.content.Context, manager: android.appwidget.AppWidgetManager, ids: IntArray) {
+        val layout = context.resources.getIdentifier("widget_preview", "layout", context.packageName)
+        val textId = context.resources.getIdentifier("widget_text", "id", context.packageName)
+        ids.forEach { id ->
+            manager.updateAppWidget(id, android.widget.RemoteViews(context.packageName, layout).apply {
+                setInt(textId, "setBackgroundResource", android.R.color.transparent)
+            })
+        }
+    }
+}
 class ImagePreviewProvider : AppWidgetProvider()
 class NoPreviewProvider : AppWidgetProvider()
 class BrokenPreviewProvider : AppWidgetProvider()

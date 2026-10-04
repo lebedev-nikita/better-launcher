@@ -1,6 +1,6 @@
 <!-- Content is taller than the provider's minHeight; every line must fit the preview. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="16dp" android:background="#244D59">
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Layout preview content" android:textSize="24sp" android:textColor="#FFFFFF" />
+    <TextView android:id="@+id/widget_text" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Layout preview content" android:textSize="24sp" android:textColor="#FFFFFF" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Second preview line" android:textSize="24sp" android:textColor="#FFFFFF" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Third preview line" android:textSize="24sp" android:textColor="#FFFFFF" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Last preview line" android:textSize="24sp" android:textColor="#FFFFFF" />

@@ -26,6 +26,7 @@ import java.util.concurrent.Future
 /** A recycled provider list. Browsing previews never allocates or binds widget IDs. */
 class WidgetPickerView(context: Context) : FrameLayout(context) {
     private val activity = context as MainActivity
+    private val hostContext = widgetHostContext(context)
     var onChoose: (AppWidgetProviderInfo) -> Unit = {}
     private data class Entry(val provider: AppWidgetProviderInfo, val label: String, val app: String, val section: String)
     private val worker = Executors.newFixedThreadPool(2)
@@ -186,7 +187,7 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
                 // This view has no allocated ID and is never registered with AppWidgetHost.
                 var fallbackRequested = false
                 runCatching {
-                    val hostView = object : AppWidgetHostView(activity) {
+                    val hostView = object : AppWidgetHostView(hostContext) {
                         override fun getErrorView(): View {
                             if (current() && !fallbackRequested) {
                                 fallbackRequested = true

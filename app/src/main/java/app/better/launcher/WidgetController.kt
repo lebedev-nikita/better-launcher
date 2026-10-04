@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 class WidgetController(private val activity: MainActivity, private val store: LauncherStore) {
     private val manager = AppWidgetManager.getInstance(activity)
     private val host = AppWidgetHost(activity, 1201)
+    private val hostContext = widgetHostContext(activity)
     private var pending = store.string("pendingWidgetId").toIntOrNull() ?: -1
     private var pendingHome = store.string("pendingWidgetDestination") == "home"
     fun start() { runCatching { host.startListening() } }
@@ -90,7 +91,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
             }
         })
         container.addView(header)
-        val view = host.createView(activity, id, info)
+        val view = host.createView(hostContext, id, info)
         view.tag = PageSwipeLayout.BLOCK_SWIPE
         val height = (info.minHeight / activity.resources.displayMetrics.density).toInt().coerceIn(100, 220)
         // Measure the current page/window, including insets and handedness, rather than the display.
