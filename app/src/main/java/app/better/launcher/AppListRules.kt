@@ -1,6 +1,6 @@
 package app.better.launcher
 
-import com.ibm.icu.text.Transliterator
+import android.icu.text.Transliterator
 import java.text.Normalizer
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
