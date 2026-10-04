@@ -81,7 +81,7 @@ class FavoritesOrderTest {
                 .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
         instrumentation.waitForIdleSync()
-        node("Все приложения")
+        node("Все приложения и поиск")
     }
 
     private fun openEditor(label: String) {

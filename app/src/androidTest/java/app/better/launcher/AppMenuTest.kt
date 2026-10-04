@@ -142,9 +142,12 @@ class AppMenuTest {
         } finally {
             instrumentation.runOnMainSync {
                 app?.let { activity.store.rename(it.id, oldAlias.orEmpty()) }
-                activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-                    .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                activity.finish()
+                val resumed = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED).filterIsInstance<MainActivity>()
+                (resumed + activity).distinct().forEach { current ->
+                    (MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(current) as? Dialog)?.dismiss()
+                    current.finish()
+                }
             }
         }
     }

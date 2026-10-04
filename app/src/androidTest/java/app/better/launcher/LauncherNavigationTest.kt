@@ -23,7 +23,7 @@ class LauncherNavigationTest {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         try {
-            bounds(activity, "Все приложения")
+            bounds(activity, "Все приложения и поиск")
             val before = Rect()
             lateinit var rail: AlphabetRail
             instrumentation.runOnMainSync {
@@ -45,7 +45,7 @@ class LauncherNavigationTest {
                 assertEquals("Opening apps must keep letters under the finger", before, after)
                 rail.onSelect("★")
             }
-            bounds(activity, "Все приложения")
+            bounds(activity, "Все приложения и поиск")
             instrumentation.runOnMainSync {
                 val after = Rect()
                 assertTrue(rail.getGlobalVisibleRect(after))

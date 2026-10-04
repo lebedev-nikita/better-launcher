@@ -152,6 +152,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshApps() {
+        // Framework callbacks queued before unregisterCallback may arrive after onDestroy.
+        if (isDestroyed) return
         if (loadingApps) { refreshQueued = true; return }
         loadingApps = true
         executor.execute {
