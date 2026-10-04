@@ -75,7 +75,7 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
 }
 
 /** One continuous control, with scroll accessibility actions and keyboard alternatives. */
-class AlphabetRail(context: Context) : View(context) {
+open class AlphabetRail(context: Context) : View(context) {
     var letters = AppListRules.railLetters(emptySet())
         set(value) { field = value; invalidate() }
     var activeLetters = emptySet<String>()
@@ -131,17 +131,24 @@ class AlphabetRail(context: Context) : View(context) {
             MotionEvent.ACTION_MOVE -> selectAt(event.y)
             MotionEvent.ACTION_UP -> {
                 // The release may carry a newer coordinate than the final MOVE.
-                if (dragging && event.y >= top() + letters.size * spacing()) selectAt(event.y)
+                if (dragging) {
+                    if (event.y >= top() + letters.size * spacing()) selectAt(event.y, hapticFeedback = false)
+                    performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
+                }
                 dragging = false; performClick(); invalidate()
             }
             MotionEvent.ACTION_CANCEL -> { dragging = false; invalidate() }
         }
         return true
     }
-    private fun selectAt(y: Float, forceSelection: Boolean = false) {
+    private fun selectAt(y: Float, forceSelection: Boolean = false, hapticFeedback: Boolean = true) {
         finger = y
         val next = letters[((y - top()) / spacing()).toInt().coerceIn(letters.indices)]
-        if (selected != next) { selected = next; performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK); onSelect(next) }
+        if (selected != next) {
+            selected = next
+            if (hapticFeedback) performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
+            onSelect(next)
+        }
         else if (forceSelection) onSelect(next)
         invalidate()
     }

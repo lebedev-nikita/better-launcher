@@ -2,14 +2,15 @@
 
 Нативный Android-лаунчер на Kotlin для **Android 12+ (API 31)**. Направление проекта — воспроизвести интерфейс и сценарии Niagara под собственным именем Better Launcher. Главный экран работает с настоящими установленными приложениями и может быть назначен системным HOME-лаунчером.
 
-Релиз-кандидат **0.2.0-rc.22** реализует вертикальное избранное, алфавитную «волну» с крупными буквами только заполненных разделов, поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева; при выборе виджета доступны превью и алфавит справа. Виджеты редактируются прямо на экране четырьмя маркерами по краям. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
+Релиз-кандидат **0.2.0-rc.23** реализует вертикальное избранное, алфавитную «волну» с крупными буквами только заполненных разделов, поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева; при выборе виджета доступны превью и алфавит справа. Виджеты редактируются прямо на экране четырьмя маркерами по краям. Буквенный индекс даёт одинаковый короткий тактильный отклик при смене раздела и отпускании пальца. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
 
-[Репозиторий](https://github.com/better-launcher/better-launcher) · [Стабильный релиз 0.1.9 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.9) · [Релиз-кандидат 0.2.0-rc.22](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.22). Репозиторий приватный: для скачивания нужен доступ к организации.
+[Репозиторий](https://github.com/better-launcher/better-launcher) · [Стабильный релиз 0.1.9 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.9) · [Релиз-кандидат 0.2.0-rc.23](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.23). Репозиторий приватный: для скачивания нужен доступ к организации.
 
 ## Документация проекта
 
 | Документ | Когда читать |
 | --- | --- |
+| [docs/releases/0.2.0-rc.23.md](docs/releases/0.2.0-rc.23.md) | Вибрация при отпускании буквенного индекса |
 | [docs/releases/0.2.0-rc.22.md](docs/releases/0.2.0-rc.22.md) | Меню виджетов и редактирование четырёх границ |
 | [docs/releases/0.2.0-rc.21.md](docs/releases/0.2.0-rc.21.md) | Объединённый кандидат со всеми ранее невлитыми функциями |
 | [AGENTS.md](AGENTS.md) | Перед работой ИИ-агента: порядок действий, инварианты и выбор проверок |
@@ -206,6 +207,7 @@ AppWidgetHost слушает обновления между `onStart` и `onSto
 | [SystemTransliterationTest](app/src/androidTest/java/app/better/launcher/SystemTransliterationTest.kt) | Системные правила Russian-Latin/BGN, Яндекс/Y, Й, порядок разделов и поиск по aliases |
 | [AppSearchIndexTest](app/src/test/java/app/better/launcher/AppSearchIndexTest.kt) | Подготовленный поиск по aliases/исходным названиям и отсутствие повторного чтения названий |
 | [AppNavigationTest](app/src/androidTest/java/app/better/launcher/AppNavigationTest.kt) | Непустые разделы, компактный алфавит с доступным нижним разделом, свободным краем Back и управлением с клавиатуры; отсутствие повторных переходов внутри буквы, ограничение создаваемых строк, переиспользование и переход к последнему выбранному разделу |
+| [AlphabetHapticTest](app/src/androidTest/java/app/better/launcher/AlphabetHapticTest.kt) | Один CLOCK_TICK при отпускании активного жеста, обе стороны индекса, повторное касание, заключительный # и отмена |
 | [WidgetPickerTest](app/src/androidTest/java/app/better/launcher/WidgetPickerTest.kt) | Превью layout/image, отсутствие и повреждение превью, алфавит, выбор провайдера и отсутствие привязки при просмотре |
 | [LauncherNavigationTest](app/src/androidTest/java/app/better/launcher/LauncherNavigationTest.kt) | Кнопки экрана виджетов, отмена выбора, Back и HOME; стабильное положение алфавита между избранным и списком приложений |
 | [WidgetResizeGeometryTest](app/src/test/java/app/better/launcher/WidgetResizeGeometryTest.kt) | Четыре границы, центрирование ширины, верхний отступ и ограничения окна/провайдера |
@@ -259,11 +261,11 @@ adb -s emulator-5580 logcat -d -s AndroidRuntime:E
 
 Основная ветка — `main`, основной remote — `origin` (`https://github.com/better-launcher/better-launcher.git`). В исходной рабочей копии также есть `personal`, указывающий на стартовый репозиторий; он не является целью публикации Better Launcher. Перед коммитом и пушем сверяйте ветку, remote и состав изменений.
 
-Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.9 соответствует `v0.1.9`; новый кандидат — `v0.2.0-rc.22`. В GitHub Release кандидата публикуются `better-launcher-0.2.0-rc.22-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
+Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.9 соответствует `v0.1.9`; новый кандидат — `v0.2.0-rc.23`. В GitHub Release кандидата публикуются `better-launcher-0.2.0-rc.23-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
 
 Подпись настраивается через `BETTER_LAUNCHER_SIGNING_PROPERTIES`: абсолютный путь к приватному Java properties-файлу вне Git. Поля: `storeFile`, `storePassword`, `keyAlias`, `keyPassword`. `storeFile` задаёт абсолютный путь к keystore. Файл свойств и keystore храните с доступом только владельцу; значения паролей не выводите в логи. Без этих данных release-сборка не подписывается и не проходит проверку подписи Gradle.
 
-Для совместимости обновлений 0.2.0-rc.22 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
+Для совместимости обновлений 0.2.0-rc.23 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
 
 Для нового выпуска обновите версию, выполните базовые проверки, connected-тесты системной транслитерации и проверьте подписанный release APK на устройстве. Сравните размер и содержимое с предыдущим APK. Подготовьте `docs/releases/X.Y.Z.md`, указав фактические результаты и ограничения.
 
