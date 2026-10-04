@@ -169,6 +169,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
                     valueFrom = range.first.toFloat(); valueTo = range.last.toFloat(); stepSize = 1f
                     this.value = value.coerceIn(range).toFloat()
                     contentDescription = label
+                    importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
                     setTickVisibilityMode(TickVisibilityMode.TICK_VISIBILITY_HIDDEN)
                     setLabelFormatter { activity.getString(R.string.widget_dimension_value, it.toInt()) }
                     addOnChangeListener { _, selected, fromUser ->
