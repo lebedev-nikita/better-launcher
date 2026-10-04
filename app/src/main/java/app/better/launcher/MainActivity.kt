@@ -481,7 +481,7 @@ class MainActivity : AppCompatActivity() {
         val windowScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.WINDOW_ANIMATION_SCALE, 1f) else 0f
         val animatorScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) else 0f
         val animateMenu = appMenu && scroll != null && windowScale > 0f && animatorScale > 0f && android.animation.ValueAnimator.areAnimatorsEnabled()
-        fun sheetHeight() = minOf(body.height + (scroll?.paddingTop ?: 0), (resources.displayMetrics.heightPixels * .85f).toInt())
+        fun sheetHeight() = minOf(body.height + (scroll?.paddingTop ?: 0) + (scroll?.paddingBottom ?: 0), (resources.displayMetrics.heightPixels * .85f).toInt())
         if (animateMenu) scroll?.translationY = resources.displayMetrics.heightPixels.toFloat()
         dialog.setContentView(scroll ?: body)
         dialog.window?.apply {
@@ -494,7 +494,10 @@ class MainActivity : AppCompatActivity() {
                 scroll?.setOnApplyWindowInsetsListener { _, insets ->
                     val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
                     body.setPadding(dp(24) + bars.left, dp(12), dp(24) + bars.right, dp(16) + bars.bottom)
-                    scroll.setPadding(0, bars.top, 0, 0)
+                    val ime = insets.getInsets(WindowInsets.Type.ime())
+                    // This edge-to-edge window keeps its bottom gravity; reserve the IME below the form.
+                    scroll.setPadding(0, bars.top, 0, (ime.bottom - bars.bottom).coerceAtLeast(0))
+                    if (body.height > 0) dialog.window?.setLayout(-1, sheetHeight())
                     insets
                 }
             }

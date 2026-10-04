@@ -54,17 +54,20 @@ class AppMenuTest {
             openMenu("Renamed app")
             node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Discard with Back")
-            instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
-            // Depending on IME visibility, Back first hides the keyboard.
-            if (currentDialog(activity) != null) instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
+            instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            instrumentation.waitForIdleSync(); SystemClock.sleep(500)
+            // HOME may replace the Activity; inspect the active window, not the old Activity.
+            if (findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.className == "android.widget.EditText" } != null) {
+                instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            }
             node { it.text == "Renamed app" }
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
 
             openMenu("Renamed app")
             node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("")
+            val dialog = currentDialog(activity) as android.app.Dialog
             instrumentation.runOnMainSync {
-                val dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(activity) as android.app.Dialog
                 fun inputs(view: android.view.View): List<android.widget.EditText> =
                     if (view is android.widget.EditText) listOf(view) else if (view is android.view.ViewGroup)
                         (0 until view.childCount).flatMap { inputs(view.getChildAt(it)) } else emptyList()
@@ -85,7 +88,9 @@ class AppMenuTest {
     private fun currentDialog(activity: MainActivity): Any? {
         var dialog: Any? = null
         instrumentation.runOnMainSync {
-            dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(activity)
+            val resumed = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED).filterIsInstance<MainActivity>().firstOrNull() ?: activity
+            dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(resumed)
         }
         return dialog
     }
