@@ -2,9 +2,9 @@
 
 Нативный Android-лаунчер на Kotlin для **Android 12+ (API 31)**. Направление проекта — воспроизвести интерфейс и сценарии Niagara под собственным именем Better Launcher. Главный экран работает с настоящими установленными приложениями и может быть назначен системным HOME-лаунчером.
 
-Версия **0.1.9** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева; при выборе виджета доступны превью и алфавит справа. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
+Релиз-кандидат **0.2.0-rc.11** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева; при выборе виджета доступны превью и алфавит справа. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
 
-[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.9 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.9) · [Релиз-кандидат 0.2.0-rc.1](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.1). Репозиторий приватный: для скачивания нужен доступ к организации.
+[Репозиторий](https://github.com/better-launcher/better-launcher) · [Стабильный релиз 0.1.9 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.9) · [Релиз-кандидат 0.2.0-rc.11](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.11). Репозиторий приватный: для скачивания нужен доступ к организации.
 
 ## Документация проекта
 
@@ -16,6 +16,7 @@
 | [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
 | [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
 | [docs/releases/0.1.8.md](docs/releases/0.1.8.md) | Исправление нижней границы алфавитного ползунка |
+| [docs/releases/0.2.0-rc.11.md](docs/releases/0.2.0-rc.11.md) | Исправление загрузки RemoteViews и проверки нового кандидата |
 | [docs/releases/0.1.9.md](docs/releases/0.1.9.md) | Превью виджетов, алфавит выбора и результаты проверки |
 | [docs/releases/0.1.7.md](docs/releases/0.1.7.md) | Уменьшенный release APK и результаты проверки |
 | [docs/verification-0.1.3.md](docs/verification-0.1.3.md) | Проверки латинского алфавита и транслитерации |
@@ -125,12 +126,15 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 | [PageSwipeLayout.kt](app/src/main/java/app/better/launcher/PageSwipeLayout.kt) | Свайпы между главным экраном и виджетами без перехвата жестов приложений, виджетов и системного Back |
 | [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt) | Затемнение системных обоев, GlyphView, AlphabetRail, вспомогательные функции размеров и фона |
 | [LauncherNotificationService.kt](app/src/main/java/app/better/launcher/LauncherNotificationService.kt) | NotificationListenerService и общий NotificationHub в памяти |
+| [WidgetHostContext.kt](app/src/main/java/app/better/launcher/WidgetHostContext.kt) | Android-контекст для сторонних RemoteViews без подмены Views через AppCompat/Material |
 | [WidgetController.kt](app/src/main/java/app/better/launcher/WidgetController.kt) | AppWidgetHost, привязка, настройка, размещение и удаление виджетов |
 | [WeatherRepository.kt](app/src/main/java/app/better/launcher/WeatherRepository.kt) | Поиск города и текущая погода через Open-Meteo |
 
 Тема и цветовые роли заданы в [styles.xml](app/src/main/res/values/styles.xml), компоненты и разрешения — в [AndroidManifest.xml](app/src/main/AndroidManifest.xml). [Иконка приложения](app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml) адаптивная. `.impeccable/design.json` содержит вспомогательное представление дизайн-системы; его HTML/CSS-примеры иллюстрируют нативные компоненты, а Android-интерфейс определяется Kotlin и ресурсами.
 
 `MainActivity` имеет `singleTask`. Новый HOME-intent закрывает диалог и клавиатуру и возвращает главный экран. Каталог обновляется по callbacks LauncherApps и при возобновлении Activity. Загрузка каталога, правил транслитерации Android ICU, календаря, погоды и файлов выполняется в executor; изменения Views возвращаются через main-thread Handler. Каталог заранее подготавливает индекс поиска в фоновой загрузке; переименование, скрытие и импорт настроек обновляют индекс при следующем обращении. Список приложений использует `ListView`: создаются только видимые строки, а переход по алфавиту выбирает позицию раздела без измерения всего каталога. Движение внутри одной буквы обновляет волну без повторных команд навигации. Отложенный запрос клавиатуры отменяется при выходе из поиска или выборе буквы. Подписки, таймер и executor освобождаются в соответствующих lifecycle callbacks.
+
+Содержимое виджетов и их превью загружается через отдельный framework-контекст с текущей конфигурацией окна. Это сохраняет стандартные Views и команды RemoteViews стороннего провайдера, не наследуя фабрику AppCompat/Material из настроек лаунчера. Уже добавленные widget IDs сохраняются при обновлении.
 
 AppWidgetHost слушает обновления между `onStart` и `onStop`. Обновление уведомлений при открытом диалоге откладывает перестроение главного экрана до закрытия диалога, сохраняя прокрутку. Эти сценарии важны при изменениях навигации и фонового обновления.
 
@@ -235,11 +239,11 @@ adb -s emulator-5580 logcat -d -s AndroidRuntime:E
 
 Основная ветка — `main`, основной remote — `origin` (`https://github.com/better-launcher/better-launcher.git`). В исходной рабочей копии также есть `personal`, указывающий на стартовый репозиторий; он не является целью публикации Better Launcher. Перед коммитом и пушем сверяйте ветку, remote и состав изменений.
 
-Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.9 соответствует `v0.1.9`; main может содержать следующую RC-версию. В GitHub Release публикуются `better-launcher-0.1.9-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
+Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.9 соответствует `v0.1.9`; новый кандидат — `v0.2.0-rc.11`. В GitHub Release кандидата публикуются `better-launcher-0.2.0-rc.11-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
 
 Подпись настраивается через `BETTER_LAUNCHER_SIGNING_PROPERTIES`: абсолютный путь к приватному Java properties-файлу вне Git. Поля: `storeFile`, `storePassword`, `keyAlias`, `keyPassword`. `storeFile` задаёт абсолютный путь к keystore. Файл свойств и keystore храните с доступом только владельцу; значения паролей не выводите в логи. Без этих данных release-сборка не подписывается и не проходит проверку подписи Gradle.
 
-Для совместимости обновлений 0.1.9 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
+Для совместимости обновлений 0.2.0-rc.11 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
 
 Для нового выпуска обновите версию, выполните базовые проверки, connected-тесты системной транслитерации и проверьте подписанный release APK на устройстве. Сравните размер и содержимое с предыдущим APK. Подготовьте `docs/releases/X.Y.Z.md`, указав фактические результаты и ограничения. Используйте путь к своему properties-файлу:
 
