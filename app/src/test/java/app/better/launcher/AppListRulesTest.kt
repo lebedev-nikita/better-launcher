@@ -22,4 +22,12 @@ class AppListRulesTest {
         assertEquals(listOf("a", "b"), AppListRules.move(listOf("a", "b"), "a", -1))
         assertEquals(listOf("a", "b"), AppListRules.move(listOf("a", "b"), "unknown", 1))
     }
+
+    @Test fun `number and symbol section follows every alphabet section`() {
+        val letters = ('A'..'Z') + ('А'..'Я')
+        for (letter in letters) {
+            assertTrue("# must follow $letter as it does on the rail",
+                AppListRules.sectionOrder("#") > AppListRules.sectionOrder(letter.toString()))
+        }
+    }
 }

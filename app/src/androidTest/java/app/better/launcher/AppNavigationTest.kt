@@ -15,6 +15,62 @@ import org.junit.Test
 class AppNavigationTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
 
+    @Test fun draggingBelowAlphabetKeepsListAtEndWithAndWithoutSymbolApps() {
+        instrumentation.runOnMainSync {
+            val context = instrumentation.targetContext
+            for (symbolApps in listOf(false, true)) {
+                val labels = ('A'..'Z').map { "$it App" } + listOf("Я App") +
+                    if (symbolApps) listOf("123 App", "! App") else emptyList()
+                val apps = labels.mapIndexed { i, label ->
+                    AppEntry("test:$i", ComponentName("test", "App$i"), Process.myUserHandle(), label, ColorDrawable())
+                }
+                val index = AppSearchIndex(apps, AppEntry::originalLabel, AppEntry::originalLabel)
+                val adapter = AppListAdapter(AppEntry::originalLabel,
+                    { app, recycled -> ((recycled as? TextView) ?: TextView(context)).apply { text = app.originalLabel; minHeight = context.dp(62) } },
+                    { section, recycled -> ((recycled as? TextView) ?: TextView(context)).apply { text = section; minHeight = context.dp(40) } })
+                val list = ListView(context).apply { this.adapter = adapter }
+                fun layout() {
+                    list.measure(View.MeasureSpec.makeMeasureSpec(context.dp(360), View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(context.dp(300), View.MeasureSpec.EXACTLY))
+                    list.layout(0, 0, context.dp(360), context.dp(300))
+                }
+                adapter.submit(index.apps, true); layout()
+                val fullRail = listOf("★") + ('A'..'Z').map(Char::toString) + listOf("Я", "#")
+                val compactRail = listOf("★") + index.sections.sortedBy(AppListRules::sectionOrder)
+                for ((railLetters, leftHanded) in listOf(fullRail, compactRail).flatMap { letters -> listOf(false, true).map { letters to it } }) {
+                    val rail = AlphabetRail(context).apply {
+                        letters = railLetters
+                        this.leftHanded = leftHanded
+                    }
+                    rail.layout(0, 0, context.dp(92), context.dp(1000))
+                    val parent = android.widget.FrameLayout(context).apply { addView(rail) }
+                    val selections = mutableListOf<String>()
+                    rail.onSelect = { section ->
+                        selections.add(section)
+                        adapter.sectionPosition(section)?.let { list.setSelectionFromTop(it, 0) }
+                        layout()
+                    }
+                    val start = rail.height * .15f
+                    val step = (rail.height * .76f / rail.letters.size).coerceAtMost(context.dp(23).toFloat())
+                    val x = context.dp(if (leftHanded) 32 else 60).toFloat()
+                    fun touch(action: Int, y: Float) {
+                        val now = SystemClock.uptimeMillis()
+                        MotionEvent.obtain(now, now, action, x, y, 0).let { rail.onTouchEvent(it); it.recycle() }
+                    }
+                    touch(MotionEvent.ACTION_DOWN, start + (rail.letters.indexOf("Я") + .5f) * step)
+                    assertTrue(list.firstVisiblePosition > 0)
+                    touch(MotionEvent.ACTION_MOVE, start + (rail.letters.size - .5f) * step)
+                    touch(MotionEvent.ACTION_MOVE, rail.height.toFloat() + context.dp(100))
+                    touch(MotionEvent.ACTION_UP, rail.height.toFloat() + context.dp(100))
+                    assertEquals(if ("#" in railLetters) listOf("Я", "#") else listOf("Я"), selections)
+                    assertEquals("Dragging below the rail must keep the last apps visible (symbols=$symbolApps, left=$leftHanded)",
+                        adapter.count - 1, list.lastVisiblePosition)
+                    assertTrue("Dragging below the rail must not return to the top", list.firstVisiblePosition > 0)
+                    parent.removeAllViews()
+                }
+            }
+        }
+    }
+
     @Test fun alphabetDispatchesOnlyChangedSectionsButNewTouchReselects() {
         instrumentation.runOnMainSync {
             val context = instrumentation.targetContext
