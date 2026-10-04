@@ -258,7 +258,7 @@
       "name": "App management sheet",
       "kind": "custom",
       "refersTo": "app-management-sheet",
-      "description": "Native long-press menu: #031629 surface, #BCD7F3 text and contour icons, rounded 24dp top corners, installed app icon/title, growing 17sp action rows with 48dp icon slots and 16dp gap, inline expandable additional actions, divider and Better Launcher settings. System insets and 85% display-height scroll cap. Source: MainActivity.showAppMenu; this metadata does not replace native rendering."
+      "description": "Native long-press menu: #031629 surface, #BCD7F3 text and contour icons, rounded 24dp top corners, installed app icon/title with a focusable 48dp rename action, a 300ms window entrance from below and 180ms exit honoring disabled system animations, growing 17sp action rows with 48dp icon slots and 16dp gap, inline expandable additional actions, divider and Better Launcher settings. System insets and 85% display-height scroll cap. Source: MainActivity.showAppMenu; this metadata does not replace native rendering."
     }
   ],
   "narrative": {
