@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private var keyboardRequest: Runnable? = null
     private var homeScroll: ScrollView? = null
     private var homeFooter: View? = null
+    private var homeFooterHeight = 0
     private var widgetScroll: ScrollView? = null
     private var homeScrollPosition = 0
     private var widgetScrollPosition = 0
@@ -204,14 +205,13 @@ class MainActivity : AppCompatActivity() {
         val params = rail.layoutParams as FrameLayout.LayoutParams
         params.topMargin = screen.paddingTop
         params.leftMargin = screen.paddingLeft; params.rightMargin = screen.paddingRight
-        params.bottomMargin = screen.paddingBottom + if (page == "home") homeFooter?.height?.takeIf { it > 0 } ?: dp(66) else 0
+        homeFooter?.height?.takeIf { it > 0 }?.let { homeFooterHeight = it }
+        // Keep the alphabet under the finger when a drag opens the app list.
+        params.bottomMargin = screen.paddingBottom + homeFooterHeight.coerceAtLeast(dp(66))
         rail.layoutParams = params
     }
     private fun updateAlphabet() {
-        val sections = catalog.sections()
-        rail.activeLetters = sections
-        rail.letters = AppListRules.railLetters(sections,
-            shortWindow = resources.displayMetrics.heightPixels / resources.displayMetrics.density < 500)
+        rail.letters = AppListRules.railLetters(catalog.sections())
     }
     private fun refreshHomePreservingScroll() {
         val y = homeScroll?.scrollY ?: 0
@@ -269,11 +269,10 @@ class MainActivity : AppCompatActivity() {
         footer.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) updateRailBounds()
         }
-        val appsButton = horizontal().apply { background = touchBackground(); isFocusable = true; contentDescription = "Все приложения и поиск"; setOnClickListener { showApps(true) } }
-        appsButton.addView(GlyphView(this, Glyph.SEARCH), LinearLayout.LayoutParams(dp(48), dp(52)))
-        appsButton.addView(text("Все приложения", 14f, secondary).apply { minHeight = dp(52) }, LinearLayout.LayoutParams(0, -2, 1f))
-        footer.addView(appsButton, LinearLayout.LayoutParams(0, -2, 1f))
+        footer.addView(iconButton(Glyph.SEARCH, "Все приложения и поиск") { showApps(true) })
+        footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
         footer.addView(iconButton(Glyph.WIDGETS, "Экран виджетов") { showWidgets(true) })
+        footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
         footer.addView(iconButton(Glyph.SETTINGS, "Настройки лаунчера") { showSettings() })
         homeLayout.addView(footer, LinearLayout.LayoutParams(-1, -2))
         screen.addView(homeLayout, FrameLayout.LayoutParams(-1, -1))
@@ -477,24 +476,41 @@ class MainActivity : AppCompatActivity() {
         return presentSheet(dialog, body, scrollContent = scrollContent)
     }
     private fun presentSheet(dialog: Dialog, body: LinearLayout, appMenu: Boolean = false, scrollContent: Boolean = true): Dialog {
-        val scroll = if (scrollContent) ScrollView(this).apply { isFillViewport = false; isVerticalScrollBarEnabled = false; addView(body) } else null
+        val scroll = if (scrollContent) object : ScrollView(this) {
+            override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+                val height = if (appMenu) MeasureSpec.makeMeasureSpec(
+                    minOf(MeasureSpec.getSize(heightMeasureSpec), (resources.displayMetrics.heightPixels * .85f).toInt()),
+                    MeasureSpec.AT_MOST
+                ) else heightMeasureSpec
+                super.onMeasure(widthMeasureSpec, height)
+            }
+        }.apply { isFillViewport = false; isVerticalScrollBarEnabled = false; isClickable = appMenu; addView(body) } else null
+        // Keep the window fixed while the sheet is measured and animated inside it.
+        // Resizing a bottom-gravity window can reach the compositor a frame after its content.
+        val container = if (appMenu && scroll != null) FrameLayout(this).apply {
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            addView(scroll, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+            setOnClickListener { dialog.dismiss() }
+        } else scroll ?: body
         val windowScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.WINDOW_ANIMATION_SCALE, 1f) else 0f
         val animatorScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) else 0f
         val animateMenu = appMenu && scroll != null && windowScale > 0f && animatorScale > 0f && android.animation.ValueAnimator.areAnimatorsEnabled()
-        fun sheetHeight() = minOf(body.height + (scroll?.paddingTop ?: 0), (resources.displayMetrics.heightPixels * .85f).toInt())
+        fun sheetHeight() = minOf(body.height + (scroll?.paddingTop ?: 0) + (scroll?.paddingBottom ?: 0), (resources.displayMetrics.heightPixels * .85f).toInt())
         if (animateMenu) scroll?.translationY = resources.displayMetrics.heightPixels.toFloat()
-        dialog.setContentView(scroll ?: body)
+        dialog.setContentView(container)
         dialog.window?.apply {
             setBackgroundDrawableResource(android.R.color.transparent); addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(.3f); setGravity(Gravity.BOTTOM); setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
             if (appMenu) {
+                setLayout(-1, -1)
                 if (!animateMenu) setWindowAnimations(0)
                 WindowCompat.setDecorFitsSystemWindows(this, false)
                 isNavigationBarContrastEnforced = false
-                scroll?.setOnApplyWindowInsetsListener { _, insets ->
+                container.setOnApplyWindowInsetsListener { _, insets ->
                     val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
                     body.setPadding(dp(24) + bars.left, dp(12), dp(24) + bars.right, dp(16) + bars.bottom)
-                    scroll.setPadding(0, bars.top, 0, 0)
+                    val ime = insets.getInsets(WindowInsets.Type.ime())
+                    container.setPadding(0, bars.top, 0, (ime.bottom - bars.bottom).coerceAtLeast(0))
                     insets
                 }
             }
@@ -507,21 +523,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         if (appMenu && scroll != null) {
-            var prepared = false
             scroll.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
-                    if (dialog.isShowing) {
-                        val height = sheetHeight()
-                        if (!prepared || dialog.window?.attributes?.height != height) {
-                            prepared = true
-                            dialog.window?.setLayout(-1, height)
-                            scroll.requestLayout()
-                            return false
-                        }
-                    }
                     scroll.viewTreeObserver.removeOnPreDrawListener(this)
                     if (dialog.isShowing && animateMenu) {
-                        // Start only after insets and the window height have settled; never flash the final position.
+                        // Insets and bottom anchoring are resolved in this layout, before the first visible frame.
                         scroll.translationY = scroll.height.toFloat()
                         scroll.animate().translationY(0f).setDuration((300f * windowScale / animatorScale).toLong())
                             .setInterpolator(AnimationUtils.loadInterpolator(this@MainActivity, R.interpolator.app_menu_arrive)).start()
@@ -531,8 +537,8 @@ class MainActivity : AppCompatActivity() {
             })
         }
         currentDialog = dialog; dialog.show()
-        dialog.window?.setLayout(-1, if (scrollContent) -2 else (resources.displayMetrics.heightPixels * .85f).toInt())
-        if (scrollContent) body.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+        if (!appMenu) dialog.window?.setLayout(-1, if (scrollContent) -2 else (resources.displayMetrics.heightPixels * .85f).toInt())
+        if (!appMenu && scrollContent) body.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             val height = sheetHeight()
             if (height > 0 && dialog.window?.attributes?.height != height) dialog.window?.setLayout(-1, height)
         }
@@ -552,7 +558,8 @@ class MainActivity : AppCompatActivity() {
         sheet(title) { body, dialog ->
             val input = EditText(this).apply { setText(current); setTextColor(Color.WHITE); setHintTextColor(secondary); this.hint = hint; isSingleLine = true; selectAll() }
             body.addView(input, LinearLayout.LayoutParams(-1, dp(56)))
-            body.addView(action("Сохранить") { onSave(input.text.toString().trim()); dialog.dismiss() })
+            body.addView(action("Сохранить") { onSave(input.text.toString().trim()); dialog.dismiss() },
+                LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.END })
             input.requestFocus(); input.postDelayed({ (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT) }, 200)
         }
     }
@@ -572,15 +579,12 @@ class MainActivity : AppCompatActivity() {
             setImageDrawable(app.icon); setPadding(dp(8), dp(8), dp(8), dp(8))
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
-        header.addView(text(catalog.label(app), 23f, foreground).apply {
+        val name = text(catalog.label(app), 23f, foreground).apply {
             isAccessibilityHeading = true; isFocusable = true; minHeight = dp(48)
             gravity = Gravity.CENTER_VERTICAL; background = touchBackground()
             contentDescription = "Переименовать ${catalog.label(app)}"; tooltipText = "Переименовать"
-            setOnClickListener {
-                dialog.dismiss()
-                editText("Переименовать", catalog.label(app)) { store.rename(app.id, it); updateAlphabet(); showHome() }
-            }
-        }, LinearLayout.LayoutParams(0, -2, 1f))
+        }
+        header.addView(name, LinearLayout.LayoutParams(0, -2, 1f))
         body.addView(header); body.addView(gap(4))
         fun menuAction(container: LinearLayout, glyph: Glyph, label: String, dismiss: Boolean = true, action: () -> Unit): LinearLayout {
             val row = horizontal().apply {
@@ -593,20 +597,21 @@ class MainActivity : AppCompatActivity() {
             container.addView(row)
             return row
         }
-        menuAction(body, Glyph.STAR, if (favorite) "Убрать из избранного" else "В избранное") {
+        val commands = vertical()
+        menuAction(commands, Glyph.STAR, if (favorite) "Убрать из избранного" else "В избранное") {
             store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id
             showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное")
         }
-        menuAction(body, Glyph.INFO, "О приложении") {
+        menuAction(commands, Glyph.INFO, "О приложении") {
             runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
         }
-        menuAction(body, Glyph.NOTIFICATIONS, "Уведомления и быстрые действия") { showAppPopup(app) }
-        menuAction(body, Glyph.DELETE, "Удалить приложение") {
+        menuAction(commands, Glyph.NOTIFICATIONS, "Уведомления и быстрые действия") { showAppPopup(app) }
+        menuAction(commands, Glyph.DELETE, "Удалить приложение") {
             if (app.user == Process.myUserHandle()) safeStart(Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))) else message("Удалите приложение через настройки рабочего профиля")
         }
         val extra = vertical().apply { visibility = View.GONE }
         lateinit var expand: LinearLayout
-        expand = menuAction(body, Glyph.DOWN, "Дополнительно", dismiss = false) {
+        expand = menuAction(commands, Glyph.DOWN, "Дополнительно", dismiss = false) {
             val expanded = extra.isGone
             extra.isGone = !expanded
             expand.stateDescription = if (expanded) "Развёрнуто" else "Свёрнуто"
@@ -618,10 +623,48 @@ class MainActivity : AppCompatActivity() {
             store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome()
             message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - app.id; if (favorite) store.favorites = store.favorites + app.id; showHome() }
         }
-        body.addView(extra); body.addView(gap(16))
-        body.addView(View(this).apply { setBackgroundColor(foreground); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(-1, dp(1)).apply { marginStart = dp(8); marginEnd = dp(8) })
-        body.addView(gap(8))
-        menuAction(body, Glyph.SETTINGS, "Настройки Better Launcher") { showSettings() }
+        commands.addView(extra); commands.addView(gap(16))
+        commands.addView(View(this).apply { setBackgroundColor(foreground); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(-1, dp(1)).apply { marginStart = dp(8); marginEnd = dp(8) })
+        commands.addView(gap(8))
+        menuAction(commands, Glyph.SETTINGS, "Настройки Better Launcher") { showSettings() }
+        body.addView(commands)
+        val editor = vertical().apply { visibility = View.GONE }
+        val input = EditText(this).apply {
+            setTextColor(foreground); setHintTextColor(foreground); hint = "Название приложения"
+            contentDescription = "Название приложения"; textSize = 17f; minHeight = dp(56)
+            setPadding(dp(16), dp(12), dp(16), dp(12))
+            background = rounded(Color.TRANSPARENT, dp(16).toFloat()).apply { setStroke(dp(2), foreground) }
+            isSingleLine = true; imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+        }
+        fun saveName() {
+            store.rename(app.id, input.text.toString())
+            (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(input.windowToken, 0)
+            dialog.dismiss(); updateAlphabet(); refreshHomePreservingScroll()
+        }
+        editor.addView(input, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24); bottomMargin = dp(24) })
+        editor.addView(text("Сохранить", 16f, foreground).apply {
+            minHeight = dp(56); gravity = Gravity.END or Gravity.CENTER_VERTICAL; letterSpacing = .08f
+            background = touchBackground(); isFocusable = true; setOnClickListener { saveName() }
+        }, LinearLayout.LayoutParams(-1, -2))
+        body.addView(editor)
+        input.setOnEditorActionListener { _, action, event ->
+            if (action == android.view.inputmethod.EditorInfo.IME_ACTION_DONE ||
+                event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP) {
+                saveName(); true
+            } else false
+        }
+        name.setOnClickListener {
+            val label = catalog.label(app)
+            name.text = getString(R.string.rename_app_title, label); name.contentDescription = null; name.tooltipText = null
+            name.isClickable = false; name.background = null
+            commands.visibility = View.GONE; editor.visibility = View.VISIBLE
+            input.setText(label); input.requestFocus(); input.selectAll()
+            input.post {
+                if (dialog.isShowing && input.hasFocus()) {
+                    (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+                }
+            }
+        }
         presentSheet(dialog, body, appMenu = true)
     }
     private fun showAppPopup(app: AppEntry) {

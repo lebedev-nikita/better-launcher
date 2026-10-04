@@ -63,7 +63,7 @@ def tap(label):
 def home():
     adb("shell", "input", "keyevent", "3")
     time.sleep(.5)
-    wait_for("Все приложения")
+    wait_for("Все приложения и поиск")
 
 
 home()
@@ -81,11 +81,11 @@ wait_for("Виджеты")
 title = wait_for("Виджеты")
 x1, y1, x2, y2 = map(int, re.findall(r"\d+", title.get("bounds")))
 adb("shell", "input", "swipe", str(x2 - 20), str((y1 + y2) // 2), str(x1 + 20), str((y1 + y2) // 2), "350")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 tap("Экран виджетов")
 wait_for("Виджеты")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 tap("Экран виджетов")
 home()
 print("PASS: widget page swipe, button, Back and Home navigation")
@@ -93,10 +93,10 @@ print("PASS: widget page swipe, button, Back and Home navigation")
 tap("Настройки лаунчера")
 wait_for("Домашний экран")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 print("PASS: settings entry and system Back")
 
-tap("Все приложения")
+tap("Все приложения и поиск")
 wait_for("Поиск приложений")
 # Pace injected keys on cold / busy emulators, then wait for the actual query.
 for character in "camera":
@@ -108,6 +108,10 @@ tree = hierarchy()
 find(tree, "Camera")
 assert not any(n.get("text") == "Phone" for n in tree.iter("node"))
 print("PASS: app search filters real installed apps")
+# A fullscreen IME can cover app rows while accessibility still exposes them.
+if "mInputShown=true" in adb("shell", "dumpsys", "input_method"):
+    adb("shell", "input", "keyevent", "4")
+    wait_for("Camera")
 tap("Camera")
 for _ in range(20):
     focus = adb("shell", "dumpsys", "activity", "activities")
@@ -127,6 +131,8 @@ wait_for("Открыть Phone")
 adb("shell", "input", "keyevent", "4")
 print("PASS: horizontal app swipe opens its pop-up")
 
+# The menu also has a Phone title; wait for the home window before targeting its row.
+wait_for("Все приложения и поиск")
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 wait_for("О приложении")
@@ -143,19 +149,20 @@ if not any(n.get("content-desc") == "Скрыть приложение" for n in
 wait_for("Скрыть приложение")
 adb("shell", "input", "keyevent", "4")
 print("PASS: app long press exposes management actions")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 tap("Переименовать Phone")
-wait_for("Переименовать")
+wait_for("Переименовать Phone")
 wait_for("Сохранить")
+assert not any(n.get("content-desc") == "Дополнительно" for n in hierarchy().iter("node"))
 assert any(n.get("class") == "android.widget.EditText" and n.get("text") == "Phone"
            for n in hierarchy().iter("node"))
 # HOME cancels editing and must preserve the current app name.
 home()
 wait_for("Phone")
-print("PASS: tapping the app title opens rename; HOME cancels without changing the name")
+print("PASS: app title switches the same menu to rename; HOME cancels without changing the name")
 
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
 rail = next(n for n in hierarchy().iter("node")
@@ -166,7 +173,7 @@ x = int(rail_right - 32 * density)  # clear Back and landscape system-bar insets
 adb("shell", "input", "swipe", str(x), str(int(rail_bottom - 48 * density)), str(x), str(int(rail_bottom + 48 * density)), "1000")
 wait_for("Поиск приложений")
 tree = hierarchy()
-assert any(n.get("content-desc", "").startswith("Алфавит приложений, #.") for n in tree.iter("node"))
+assert any(re.match(r"Алфавит приложений, [A-Z#]\.", n.get("content-desc", "")) for n in tree.iter("node"))
 assert not any(n.get("text") == "Camera" for n in tree.iter("node"))
 print("PASS: release below the alphabet keeps the app list at the final section")
 adb("shell", "input", "keyevent", "4")

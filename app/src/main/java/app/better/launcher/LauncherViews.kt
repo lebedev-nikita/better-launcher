@@ -74,9 +74,7 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
 
 /** One continuous control, with scroll accessibility actions and keyboard alternatives. */
 class AlphabetRail(context: Context) : View(context) {
-    var letters = AppListRules.railLetters(emptySet(), shortWindow = false)
-        set(value) { field = value; invalidate() }
-    var activeLetters = emptySet<String>()
+    var letters = AppListRules.railLetters(emptySet())
         set(value) { field = value; invalidate() }
     var onSelect: (String) -> Unit = {}
     var alphabetLabel = "Алфавит приложений"
@@ -105,7 +103,7 @@ class AlphabetRail(context: Context) : View(context) {
             val wave = if (dragging) exp(-distance * distance).toFloat() else 0f
             val x = edge + (if (leftHanded) 1 else -1) * context.dp(24) * wave
             paint.textSize = (11f + wave * 7f) * resources.displayMetrics.scaledDensity
-            paint.color = if (letter == selected) Color.WHITE else if (letter in activeLetters || letter == "★") 0xE6FFFFFF.toInt() else 0x9EFFFFFF.toInt()
+            paint.color = if (letter == selected) Color.WHITE else 0xE6FFFFFF.toInt()
             canvas.drawText(letter, x, y - (paint.ascent() + paint.descent()) / 2f, paint)
         }
         if (dragging) {

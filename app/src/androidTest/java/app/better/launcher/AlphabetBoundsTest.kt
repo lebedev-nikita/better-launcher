@@ -37,10 +37,10 @@ class AlphabetBoundsTest {
                 adapter.submit(index.apps, true); layout()
                 for (short in listOf(false, true)) for (left in listOf(false, true)) for (finalMove in listOf(false, true)) {
                     val rail = AlphabetRail(context).apply {
-                        letters = AppListRules.railLetters(index.sections, short)
+                        letters = AppListRules.railLetters(index.sections)
                         leftHanded = left
                     }
-                    rail.layout(0, 0, context.dp(92), context.dp(1000))
+                    rail.layout(0, 0, context.dp(92), context.dp(if (short) 100 else 1000))
                     val parent = FrameLayout(context).apply { addView(rail) }
                     val selections = mutableListOf<String>()
                     rail.onSelect = { section ->
@@ -53,21 +53,25 @@ class AlphabetBoundsTest {
                     val x = context.dp(if (left) 32 else 60).toFloat()
                     fun touch(action: Int, y: Float) {
                         val now = SystemClock.uptimeMillis()
-                        MotionEvent.obtain(now, now, action, x, y, 0).let { rail.onTouchEvent(it); it.recycle() }
+                        MotionEvent.obtain(now, now, action, x, y, 0).let {
+                            assertTrue("Gesture must start within the visible rail", rail.onTouchEvent(it)); it.recycle()
+                        }
                     }
-                    val z = start + (rail.letters.indexOf("Z") + .5f) * step
+                    val initial = if (symbols) "Z" else "Y"
+                    val last = if (symbols) "#" else "Z"
+                    val z = start + (rail.letters.indexOf(initial) + .5f) * step
                     val below = rail.height.toFloat() + context.dp(100)
                     touch(MotionEvent.ACTION_DOWN, z)
                     touch(MotionEvent.ACTION_MOVE, z + step * .1f)
                     if (finalMove) touch(MotionEvent.ACTION_MOVE, below)
                     touch(MotionEvent.ACTION_UP, below)
-                    assertEquals("symbols=$symbols, short=$short, left=$left, finalMove=$finalMove", listOf("Z", "#"), selections)
+                    assertEquals("symbols=$symbols, short=$short, left=$left, finalMove=$finalMove", listOf(initial, last), selections)
                     assertEquals(adapter.count - 1, list.lastVisiblePosition)
                     assertTrue("Overflow must not return to the first apps", list.firstVisiblePosition > 0)
                     touch(MotionEvent.ACTION_DOWN, z)
                     touch(MotionEvent.ACTION_CANCEL, below)
                     touch(MotionEvent.ACTION_UP, below)
-                    assertEquals("A late release must not reactivate a cancelled gesture", listOf("Z", "#", "Z"), selections)
+                    assertEquals("A late release must not reactivate a cancelled gesture", listOf(initial, last, initial), selections)
                     parent.removeAllViews()
                 }
             }

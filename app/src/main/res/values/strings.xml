@@ -3,4 +3,5 @@
     <string name="wallpaper_dimming_percentage">%1$d%%</string>
     <string name="widget_dimension">%1$s · %2$d dp</string>
     <string name="widget_dimension_value">%1$d dp</string>
+    <string name="rename_app_title">Переименовать %1$s</string>
 </resources>
