@@ -1,72 +1,217 @@
 # Better Launcher
 
-Нативный Android-лаунчер на Kotlin для **Android 12+**. Первая версия повторяет основную компоновку и сценарии Niagara: вертикальное избранное, алфавитная «волна», поиск, уведомления и всплывающие меню приложений.
+Нативный Android-лаунчер на Kotlin для **Android 12+ (API 31)**. Направление проекта — воспроизвести интерфейс и сценарии Niagara под собственным именем Better Launcher. Главный экран работает с настоящими установленными приложениями и может быть назначен системным HOME-лаунчером.
 
-Это работающий HOME-лаунчер с реальными установленными приложениями. Полный паритет Niagara и Niagara Pro пока не достигнут: подробности в [таблице возможностей](docs/features.md).
+Версия **0.1.0** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки и стопку виджетов. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
 
-## Сборка
+[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.0 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.0). Репозиторий приватный: для скачивания нужен доступ к организации.
 
-Нужны JDK 17 или 21, Android SDK Platform 36 и Build Tools 35.0.0 или новее.
+## Документация проекта
 
-Создайте `local.properties` с путём к Android SDK:
+| Документ | Когда читать |
+| --- | --- |
+| [AGENTS.md](AGENTS.md) | Перед работой ИИ-агента: порядок действий, инварианты и выбор проверок |
+| [PRODUCT.md](PRODUCT.md) | Требования продукта, выбранная платформа и направление развития |
+| [DESIGN.md](DESIGN.md) | Изменения интерфейса, размеров, цветов, типографики и поведения при масштабировании |
+| [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
+| [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
+| [docs/verification.md](docs/verification.md) | Проверки версии 0.1.0 и границы подтверждённой совместимости |
+| [docs/releases/0.1.0.md](docs/releases/0.1.0.md) | Состав первого выпуска и инструкция установки |
 
-```properties
-sdk.dir=/path/to/android-sdk
-```
+## Стек и окружение
+
+Проект состоит из одного Android-модуля `app`. Интерфейс создаётся программно из нативных Views; настройки используют Material 3. Основная логика находится в пакете `app.better.launcher`. Отдельного сервера, учётных записей и инфраструктуры развёртывания нет.
+
+| Параметр | Текущее значение | Источник |
+| --- | --- | --- |
+| Минимальная версия Android | API 31 / Android 12 | [app/build.gradle.kts](app/build.gradle.kts) |
+| Compile SDK / Target SDK | 36 / 36 | [app/build.gradle.kts](app/build.gradle.kts) |
+| Application ID / namespace | `app.better.launcher` | [app/build.gradle.kts](app/build.gradle.kts) |
+| Kotlin | 2.2.21 | [build.gradle.kts](build.gradle.kts) |
+| Android Gradle Plugin | 8.13.2 | [build.gradle.kts](build.gradle.kts) |
+| Gradle | 8.13, через wrapper | [gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties) |
+| JVM target | 17; для сборки подходят JDK 17 и 21 | [app/build.gradle.kts](app/build.gradle.kts) |
+| Material Components | 1.13.0 | [app/build.gradle.kts](app/build.gradle.kts) |
+
+Нужны Android SDK Platform 36, Build Tools 35.0.0 и Platform Tools с `adb`. Для интеграционных проверок нужен телефон или Android Emulator; для UI-скрипта также Python 3. Android Studio можно использовать для открытия корня проекта, настройки Gradle JDK и установки SDK через SDK Manager. Версии инструментов задаются Gradle-файлами; при их обновлении обновляйте эту таблицу.
+
+## Получение кода и первая сборка
+
+С авторизованным GitHub CLI:
 
 ```sh
-./gradlew :app:assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+gh repo clone better-launcher/better-launcher
+cd better-launcher
 ```
 
-Откройте Better Launcher → кнопка настроек внизу → «Домашний экран» → выберите Better Launcher в системном диалоге Android. Установка APK сама по себе не меняет лаунчер по умолчанию.
+Создайте в корне `local.properties` с абсолютным путём к своему Android SDK. Android Studio также может создать этот файл:
 
-## Управление
+```properties
+sdk.dir=/absolute/path/to/android-sdk
+```
+
+Проверьте JDK и соберите APK:
+
+```sh
+java -version
+./gradlew :app:assembleDebug
+```
+
+Результат: `app/build/outputs/apk/debug/app-debug.apk`. Первый запуск Gradle загружает wrapper и зависимости. Для Windows используйте `gradlew.bat`; остальные примеры команд ниже рассчитаны на POSIX-оболочку.
+
+`local.properties`, каталоги сборки и локальные APK исключены из Git. Пути SDK, ключи подписи, токены и пользовательские резервные копии храните вне отслеживаемых файлов проекта.
+
+## Установка и использование
+
+Можно установить APK из релиза вручную либо через `adb`. Если подключено несколько устройств, указывайте serial явно:
+
+```sh
+adb devices
+adb -s emulator-5580 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
+```
+
+`emulator-5580` — пример; замените его на serial своего устройства. После запуска откройте настройки Better Launcher → «Домашний экран» → выберите Better Launcher в системном диалоге Android. Для возврата к другому лаунчеру используйте системные настройки приложения по умолчанию для домашнего экрана.
 
 | Действие | Результат |
 | --- | --- |
 | Нажать на приложение | Открыть приложение |
-| Удерживать приложение | Избранное, название, скрытие, сведения, удаление |
+| Удерживать приложение | Избранное, название, скрытие с отменой, сведения, удаление |
 | Провести по приложению в сторону | Уведомления, быстрые действия и прикреплённые приложения |
-| Провести по алфавиту | Перейти к букве в списке всех приложений |
+| Провести по алфавиту | Перейти к разделу списка всех приложений |
 | Нажать на звёздочку в алфавите | Вернуться к избранному |
-| «Все приложения» | Поиск с клавиатурой; Enter открывает первый результат |
+| «Все приложения» | Поиск; Enter открывает первый результат |
 | Нажать на дату | Ближайшие события календаря |
 | Удерживать свободное место | Настройки |
 
-Избранное, порядок, папки, названия, скрытые приложения и оформление сохраняются автоматически. Папки и избранное редактируются в настройках. Виджеты добавляются после системного разрешения и переключаются в стопке из четырёх виджетов.
+В настройках редактируются избранное, порядок и папки. Виджеты добавляются через системную привязку и, при необходимости, внешний экран настройки провайдера; стопка поддерживает до четырёх виджетов.
 
-## Доступ к данным
+## Архитектура и жизненный цикл
 
-Уведомления требуют отдельного разрешения в настройках Android. Календарь запрашивается при открытии событий. Уведомления и события остаются на устройстве; содержимое уведомлений не записывается на диск.
+Исходники находятся в [app/src/main/java/app/better/launcher](app/src/main/java/app/better/launcher).
 
-Погода включается только после выбора города. Поиск города и прогноз загружаются из [Open-Meteo](https://open-meteo.com/); геолокация не запрашивается. Экспорт и импорт настроек используют системный выбор файла. Идентификаторы виджетов привязаны к устройству и не переносятся через резервную копию.
+| Файл | Ответственность |
+| --- | --- |
+| [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt) | Главный экран, список приложений, настройки, диалоги, разрешения, календарь и MediaSession; координация фоновых задач |
+| [AppCatalog.kt](app/src/main/java/app/better/launcher/AppCatalog.kt) | Каталог через LauncherApps по доступным профилям, реальные значки, запуск, shortcuts, первичное избранное |
+| [AppListRules.kt](app/src/main/java/app/better/launcher/AppListRules.kt) | Чистые правила поиска, нормализации, алфавитных разделов и перемещения избранного |
+| [LauncherStore.kt](app/src/main/java/app/better/launcher/LauncherStore.kt) | SharedPreferences, папки, aliases, скрытые приложения, JSON-экспорт и проверяемый импорт |
+| [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt) | Canvas-обои, GlyphView, AlphabetRail, вспомогательные функции размеров и фона |
+| [LauncherNotificationService.kt](app/src/main/java/app/better/launcher/LauncherNotificationService.kt) | NotificationListenerService и общий NotificationHub в памяти |
+| [WidgetController.kt](app/src/main/java/app/better/launcher/WidgetController.kt) | AppWidgetHost, привязка, настройка, размещение и удаление виджетов |
+| [WeatherRepository.kt](app/src/main/java/app/better/launcher/WeatherRepository.kt) | Поиск города и текущая погода через Open-Meteo |
+
+Тема и цветовые роли заданы в [styles.xml](app/src/main/res/values/styles.xml), компоненты и разрешения — в [AndroidManifest.xml](app/src/main/AndroidManifest.xml). [Иконка приложения](app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml) адаптивная. `.impeccable/design.json` содержит вспомогательное представление дизайн-системы; его HTML/CSS-примеры иллюстрируют нативные компоненты, а Android-интерфейс определяется Kotlin и ресурсами.
+
+`MainActivity` имеет `singleTask`. Новый HOME-intent закрывает диалог и клавиатуру и возвращает главный экран. Каталог обновляется по callbacks LauncherApps и при возобновлении Activity. Загрузка каталога, календаря, погоды и файлов выполняется в executor; изменения Views возвращаются через main-thread Handler. Подписки, таймер и executor освобождаются в соответствующих lifecycle callbacks.
+
+AppWidgetHost слушает обновления между `onStart` и `onStop`. Обновление уведомлений при открытом диалоге откладывает перестроение главного экрана до закрытия диалога, сохраняя прокрутку. Эти сценарии важны при изменениях навигации и фонового обновления.
+
+## Хранение данных и интеграции
+
+Настройки находятся в приватном SharedPreferences-файле `launcher`. `AppEntry.id` имеет формат `<serial Android-профиля>:<ComponentName>`: один package name не идентифицирует приложение между профилями или несколькими launcher activities.
+
+| Данные | Представление в LauncherStore |
+| --- | --- |
+| Избранное | Упорядоченный список app/folder IDs в `favorites` |
+| Скрытые приложения | Набор IDs в `hidden` |
+| Названия | Ключи `alias:<app ID>` |
+| Папки | Ключи `folder:<UUID>`, JSON с `name` и `apps` |
+| Прикреплённые приложения | Ключи `popup:<app ID>` |
+| Виджеты | Локальные IDs в `widgets`; незавершённая привязка — `pendingWidgetId` |
+| Оформление и погода | Типизированные параметры, выбранный город и его координаты |
+
+Экспорт содержит `version: 1` и объект `preferences`. Это **версия формата резервной копии**, независимая от версии приложения. Импорт полностью проверяет допустимые ключи, типы и вложенный JSON до изменения настроек; повреждённый файл должен оставить предыдущие данные целыми. Лимит чтения — 1 000 000 символов. Экспорт исключает `widgets` и `pendingWidgetId`; импорт сохраняет текущий локальный список виджетов. Системное резервное копирование отключено в manifest и [data_extraction_rules.xml](app/src/main/res/xml/data_extraction_rules.xml); пользовательский экспорт/импорт работает через системный выбор файла.
+
+| Интеграция | Доступ и поведение |
+| --- | --- |
+| HOME | ROLE_HOME выбирается пользователем в системном диалоге |
+| Уведомления | Отдельный доступ к NotificationListenerService в настройках Android; фильтрация по package и UserHandle |
+| Музыка | Активные MediaSession доступны через включённый доступ к уведомлениям |
+| Календарь | READ_CALENDAR запрашивается при открытии событий; до 12 событий за ближайшие 7 дней |
+| Виджеты | Системное разрешение привязки и настройка конкретного провайдера |
+| Удаление приложения | REQUEST_DELETE_PACKAGES открывает системное подтверждение удаления |
+| Погода | INTERNET; пользователь выбирает город, геолокация не запрашивается |
+
+Содержимое уведомлений находится только в NotificationHub в памяти, не сохраняется и не передаётся по сети. События календаря читаются на устройстве. Сеть в текущем приложении используется для запросов города и прогноза на `geocoding-api.open-meteo.com` и `api.open-meteo.com`. Погодные запросы имеют connect/read timeouts по 8 секунд; прогноз обновляется с интервалом 30 минут или по явному запросу. Для работы с Open-Meteo в текущей реализации API-ключ не нужен.
 
 ## Проверки
 
+Для изменений Kotlin, ресурсов или конфигурации Android выполняйте:
+
 ```sh
-./gradlew :app:testDebugUnitTest :app:lintDebug
+./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+```
+
+| Проверка | Покрытие и отчёт |
+| --- | --- |
+| [AppListRulesTest](app/src/test/java/app/better/launcher/AppListRulesTest.kt) | Нормализация латиницы/кириллицы, поиск, порядок разделов и перемещение избранного; `app/build/reports/tests/testDebugUnitTest/index.html` |
+| [LauncherIntegrationTest](app/src/androidTest/java/app/better/launcher/LauncherIntegrationTest.kt) | Сохранение, папки, backup, атомарный отказ импорта, реальный каталог и aliases/hidden; `app/build/reports/androidTests/connected/debug/index.html` |
+| Android lint | `app/build/reports/lint-results-debug.html` |
+| [smoke-test.py](scripts/smoke-test.py) | Шесть UI-сценариев через adb и отсутствие аварий процесса лаунчера |
+
+### Интеграционные тесты
+
+Запускайте на выделенном тестовом устройстве. Gradle устанавливает тестируемый APK и test APK, а по завершении удаляет их; для продолжения UI-проверок установите основной APK заново. Тесты временно заменяют SharedPreferences и восстанавливают их в `finally`, но выделенный эмулятор всё равно нужен из-за установки/удаления приложений.
+
+```sh
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-Для UI-проверки используйте отдельный эмулятор Google APIs с английским системным языком и установленными Camera и Phone. После `connectedDebugAndroidTest` установите основной APK снова: Gradle удаляет тестовые приложения по завершении.
+### Проверка интерфейса
+
+Используйте эмулятор Google APIs с английским системным языком, установленными Camera и Phone, исходным избранным и алфавитом справа. На одном устройстве запускайте один UI-скрипт за раз. Лог AndroidRuntime проверяется целиком; старую аварию сначала разберите, затем начните отдельный запуск с очищенным логом.
 
 ```sh
 adb -s emulator-5580 install -r app/build/outputs/apk/debug/app-debug.apk
 adb -s emulator-5580 shell cmd package set-home-activity app.better.launcher/.MainActivity
+adb -s emulator-5580 logcat -c
 python3 scripts/smoke-test.py --serial emulator-5580
 ```
 
-Скрипт проверяет настройки, системную кнопку «Назад», поиск, запуск Camera, возврат домой, свайп по приложению, долгое нажатие и алфавит. Отчёт: [docs/verification.md](docs/verification.md).
+Команда назначения HOME выше предназначена для тестового эмулятора. Скрипт проверяет настройки/Back, поиск, запуск Camera/HOME, свайп меню, долгое нажатие и алфавит; он не проверяет полный набор интеграций. Для UI-изменений отдельно проверяйте портрет, узкий экран с font scale 1.3, горизонтальную ориентацию, клавиатуру и системный Back. Снимки текущей проверки храните в локальной `.impeccable/review/`.
 
-## Структура
+Для 0.1.0 подтверждены 3 unit-теста, 3 интеграционных теста, UI-сценарии на Android 12 и Android 16 и отдельные сценарии уведомлений/виджета Clock на Android 16. Lint того выпуска: 0 ошибок, 35 предупреждений. Проверки физических устройств, Android 13–15, рабочих профилей, TalkBack и остальных провайдеров ещё не завершены. Полный список границ — в [отчёте](docs/verification.md). CI workflow в репозитории пока отсутствует.
 
-- `MainActivity.kt` — главный экран, список приложений, нативные меню и настройки.
-- `AppCatalog.kt` — приложения, профили и Android shortcuts.
-- `LauncherStore.kt` — сохранение настроек и проверяемый импорт резервной копии.
-- `LauncherViews.kt` — алфавит, пиктограммы и собственные векторные обои.
-- `LauncherNotificationService.kt` — системные уведомления, доступные для просмотра и ответа.
-- `WidgetController.kt` — привязка и размещение Android App Widgets.
-- `WeatherRepository.kt` — город и прогноз Open-Meteo.
+### Если что-то не работает
 
-Интерфейс сопоставлялся с [официальным описанием Niagara](https://niagaralauncher.com/) и [описанием всплывающих меню](https://help.niagaralauncher.app/article/115-pop-ups). Бренд приложения — Better Launcher; исходный код, пиктограммы и встроенные обои созданы в этом проекте.
+| Симптом | Что проверить |
+| --- | --- |
+| SDK location not found / отсутствующая платформа | `local.properties`, Platform 36 и Build Tools в SDK Manager |
+| Ошибка версии Java | `java -version`, Gradle JDK в Android Studio; JDK 17 или 21 |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Сертификаты двух APK различаются; соберите обновление тем же ключом. Удаление приложения сбрасывает его данные, поэтому сначала экспортируйте настройки |
+| HOME открывает другой лаунчер | Системное приложение по умолчанию для домашнего экрана; на тестовом эмуляторе — команда назначения HOME выше |
+| Нет уведомлений или управления музыкой | Включён ли доступ к уведомлениям, есть ли активное уведомление/MediaSession |
+| Нет погоды или событий | Выбран ли город, доступен ли интернет; выдан ли READ_CALENDAR и есть ли события в интервале 7 дней |
+| UI-скрипт не находит Camera/Phone | Язык и состав эмулятора, начальное избранное, сторона алфавита, установка APK после connected-тестов |
+
+Для диагностики процесса:
+
+```sh
+adb -s emulator-5580 logcat -d -s AndroidRuntime:E
+```
+
+## Git и выпуски
+
+Основная ветка — `main`, основной remote — `origin` (`https://github.com/better-launcher/better-launcher.git`). В исходной рабочей копии также есть `personal`, указывающий на стартовый репозиторий; он не является целью публикации Better Launcher. Перед коммитом и пушем сверяйте ветку, remote и состав изменений.
+
+Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Выпуск 0.1.0 соответствует тегу `v0.1.0`. В GitHub Release находятся `better-launcher-0.1.0-debug.apk` и `SHA256SUMS.txt`; APK подписан локальным отладочным ключом. Debug-ключи разных разработчиков могут различаться. Постоянная production-подпись и публикация в магазине пока не настроены; release build type уже включает R8, но signing configuration для него отсутствует.
+
+Для следующего выпуска обновите Android-версию, выполните проверки и подготовьте `docs/releases/X.Y.Z.md`. Укажите фактические ограничения и используйте абсолютные ссылки в тексте GitHub Release. После коммита подготовьте файлы и новый тег, заменив `X.Y.Z` реальным номером версии:
+
+```sh
+./gradlew :app:assembleDebug
+mkdir -p artifacts
+cp app/build/outputs/apk/debug/app-debug.apk artifacts/better-launcher-X.Y.Z-debug.apk
+(cd artifacts && shasum -a 256 better-launcher-X.Y.Z-debug.apk > SHA256SUMS.txt)
+git tag -a vX.Y.Z -m "Better Launcher X.Y.Z"
+git push origin main
+git push origin vX.Y.Z
+gh release create vX.Y.Z artifacts/better-launcher-X.Y.Z-debug.apk artifacts/SHA256SUMS.txt \
+  --repo better-launcher/better-launcher --title "Better Launcher X.Y.Z" \
+  --notes-file docs/releases/X.Y.Z.md --verify-tag
+```
+
+APK и контрольная сумма прикрепляются к релизу, исходники остаются в Git. Проверяйте опубликованный тег, commit и digest загруженных файлов. Уже опубликованный `v0.1.0` сохраняет историю первого выпуска.
+
+Интерфейс опирается на [официальное описание Niagara](https://niagaralauncher.com/) и [описание всплывающих меню](https://help.niagaralauncher.app/article/115-pop-ups). Код лаунчера, пиктограммы и встроенные Canvas-обои созданы для Better Launcher. Отдельный файл LICENSE для проекта пока не добавлен.
