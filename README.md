@@ -2,9 +2,9 @@
 
 Нативный Android-лаунчер на Kotlin для **Android 12+ (API 31)**. Направление проекта — воспроизвести интерфейс и сценарии Niagara под собственным именем Better Launcher. Главный экран работает с настоящими установленными приложениями и может быть назначен системным HOME-лаунчером.
 
-Версия **0.1.1** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки и стопку виджетов. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
+Версия **0.1.2** реализует вертикальное избранное, алфавитную «волну», поиск, меню приложений, уведомления, папки и стопку виджетов. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
 
-[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.1 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.1). Репозиторий приватный: для скачивания нужен доступ к организации.
+[Репозиторий](https://github.com/better-launcher/better-launcher) · [Релиз 0.1.2 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.1.2). Репозиторий приватный: для скачивания нужен доступ к организации.
 
 ## Документация проекта
 
@@ -16,6 +16,8 @@
 | [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
 | [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
 | [docs/verification.md](docs/verification.md) | Проверки версии 0.1.0 и границы подтверждённой совместимости |
+| [docs/app-navigation-verification.md](docs/app-navigation-verification.md) | Диагностика задержки списка и проверки оптимизации |
+| [docs/releases/0.1.2.md](docs/releases/0.1.2.md) | Патч плавности списка приложений и алфавита |
 | [docs/releases/0.1.1.md](docs/releases/0.1.1.md) | Изменения и проверки патч-релиза |
 | [docs/releases/0.1.0.md](docs/releases/0.1.0.md) | Состав первого выпуска и инструкция установки |
 
@@ -206,7 +208,7 @@ adb -s emulator-5580 logcat -d -s AndroidRuntime:E
 
 Основная ветка — `main`, основной remote — `origin` (`https://github.com/better-launcher/better-launcher.git`). В исходной рабочей копии также есть `personal`, указывающий на стартовый репозиторий; он не является целью публикации Better Launcher. Перед коммитом и пушем сверяйте ветку, remote и состав изменений.
 
-Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Текущий выпуск 0.1.1 соответствует тегу `v0.1.1`. В GitHub Release находятся `better-launcher-0.1.1-debug.apk` и `SHA256SUMS.txt`; APK подписан локальным отладочным ключом. Debug-ключи разных разработчиков могут различаться. Постоянная production-подпись и публикация в магазине пока не настроены; release build type уже включает R8, но signing configuration для него отсутствует.
+Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Текущий выпуск 0.1.2 соответствует тегу `v0.1.2`; первый выпуск сохранён под тегом `v0.1.0`. В текущем GitHub Release находятся `better-launcher-0.1.2-debug.apk` и `SHA256SUMS.txt`; APK подписан локальным отладочным ключом. Debug-ключи разных разработчиков могут различаться. Постоянная production-подпись и публикация в магазине пока не настроены; release build type уже включает R8, но signing configuration для него отсутствует.
 
 Для следующего выпуска обновите Android-версию, выполните проверки и подготовьте `docs/releases/X.Y.Z.md`. Укажите фактические ограничения и используйте абсолютные ссылки в тексте GitHub Release. После коммита подготовьте файлы и новый тег, заменив `X.Y.Z` реальным номером версии:
 

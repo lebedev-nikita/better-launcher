@@ -65,7 +65,8 @@ class AppNavigationTest {
             list.setSelectionFromTop(adapter.sectionPosition("C")!!, 0)
             list.setSelectionFromTop(adapter.sectionPosition("T")!!, 0)
             layout()
-            assertEquals("T", (list.getChildAt(0) as TextView).text.toString())
+            // In keyboard mode ListView selects the first enabled app after the heading.
+            assertEquals("T", (list.getChildAt(0) as TextView).text.toString().substringBefore(" "))
             val createdAfterJump = creations
             list.setSelectionFromTop(adapter.sectionPosition("B")!!, 0); layout()
             assertTrue("Rows should be reused after another jump", creations <= createdAfterJump + 1)

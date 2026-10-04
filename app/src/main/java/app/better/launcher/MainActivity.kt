@@ -573,7 +573,7 @@ class MainActivity : AppCompatActivity() {
         section(body, "Резервная копия")
         body.addView(setting("Экспорт настроек", "Сохранить избранное, папки и оформление") { safeStartForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE, "better-launcher.json"), 51) })
         body.addView(setting("Импорт настроек", "Восстановить из файла; текущие настройки заменятся") { safeStartForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE), 52) })
-        body.addView(gap(22)); body.addView(text("Better Launcher 0.1.0", 14f, secondary).apply { setPadding(dp(16), 0, 0, 0) })
+        body.addView(gap(22)); body.addView(text("Better Launcher ${packageManager.getPackageInfo(packageName, 0).versionName}", 14f, secondary).apply { setPadding(dp(16), 0, 0, 0) })
         scroll.addView(body); screen.addView(scroll, FrameLayout.LayoutParams(-1, -1))
     }
     private fun section(body: LinearLayout, label: String) {
