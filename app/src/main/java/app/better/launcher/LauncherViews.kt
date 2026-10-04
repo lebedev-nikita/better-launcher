@@ -28,7 +28,7 @@ class WallpaperScrimView(context: Context) : View(context) {
     }
 }
 
-enum class Glyph { SEARCH, SETTINGS, BACK, CLOSE, MORE, UP, DOWN, CHEVRON, FOLDER, PLUS, CHECK, SUN, PLAY, PAUSE, NEXT, PREVIOUS, EDIT, NOTIFICATIONS }
+enum class Glyph { SEARCH, SETTINGS, BACK, CLOSE, MORE, UP, DOWN, CHEVRON, FOLDER, PLUS, CHECK, SUN, PLAY, PAUSE, NEXT, PREVIOUS, EDIT, NOTIFICATIONS, WIDGETS }
 
 class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE) : View(context) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.8f; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND }
@@ -41,6 +41,10 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
         fun line(x1: Float, y1: Float, x2: Float, y2: Float) = canvas.drawLine(x1, y1, x2, y2, paint)
         fun path(vararg points: Float) { val p = Path(); p.moveTo(points[0], points[1]); var i = 2; while (i < points.size) { p.lineTo(points[i], points[i + 1]); i += 2 }; canvas.drawPath(p, paint) }
         when (glyph) {
+            Glyph.WIDGETS -> {
+                canvas.drawRect(3f, 3f, 10f, 10f, paint); canvas.drawRect(14f, 3f, 21f, 10f, paint)
+                canvas.drawRect(3f, 14f, 10f, 21f, paint); canvas.drawRect(14f, 14f, 21f, 21f, paint)
+            }
             Glyph.SEARCH -> { canvas.drawCircle(10.5f, 10.5f, 6.5f, paint); line(15.5f, 15.5f, 21f, 21f) }
             Glyph.BACK -> { path(14f, 5f, 7f, 12f, 14f, 19f); line(7f, 12f, 22f, 12f) }
             Glyph.CLOSE -> { line(6f, 6f, 18f, 18f); line(6f, 18f, 18f, 6f) }

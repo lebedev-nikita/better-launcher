@@ -194,7 +194,13 @@ Settings are label-description rows on an opaque dark surface. Destination rows 
 
 ### Navigation
 
-The footer provides app search on the left and settings on the right. The app list has back and clear controls; Android Back returns to home. Settings hide the alphabet rail. Favorites navigation uses the star entry; the normal rail contains Latin letters, available Cyrillic sections, and a final number/symbol section.
+The footer provides app search on the left, then a widget-page button and settings on the right. The search label wraps within the remaining space at large font sizes. The alphabet rail reserves system/IME insets and the measured home footer height so it cannot cover or intercept footer actions. The app list has back and clear controls; Android Back returns to home. Settings and the widget page hide the alphabet rail. Favorites navigation uses the star entry; the normal rail contains Latin letters, available Cyrillic sections, and a final number/symbol section.
+
+### Widgets
+
+Home hosts at most one widget. A rightward swipe on free home space opens the widget page to the left; a leftward swipe there returns home. The footer button offers the same destination without a gesture. Swipes starting on app rows or hosted widget content keep their existing interactions; the outer (24dp) system Back edge remains reserved.
+
+The widget page uses the same wallpaper, type, and native actions. Its header has Home, a (26sp) wrapping title, and Add; the list has (28dp) side margins and (24dp) gaps between widgets. A Home action stays below the scroll. Provider labels grow above a (48dp) minimum height, and widget widths derive from the measured space after insets. Menus move a widget between screens or delete it. Choosing a new home widget moves the old one left. A (180ms) directional slide/fade honors disabled Android animations.
 
 ### App Rows and Alphabet Rail
 

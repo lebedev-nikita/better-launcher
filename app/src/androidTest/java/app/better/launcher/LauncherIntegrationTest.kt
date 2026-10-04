@@ -58,6 +58,52 @@ class LauncherIntegrationTest {
         assertTrue(runCatching { store.import("""{"version":1,"preferences":{"folder:x":"{}"}}""") }.isFailure)
         assertEquals(before, store.export())
     }
+    @Test fun widgetPlacementMigratesAndSurvivesRecreationAndPortableImport() = isolated { store ->
+        // Existing stacks keep their first widget on home; the others move left.
+        store.prefs.edit().putString("widgets", "[\"41\",\"42\",\"43\"]").commit()
+        assertEquals(41, store.homeWidgetId)
+        assertEquals(listOf(42, 43), store.pageWidgets)
+        store.homeWidgetId = 42
+        assertEquals(listOf(41, 43), store.pageWidgets)
+        store.set("pendingWidgetId", "44")
+        store.set("pendingWidgetDestination", "widgets")
+        val backup = store.export()
+        assertFalse(backup.contains("homeWidgetId"))
+        assertFalse(backup.contains("pendingWidget"))
+        store.import(backup)
+        val reloaded = LauncherStore(context)
+        assertEquals(42, reloaded.homeWidgetId)
+        assertEquals(listOf(41, 43), reloaded.pageWidgets)
+        assertEquals("44", reloaded.string("pendingWidgetId"))
+        assertEquals("widgets", reloaded.string("pendingWidgetDestination"))
+        // Backups from another device cannot replace host IDs or the home selection.
+        reloaded.import("""{"version":1,"preferences":{"widgets":"[\"99\"]","homeWidgetId":"99","pendingWidgetId":"100","pendingWidgetDestination":"home"}}""")
+        assertEquals(listOf(41, 42, 43), reloaded.widgets)
+        assertEquals(42, reloaded.homeWidgetId)
+        assertEquals("44", reloaded.string("pendingWidgetId"))
+        assertEquals("widgets", reloaded.string("pendingWidgetDestination"))
+        reloaded.homeWidgetId = null
+        reloaded.import(backup)
+        assertNull(LauncherStore(context).homeWidgetId)
+        assertEquals(listOf(41, 42, 43), reloaded.pageWidgets)
+    }
+    @Test fun deletingHomeDoesNotPromoteAnotherWidgetAndInvalidImportIsAtomic() = isolated { store ->
+        store.widgets = listOf(41, 42, 43)
+        store.homeWidgetId = 42
+        store.widgets = listOf(41, 43)
+        assertNull(store.homeWidgetId)
+        assertEquals(listOf(41, 43), store.pageWidgets)
+        val before = store.prefs.all
+        listOf(
+            """{"homeWidgetId":42}""",
+            """{"homeWidgetId":"invalid"}""",
+            """{"widgets":"invalid"}""",
+            """{"pendingWidgetDestination":"invalid"}"""
+        ).forEach { invalid ->
+            assertTrue(runCatching { store.import("""{"version":1,"preferences":$invalid}""") }.isFailure)
+            assertEquals(before, store.prefs.all)
+        }
+    }
     @Test fun catalogLoadsRealAppsAndRespectsHiddenAppsAndAliases() = isolated { store ->
         val catalog = AppCatalog(context, store)
         catalog.load()

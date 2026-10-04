@@ -2,7 +2,7 @@
 """UI smoke checks against a dedicated emulator with Better Launcher installed.
 
 Requires adb and Python 3. Run after setting Better Launcher as this emulator's
-default home app. It launches Camera and changes no launcher preferences.
+default home app. It launches Camera and preserves favorites and widget placement.
 """
 import argparse
 import re
@@ -20,8 +20,13 @@ def adb(*command):
 
 
 def hierarchy():
-    adb("shell", "uiautomator", "dump", "/sdcard/better-smoke.xml")
-    return ET.fromstring(adb("shell", "cat", "/sdcard/better-smoke.xml"))
+    for _ in range(3):
+        adb("shell", "rm", "-f", "/data/local/tmp/better-smoke.xml")
+        result = adb("shell", "uiautomator", "dump", "/data/local/tmp/better-smoke.xml")
+        if "dumped to" in result:
+            return ET.fromstring(adb("shell", "cat", "/data/local/tmp/better-smoke.xml"))
+        time.sleep(.4)
+    raise AssertionError("uiautomator could not capture the current UI")
 
 
 def find(tree, label):
@@ -65,6 +70,24 @@ launcher_nodes = [n for n in hierarchy().iter("node") if n.get("package") == "ap
 assert not any(n.get("content-desc") == "Часы" or re.fullmatch(r"\d{1,2}:\d{2}", n.get("text", ""))
                or re.fullmatch(r"[А-Яа-яЁё]+, \d{1,2} [а-яё]+", n.get("text", "")) for n in launcher_nodes)
 print("PASS: home has no built-in clock or date")
+scroll = next(n for n in hierarchy().iter("node") if n.get("class") == "android.widget.ScrollView")
+x1, y1, x2, y2 = map(int, re.findall(r"\d+", scroll.get("bounds")))
+density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
+y = int(y1 + 12 * density)  # free space above favorites, inside system insets
+adb("shell", "input", "swipe", str(int(x2 * .25)), str(y), str(int(x2 * .65)), str(y), "350")
+wait_for("Виджеты")
+title = wait_for("Виджеты")
+x1, y1, x2, y2 = map(int, re.findall(r"\d+", title.get("bounds")))
+adb("shell", "input", "swipe", str(x2 - 20), str((y1 + y2) // 2), str(x1 + 20), str((y1 + y2) // 2), "350")
+wait_for("Все приложения")
+tap("Экран виджетов")
+wait_for("Виджеты")
+adb("shell", "input", "keyevent", "4")
+wait_for("Все приложения")
+tap("Экран виджетов")
+home()
+print("PASS: widget page swipe, button, Back and Home navigation")
+
 tap("Настройки лаунчера")
 wait_for("Домашний экран")
 adb("shell", "input", "keyevent", "4")

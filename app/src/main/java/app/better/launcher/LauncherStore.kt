@@ -1,6 +1,7 @@
 package app.better.launcher
 
 import android.content.Context
+import androidx.core.content.edit
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -42,7 +43,22 @@ class LauncherStore(context: Context) {
     fun setPopUp(id: String, ids: List<String>) = putArray("popup:$id", ids)
     var widgets: List<Int>
         get() = array("widgets").mapNotNull(String::toIntOrNull)
-        set(value) = putArray("widgets", value.map(Int::toString))
+        set(value) {
+            // Freeze the legacy stack's first widget before changing its contents.
+            val home = homeWidgetId
+            prefs.edit {
+                putString("widgets", JSONArray(value.distinct().map(Int::toString)).toString())
+                putString("homeWidgetId", home?.takeIf { it in value }?.toString().orEmpty())
+            }
+        }
+    var homeWidgetId: Int?
+        get() = if (prefs.contains("homeWidgetId")) string("homeWidgetId").toIntOrNull()?.takeIf { it in widgets }
+            else widgets.firstOrNull()
+        set(value) {
+            require(value == null || value in widgets)
+            set("homeWidgetId", value?.toString().orEmpty())
+        }
+    val pageWidgets: List<Int> get() { val home = homeWidgetId; return widgets.filter { it != home } }
     fun bool(key: String, default: Boolean = false) = prefs.getBoolean(key, default)
     fun string(key: String, default: String = "") = prefs.getString(key, default) ?: default
     fun set(key: String, value: Boolean) { prefs.edit().putBoolean(key, value).apply() }
@@ -50,7 +66,7 @@ class LauncherStore(context: Context) {
     fun export(): String {
         val json = JSONObject().put("version", 1)
         val values = JSONObject()
-        prefs.all.filterKeys { it != "widgets" && it != "pendingWidgetId" }.forEach { (key, value) -> if (value is Set<*>) values.put(key, JSONArray(value.toList())) else values.put(key, value) }
+        prefs.all.filterKeys { it !in localWidgetKeys }.forEach { (key, value) -> if (value is Set<*>) values.put(key, JSONArray(value.toList())) else values.put(key, value) }
         return json.put("preferences", values).toString(2)
     }
     fun import(text: String) {
@@ -62,7 +78,7 @@ class LauncherStore(context: Context) {
         val accepted = mutableMapOf<String, Any>()
         val booleanKeys = setOf("initialized", "gesturesLearned", "dimWallpaper", "hideIcons", "largeText", "compact", "leftHanded", "hideStatus", "clock24", "smallClock", "notifications")
         // Keep the ignored legacy wallpaper key compatible with version 1 backups.
-        val stringKeys = setOf("favorites", "widgets", "font", "wallpaper", "weatherCity", "weatherLat", "weatherLon")
+        val stringKeys = setOf("favorites", "font", "wallpaper", "weatherCity", "weatherLat", "weatherLon") + localWidgetKeys
         values.keys().forEach { key ->
             val value = values.get(key)
             require(key.length <= 300)
@@ -87,12 +103,20 @@ class LauncherStore(context: Context) {
             val ids = JSONArray(value as String)
             repeat(ids.length()) { ids.getString(it) }
         }
+        (accepted["widgets"] as? String)?.let { value ->
+            val ids = JSONArray(value)
+            repeat(ids.length()) { require(ids.getString(it).toIntOrNull()?.let { id -> id > 0 } == true) }
+        }
+        listOf("homeWidgetId", "pendingWidgetId").forEach { key ->
+            (accepted[key] as? String)?.let { require(it.isEmpty() && key == "homeWidgetId" || it.toIntOrNull()?.let { id -> id > 0 } == true) }
+        }
+        (accepted["pendingWidgetDestination"] as? String)?.let { require(it == "home" || it == "widgets") }
         // Widget ids belong to this device and this host, never to a portable backup.
-        accepted.remove("widgets")
-        val localWidgets = prefs.getString("widgets", "[]")
+        localWidgetKeys.forEach(accepted::remove)
+        val localWidgets = prefs.all.filterKeys { it in localWidgetKeys }
         prefs.edit().apply {
             clear()
-            putString("widgets", localWidgets)
+            localWidgets.forEach { (key, value) -> putString(key, value as String) }
             accepted.forEach { (key, value) -> when (value) {
                 is Boolean -> putBoolean(key, value)
                 is String -> putString(key, value)
@@ -100,4 +124,5 @@ class LauncherStore(context: Context) {
             } }
         }.apply()
     }
+    private val localWidgetKeys = setOf("widgets", "homeWidgetId", "pendingWidgetId", "pendingWidgetDestination")
 }

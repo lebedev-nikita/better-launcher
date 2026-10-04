@@ -24,6 +24,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isNotEmpty
+import androidx.core.view.isEmpty
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
 import java.text.SimpleDateFormat
@@ -40,7 +41,7 @@ class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var wallpaperScrim: WallpaperScrimView
-    private lateinit var screen: FrameLayout
+    private lateinit var screen: PageSwipeLayout
     private lateinit var rail: AlphabetRail
     private var page = "home"
     private var allApps: ListView? = null
@@ -49,6 +50,10 @@ class MainActivity : AppCompatActivity() {
     private var emptyApps: LinearLayout? = null
     private var keyboardRequest: Runnable? = null
     private var homeScroll: ScrollView? = null
+    private var homeFooter: View? = null
+    private var widgetScroll: ScrollView? = null
+    private var homeScrollPosition = 0
+    private var widgetScrollPosition = 0
     private var search: EditText? = null
     private var weatherText: TextView? = null
     private var weather: Weather? = null
@@ -80,7 +85,8 @@ class MainActivity : AppCompatActivity() {
         root = FrameLayout(this)
         wallpaperScrim = WallpaperScrimView(this)
         root.addView(wallpaperScrim, FrameLayout.LayoutParams(-1, -1))
-        screen = FrameLayout(this)
+        screen = PageSwipeLayout(this)
+        screen.onSwipe = { if (page == "home") showWidgets(true) else if (page == "widgets") returnFromWidgets() }
         root.addView(screen, FrameLayout.LayoutParams(-1, -1))
         rail = AlphabetRail(this)
         rail.onSelect = { letter ->
@@ -94,7 +100,7 @@ class MainActivity : AppCompatActivity() {
             val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
             val ime = insets.getInsets(WindowInsets.Type.ime())
             screen.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
-            rail.setPadding(0, bars.top, 0, bars.bottom)
+            updateRailBounds()
             insets
         }
         setContentView(root)
@@ -102,7 +108,18 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { handleBack() }
         })
-        applyAppearance(); showHome(); refreshApps()
+        homeScrollPosition = savedInstanceState?.getInt("homeScrollPosition") ?: 0
+        widgetScrollPosition = savedInstanceState?.getInt("widgetScrollPosition") ?: 0
+        applyAppearance()
+        if (savedInstanceState?.getString("page") == "widgets") showWidgets() else showHome()
+        refreshApps()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("page", page)
+        outState.putInt("homeScrollPosition", homeScroll?.scrollY ?: homeScrollPosition)
+        outState.putInt("widgetScrollPosition", widgetScroll?.scrollY ?: widgetScrollPosition)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); currentDialog?.dismiss(); hideKeyboard(); showHome() }
@@ -122,7 +139,11 @@ class MainActivity : AppCompatActivity() {
         catalog.launcherApps.unregisterCallback(packageCallback)
         handler.removeCallbacksAndMessages(null); executor.shutdownNow(); currentDialog?.dismiss(); super.onDestroy()
     }
-    private fun handleBack() { if (page != "home") { hideKeyboard(); showHome() } else if (currentDialog != null) currentDialog?.dismiss() }
+    private fun handleBack() {
+        if (currentDialog != null) currentDialog?.dismiss()
+        else if (page == "widgets") returnFromWidgets()
+        else if (page != "home") { hideKeyboard(); showHome() }
+    }
 
     private fun refreshApps() {
         if (loadingApps) { refreshQueued = true; return }
@@ -156,9 +177,14 @@ class MainActivity : AppCompatActivity() {
     }
     fun gap(height: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
     private fun clearScreen(newPage: String) {
+        if (page == "home" && newPage == "widgets") homeScrollPosition = homeScroll?.scrollY ?: 0
+        widgetScroll?.let { widgetScrollPosition = it.scrollY }
         keyboardRequest?.let(handler::removeCallbacks); keyboardRequest = null
-        page = newPage; screen.removeAllViews(); allApps = null; appAdapter = null; emptyApps = null; appQuery = ""; homeScroll = null; search = null; weatherText = null
-        rail.visibility = if (newPage == "settings") View.GONE else View.VISIBLE
+        page = newPage; screen.removeAllViews(); allApps = null; appAdapter = null; emptyApps = null; appQuery = ""; homeScroll = null; homeFooter = null; widgetScroll = null; search = null; weatherText = null
+        screen.direction = when (newPage) { "home" -> 1; "widgets" -> -1; else -> 0 }
+        screen.accessibilityPaneTitle = when (newPage) { "home" -> "Главный экран"; "widgets" -> "Виджеты"; "apps" -> "Все приложения"; else -> "Настройки" }
+        rail.visibility = if (newPage == "home" || newPage == "apps") View.VISIBLE else View.GONE
+        updateRailBounds()
     }
     private fun contentMargins(): Pair<Int, Int> = if (store.bool("leftHanded")) dp(84) to dp(28) else dp(28) to dp(84)
     private fun applyAppearance() {
@@ -166,8 +192,16 @@ class MainActivity : AppCompatActivity() {
         wallpaperScrim.shade = .61f + if (store.bool("dimWallpaper", true)) .06f else 0f
         rail.leftHanded = store.bool("leftHanded")
         rail.layoutParams = FrameLayout.LayoutParams(dp(92), -1, if (rail.leftHanded) Gravity.START else Gravity.END)
+        updateRailBounds()
         if (store.bool("hideStatus")) window.insetsController?.hide(WindowInsets.Type.statusBars()) else window.insetsController?.show(WindowInsets.Type.statusBars())
         window.insetsController?.setSystemBarsAppearance(0, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)
+    }
+    private fun updateRailBounds() {
+        val params = rail.layoutParams as FrameLayout.LayoutParams
+        params.topMargin = screen.paddingTop
+        params.leftMargin = screen.paddingLeft; params.rightMargin = screen.paddingRight
+        params.bottomMargin = screen.paddingBottom + if (page == "home") homeFooter?.height?.takeIf { it > 0 } ?: dp(66) else 0
+        rail.layoutParams = params
     }
     private fun updateAlphabet() {
         val sections = catalog.sections()
@@ -199,7 +233,7 @@ class MainActivity : AppCompatActivity() {
             line.minimumHeight = dp(48); line.isFocusable = true; line.background = touchBackground()
             line.setOnClickListener { showWeather() }; content.addView(line)
         }
-        val widgetBox = vertical(); widgets.render(widgetBox)
+        val widgetBox = vertical(); widgets.renderHome(widgetBox)
         if (widgetBox.childCount > 0) { content.addView(gap(14)); content.addView(widgetBox) }
         mediaView()?.let { content.addView(gap(12)); content.addView(it) }
         if (content.isNotEmpty()) content.addView(gap(if (shortWindow) 18 else 30))
@@ -228,14 +262,58 @@ class MainActivity : AppCompatActivity() {
         content.setOnTouchListener { _, event -> gesture.onTouchEvent(event) }
         content.isLongClickable = true; content.setOnLongClickListener { showSettings(); true }
         val footer = horizontal().apply { setPadding(dp(22), dp(7), dp(22), dp(7)); minimumHeight = dp(66) }
+        homeFooter = footer
+        footer.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop) updateRailBounds()
+        }
         val appsButton = horizontal().apply { background = touchBackground(); isFocusable = true; contentDescription = "Все приложения и поиск"; setOnClickListener { showApps(true) } }
         appsButton.addView(GlyphView(this, Glyph.SEARCH), LinearLayout.LayoutParams(dp(48), dp(52)))
-        appsButton.addView(text("Все приложения", 14f, secondary), LinearLayout.LayoutParams(-2, dp(52)))
-        footer.addView(appsButton)
-        footer.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+        appsButton.addView(text("Все приложения", 14f, secondary).apply { minHeight = dp(52) }, LinearLayout.LayoutParams(0, -2, 1f))
+        footer.addView(appsButton, LinearLayout.LayoutParams(0, -2, 1f))
+        footer.addView(iconButton(Glyph.WIDGETS, "Экран виджетов") { showWidgets(true) })
         footer.addView(iconButton(Glyph.SETTINGS, "Настройки лаунчера") { showSettings() })
         homeLayout.addView(footer, LinearLayout.LayoutParams(-1, -2))
         screen.addView(homeLayout, FrameLayout.LayoutParams(-1, -1))
+    }
+
+    fun showWidgets(animate: Boolean = false) {
+        hideKeyboard(); clearScreen("widgets")
+        val column = vertical().apply { setPadding(dp(20), dp(12), dp(20), 0) }
+        val header = horizontal()
+        header.addView(iconButton(Glyph.BACK, "На главный экран") { returnFromWidgets() })
+        header.addView(text("Виджеты", 26f), LinearLayout.LayoutParams(0, -2, 1f))
+        header.addView(iconButton(Glyph.PLUS, "Добавить виджет") { widgets.add() })
+        column.addView(header)
+        val content = vertical().apply { setPadding(dp(8), dp(12), dp(8), dp(24)) }
+        widgets.renderPage(content)
+        if (content.isEmpty()) {
+            content.addView(gap(24))
+            content.addView(text("Все нужные виджеты — здесь", 23f))
+            content.addView(gap(12))
+            content.addView(text("Добавьте виджеты. Через меню виджета можно выбрать один для главного экрана.", 16f, secondary))
+            content.addView(gap(16))
+            content.addView(action("Добавить виджет") { widgets.add() })
+        }
+        widgetScroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(content) }
+        column.addView(widgetScroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        column.addView(action("На главный экран") { returnFromWidgets() }, LinearLayout.LayoutParams(-1, -2))
+        screen.addView(column, FrameLayout.LayoutParams(-1, -1))
+        widgetScroll?.post { widgetScroll?.scrollTo(0, widgetScrollPosition) }
+        if (animate) animatePage(column, -1)
+    }
+
+    private fun returnFromWidgets() {
+        showHome()
+        homeScroll?.post { homeScroll?.scrollTo(0, homeScrollPosition) }
+        animatePage(screen.getChildAt(0), 1)
+    }
+
+    private fun animatePage(view: View, direction: Int) {
+        if (!android.animation.ValueAnimator.areAnimatorsEnabled()) return
+        view.translationX = direction * dp(48).toFloat()
+        view.alpha = .6f
+        view.animate().translationX(0f).alpha(1f).setDuration(180)
+            .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
     }
 
     private fun appRow(app: AppEntry, favorite: Boolean): View = AppRow(favorite).apply { bind(app) }
@@ -250,6 +328,7 @@ class MainActivity : AppCompatActivity() {
 
         init {
             orientation = HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+            tag = PageSwipeLayout.BLOCK_SWIPE
             minimumHeight = dp(if (store.bool("compact")) 54 else 62)
             background = touchBackground(); isFocusable = true
             if (!store.bool("hideIcons")) {
@@ -298,6 +377,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun folderRow(folder: AppFolder): View = horizontal().apply {
+        tag = PageSwipeLayout.BLOCK_SWIPE
         minimumHeight = dp(62); background = touchBackground(); isFocusable = true
         addView(GlyphView(this@MainActivity, Glyph.FOLDER), LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
         addView(text(folder.name, 21f), LinearLayout.LayoutParams(0, -2, 1f))
@@ -547,7 +627,8 @@ class MainActivity : AppCompatActivity() {
         header.addView(text("Настройки", 26f), LinearLayout.LayoutParams(0, dp(64), 1f)); body.addView(header)
         body.addView(setting("Домашний экран", if (isDefaultHome()) "Better Launcher установлен по умолчанию" else "Выбрать Better Launcher по умолчанию") { requestHomeRole() })
         body.addView(setting("Избранные приложения", "Порядок, приложения и папки") { editFavorites() })
-        body.addView(setting("Виджеты", "${store.widgets.size} из 4 · переключение в стопке") { widgets.add() })
+        body.addView(setting("Виджеты", "Экран слева · ${store.pageWidgets.size} виджетов") { showWidgets() })
+        body.addView(setting("Виджет на главном экране", if (store.homeWidgetId == null) "Добавить один виджет" else "Заменить · прежний останется на экране виджетов") { widgets.add(toHome = true) })
         section(body, "Внешний вид")
         body.addView(setting("Обои", "Выбрать системные обои") { safeStart(Intent(Intent.ACTION_SET_WALLPAPER)) })
         body.addView(setting("Шрифт", when (store.string("font", "sans-serif")) { "sans-serif-light" -> "Лёгкий"; "sans-serif-condensed" -> "Компактный"; "serif" -> "С засечками"; else -> "Системный" }) {
