@@ -23,9 +23,9 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.core.view.isNotEmpty
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
@@ -47,8 +47,6 @@ class MainActivity : AppCompatActivity() {
     private var homeScroll: ScrollView? = null
     private var allList: LinearLayout? = null
     private var search: EditText? = null
-    private var clock: TextView? = null
-    private var date: TextView? = null
     private var weatherText: TextView? = null
     private var weather: Weather? = null
     private var weatherLoading = false
@@ -60,8 +58,8 @@ class MainActivity : AppCompatActivity() {
     private var refreshQueued = false
     private var resumed = false
     private var notificationRefreshPending = false
-    private val ticker = object : Runnable {
-        override fun run() { updateClock(); refreshWeather(); handler.postDelayed(this, 30_000) }
+    private val weatherTicker = object : Runnable {
+        override fun run() { refreshWeather(); handler.postDelayed(this, 30_000) }
     }
     private val packageCallback = object : LauncherApps.Callback() {
         override fun onPackageAdded(packageName: String, user: UserHandle) = refreshApps()
@@ -69,9 +67,6 @@ class MainActivity : AppCompatActivity() {
         override fun onPackageChanged(packageName: String, user: UserHandle) = refreshApps()
         override fun onPackagesAvailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) = refreshApps()
         override fun onPackagesUnavailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) = refreshApps()
-    }
-    private val timeReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) { updateClock() }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,9 +97,6 @@ class MainActivity : AppCompatActivity() {
         }
         setContentView(root)
         catalog.launcherApps.registerCallback(packageCallback, handler)
-        val filter = IntentFilter().apply { addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED); addAction(Intent.ACTION_DATE_CHANGED) }
-        if (Build.VERSION.SDK_INT >= 33) registerReceiver(timeReceiver, filter, RECEIVER_NOT_EXPORTED)
-        else registerReceiver(timeReceiver, filter)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() { handleBack() }
         })
@@ -121,11 +113,11 @@ class MainActivity : AppCompatActivity() {
                 if (currentDialog == null) refreshHomePreservingScroll() else notificationRefreshPending = true
             }
         }
-        handler.post(ticker); applyAppearance(); refreshApps(); refreshWeather()
+        handler.post(weatherTicker); applyAppearance(); refreshApps(); refreshWeather()
     }
-    override fun onPause() { resumed = false; handler.removeCallbacks(ticker); NotificationHub.onChanged = null; super.onPause() }
+    override fun onPause() { resumed = false; handler.removeCallbacks(weatherTicker); NotificationHub.onChanged = null; super.onPause() }
     override fun onDestroy() {
-        catalog.launcherApps.unregisterCallback(packageCallback); unregisterReceiver(timeReceiver)
+        catalog.launcherApps.unregisterCallback(packageCallback)
         handler.removeCallbacksAndMessages(null); executor.shutdownNow(); currentDialog?.dismiss(); super.onDestroy()
     }
     private fun handleBack() { if (page != "home") { hideKeyboard(); showHome() } else if (currentDialog != null) currentDialog?.dismiss() }
@@ -162,7 +154,7 @@ class MainActivity : AppCompatActivity() {
     }
     fun gap(height: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
     private fun clearScreen(newPage: String) {
-        page = newPage; screen.removeAllViews(); allScroll = null; homeScroll = null; allList = null; search = null; clock = null; date = null; weatherText = null
+        page = newPage; screen.removeAllViews(); allScroll = null; homeScroll = null; allList = null; search = null; weatherText = null
         rail.visibility = if (newPage == "settings") View.GONE else View.VISIBLE
     }
     private fun contentMargins(): Pair<Int, Int> = if (store.bool("leftHanded")) dp(84) to dp(28) else dp(28) to dp(84)
@@ -196,14 +188,6 @@ class MainActivity : AppCompatActivity() {
         val viewportDp = resources.displayMetrics.heightPixels / resources.displayMetrics.density
         val shortWindow = viewportDp < 500
         content.setPadding(start, if (shortWindow) dp(24) else dp((viewportDp * .14f).coerceIn(36f, 126f)), end, dp(24))
-        clock = text("", if (shortWindow) 52f else if (store.bool("smallClock")) 58f else 76f).apply {
-            typeface = Typeface.create("sans-serif-light", Typeface.NORMAL); letterSpacing = -.035f
-            contentDescription = "Часы"; setOnClickListener { safeStart(Intent(android.provider.AlarmClock.ACTION_SHOW_ALARMS)) }
-            isFocusable = true
-        }
-        content.addView(clock, LinearLayout.LayoutParams(-1, -2))
-        date = text("", 17f).apply { minHeight = dp(40); background = touchBackground(); isFocusable = true; setOnClickListener { showAgenda() } }
-        content.addView(date)
         if (store.string("weatherCity").isNotBlank()) {
             val line = horizontal()
             line.addView(GlyphView(this, Glyph.SUN), LinearLayout.LayoutParams(dp(24), dp(32)))
@@ -215,7 +199,7 @@ class MainActivity : AppCompatActivity() {
         val widgetBox = vertical(); widgets.render(widgetBox)
         if (widgetBox.childCount > 0) { content.addView(gap(14)); content.addView(widgetBox) }
         mediaView()?.let { content.addView(gap(12)); content.addView(it) }
-        content.addView(gap(if (shortWindow) 18 else 30))
+        if (content.isNotEmpty()) content.addView(gap(if (shortWindow) 18 else 30))
         val favorites = store.favorites.filter { catalog.find(it) != null || store.folder(it) != null }
         if (favorites.isEmpty()) {
             content.addView(text(if (loadingApps) "Загружаем приложения…" else "Ваши приложения, всегда под рукой", 20f))
@@ -249,7 +233,6 @@ class MainActivity : AppCompatActivity() {
         footer.addView(iconButton(Glyph.SETTINGS, "Настройки лаунчера") { showSettings() })
         homeLayout.addView(footer, LinearLayout.LayoutParams(-1, -2))
         screen.addView(homeLayout, FrameLayout.LayoutParams(-1, -1))
-        updateClock()
     }
 
     private fun appRow(app: AppEntry, favorite: Boolean): View {
@@ -360,12 +343,6 @@ class MainActivity : AppCompatActivity() {
             ?: sectionViews.keys.lastOrNull() ?: return
         allList?.post { sectionViews[section]?.let { allScroll?.scrollTo(0, it.top) } }
     }
-    private fun updateClock() {
-        val pattern = if (store.bool("clock24", android.text.format.DateFormat.is24HourFormat(this))) "HH:mm" else "h:mm"
-        clock?.text = SimpleDateFormat(pattern, Locale.getDefault()).format(Date())
-        date?.text = SimpleDateFormat("EEEE, d MMMM", Locale.forLanguageTag("ru")).format(Date()).replaceFirstChar { it.titlecase() }
-    }
-
     fun sheet(title: String, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()
         val dialog = Dialog(this)
@@ -544,9 +521,7 @@ class MainActivity : AppCompatActivity() {
         body.addView(toggle("Компактный список", "Уменьшить расстояние между приложениями", "compact"))
         body.addView(toggle("Алфавит слева", "Для использования левой рукой", "leftHanded") { applyAppearance() })
         body.addView(toggle("Скрыть строку состояния", "Больше места на главном экране", "hideStatus") { applyAppearance() })
-        section(body, "Часы и информация")
-        body.addView(toggle("24-часовой формат", "Формат времени", "clock24", android.text.format.DateFormat.is24HourFormat(this)))
-        body.addView(toggle("Небольшие часы", "Уменьшить размер часов", "smallClock"))
+        section(body, "Информация")
         body.addView(setting("Погода", store.string("weatherCity").ifBlank { "Выбрать город · Open-Meteo" }) { chooseWeatherCity() })
         body.addView(setting("Календарь", if (checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED) "Просмотр ближайших событий" else "Разрешить показ событий") { showAgenda() })
         section(body, "Уведомления")

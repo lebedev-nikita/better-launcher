@@ -31,13 +31,24 @@ def find(tree, label):
     raise AssertionError(f"Missing UI element: {label}")
 
 
+def wait_for(label):
+    deadline = time.monotonic() + 15
+    while True:
+        try:
+            return find(hierarchy(), label)
+        except (AssertionError, subprocess.CalledProcessError, ET.ParseError):
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(.5)
+
+
 def center(node):
     x1, y1, x2, y2 = map(int, re.findall(r"\d+", node.get("bounds")))
     return (x1 + x2) // 2, (y1 + y2) // 2
 
 
 def tap(label):
-    x, y = center(find(hierarchy(), label))
+    x, y = center(wait_for(label))
     adb("shell", "input", "tap", str(x), str(y))
     time.sleep(.4)
 
@@ -45,14 +56,19 @@ def tap(label):
 def home():
     adb("shell", "input", "keyevent", "3")
     time.sleep(.5)
-    find(hierarchy(), "Все приложения")
+    wait_for("Все приложения")
 
 
 home()
+# This scenario uses the initial favorites without user-added widgets.
+launcher_nodes = [n for n in hierarchy().iter("node") if n.get("package") == "app.better.launcher"]
+assert not any(n.get("content-desc") == "Часы" or re.fullmatch(r"\d{1,2}:\d{2}", n.get("text", ""))
+               or re.fullmatch(r"[А-Яа-яЁё]+, \d{1,2} [а-яё]+", n.get("text", "")) for n in launcher_nodes)
+print("PASS: home has no built-in clock or date")
 tap("Настройки лаунчера")
-find(hierarchy(), "Домашний экран")
+wait_for("Домашний экран")
 adb("shell", "input", "keyevent", "4")
-find(hierarchy(), "Все приложения")
+wait_for("Все приложения")
 print("PASS: settings entry and system Back")
 
 tap("Все приложения")
@@ -62,33 +78,38 @@ find(tree, "Camera")
 assert not any(n.get("text") == "Phone" for n in tree.iter("node"))
 print("PASS: app search filters real installed apps")
 tap("Camera")
-focus = adb("shell", "dumpsys", "activity", "activities")
-resumed = re.findall(r"topResumedActivity=.*", focus)
-if not resumed:  # Android 12 uses the older dumpsys field name.
-    resumed = re.findall(r"mResumedActivity:.*", focus)
+for _ in range(20):
+    focus = adb("shell", "dumpsys", "activity", "activities")
+    resumed = re.findall(r"topResumedActivity=.*", focus)
+    if not resumed:  # Android 12 uses the older dumpsys field name.
+        resumed = re.findall(r"mResumedActivity:.*", focus)
+    if resumed and "app.better.launcher/" not in resumed[-1]:
+        break
+    time.sleep(.25)
 assert resumed and "app.better.launcher/" not in resumed[-1], resumed
 home()
 print("PASS: launching an app and returning Home")
 
-x, y = center(find(hierarchy(), "Phone"))
+x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x + 220), str(y), "350")
-find(hierarchy(), "Открыть Phone")
+wait_for("Открыть Phone")
 adb("shell", "input", "keyevent", "4")
 print("PASS: horizontal app swipe opens its pop-up")
 
-x, y = center(find(hierarchy(), "Phone"))
+x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
-find(hierarchy(), "Переименовать")
-find(hierarchy(), "Скрыть приложение")
+wait_for("Переименовать")
+wait_for("Скрыть приложение")
 adb("shell", "input", "keyevent", "4")
 print("PASS: app long press exposes management actions")
+wait_for("Все приложения")
 
 size = adb("shell", "wm", "size")
 width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
 x = int(width - 30 * density)  # clear the OS Back gesture edge
 adb("shell", "input", "swipe", str(x), str(int(height * .4)), str(x), str(int(height * .75)), "600")
-find(hierarchy(), "Поиск приложений")
+wait_for("Поиск приложений")
 adb("shell", "input", "keyevent", "4")
 home()
 print("PASS: alphabet gesture opens the app list")

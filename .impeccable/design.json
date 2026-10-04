@@ -132,7 +132,7 @@
       },
       "setting-title": {
         "displayName": "Settings label",
-        "purpose": "Primary settings labels and the home date."
+        "purpose": "Primary settings labels."
       },
       "body": {
         "displayName": "Body and actions",

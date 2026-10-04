@@ -121,7 +121,7 @@ Warm dark neutrals support a small peach accent; wallpaper palettes supply the b
 
 - **Warm charcoal** (`surface`): opaque settings background, bottom sheets, and transient messages.
 - **White foreground** (`on-surface`): app names, headings, actions, and programmatically drawn vector icons.
-- **Warm pale text** (`on-surface-variant`): settings descriptions, notification previews, date-adjacent information, search hints, and secondary actions.
+- **Warm pale text** (`on-surface-variant`): settings descriptions, notification previews, weather information, search hints, and secondary actions.
 - **Warm gray outline** (`outline`): outline role supplied to Material 3 controls.
 - **White touch wash** (`touch-ripple`): repeated native `RippleDrawable` feedback on actions and clickable rows. The frontmatter uses CSS RGBA ordering; the Kotlin source uses Android ARGB ordering.
 
@@ -137,10 +137,9 @@ Android supplies the wallpaper behind the transparent launcher window, including
 
 ### Hierarchy
 
-- **Clock:** native `sans-serif-light`, normal style, tight tracking (`-0.035em`); normal phone (76sp), small-clock preference (58sp), and short window (52sp). This is the current clock component, not a universal display-heading prescription.
 - **Screen heading:** settings title (26sp); sheet titles use `title`.
 - **App labels:** `app-label`, or `app-label-large` when the user enables larger app names. Labels wrap to two lines before ellipsizing.
-- **Setting titles and date:** `setting-title`.
+- **Setting titles:** `setting-title`.
 - **Body and actions:** `body`; explanatory copy also uses nearby sizes according to its component.
 - **Secondary labels:** `label`, including section labels and footer text.
 - **Details:** `detail`, including settings descriptions and notification previews.
@@ -153,7 +152,9 @@ Android supplies the wallpaper behind the transparent launcher window, including
 
 The phone UI uses one vertical content column. Home content and the app list reserve space for the alphabet: normal content margins are (28dp) at the start and (84dp) at the end; left-handed mode reverses these. The rail occupies a (92dp) overlay, while its resting letter center stays (32dp) inside the screen edge. Its touch corridor is (48dp), between (24dp) and (72dp) from the edge.
 
-The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Home top padding is 14% of viewport height, clamped to (36–126dp). Below a viewport height (500dp), it becomes (24dp), the clock shrinks, the clock-to-list gap decreases, and the alphabet shows only available app sections plus favorites. This is a height adaptation; no width breakpoint or tablet layout is implemented.
+The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Home top padding is 14% of viewport height, clamped to (36–126dp). Below a viewport height (500dp), it becomes (24dp), the optional information-to-list gap decreases, and the alphabet shows only available app sections plus favorites. This is a height adaptation; no width breakpoint or tablet layout is implemented.
+
+Home has no built-in clock or date. When no weather, widget, or media content is present, favorites start directly after the top padding; otherwise an (18dp) short-window or (30dp) normal gap separates that content from favorites. Calendar events remain available from settings.
 
 Normal app rows have a minimum height (62dp); compact mode uses (54dp). Installed app icons are (38dp) with a trailing gap (16dp). Settings rows have a minimum height (76dp), grow with their text, and separate label from description with (5dp). The shared spacing steps in the frontmatter recur across actions, content, and containers; they do not imply an enforced grid.
 
