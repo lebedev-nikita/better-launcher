@@ -88,7 +88,7 @@ class AppMenuTest {
     }
     private fun node(matches: (AccessibilityNodeInfo) -> Boolean): AccessibilityNodeInfo {
         var found: AccessibilityNodeInfo? = null
-        await { found = findNode(instrumentation.uiAutomation.rootInActiveWindow, matches); found != null }
+        await { found = findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.isVisibleToUser && matches(it) }; found != null }
         return found!!
     }
     private fun await(condition: () -> Boolean) {

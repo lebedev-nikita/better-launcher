@@ -258,7 +258,7 @@
       "name": "App management sheet",
       "kind": "custom",
       "refersTo": "app-management-sheet",
-      "description": "Native long-press menu: #031629 surface, #BCD7F3 text and contour icons, rounded 24dp top corners, installed app icon/title, growing 17sp action rows with 48dp icon slots and 16dp gap, inline expandable additional actions, divider and Better Launcher settings. System insets and 85% display-height scroll cap. Source: MainActivity.showAppMenu; this metadata does not replace native rendering."
+      "description": "Native long-press menu: #031629 surface, #BCD7F3 text and contour icons, rounded 24dp top corners, installed app icon and tappable 48dp-minimum title with accessible rename action, growing 17sp action rows with 48dp icon slots and 16dp gap, inline expandable attached-app/hide actions without a rename row, divider and Better Launcher settings. System insets and 85% display-height scroll cap. Native 300ms decelerating rise (0.16, 1, 0.3, 1) after settled insets/window layout, native window dimming and 180ms exit, and system animation scaling. Source: MainActivity.showAppMenu and anim/app_menu_*; this metadata does not replace native rendering."
     },
     {
       "name": "Widget provider picker",
