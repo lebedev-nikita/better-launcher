@@ -133,7 +133,7 @@ wait_for("О приложении")
 wait_for("Настройки Better Launcher")
 assert not any(n.get("content-desc") == "Переименовать" for n in hierarchy().iter("node"))
 tap("Дополнительно")
-wait_for("Переименовать")
+assert not any(n.get("content-desc") == "Переименовать" for n in hierarchy().iter("node"))
 # Additional actions can require scrolling on short windows / larger fonts.
 tree = hierarchy()
 if not any(n.get("content-desc") == "Скрыть приложение" for n in tree.iter("node")):
@@ -144,6 +144,18 @@ wait_for("Скрыть приложение")
 adb("shell", "input", "keyevent", "4")
 print("PASS: app long press exposes management actions")
 wait_for("Все приложения")
+
+x, y = center(wait_for("Phone"))
+adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
+tap("Переименовать Phone")
+wait_for("Переименовать")
+wait_for("Сохранить")
+assert any(n.get("class") == "android.widget.EditText" and n.get("text") == "Phone"
+           for n in hierarchy().iter("node"))
+# HOME cancels editing and must preserve the current app name.
+home()
+wait_for("Phone")
+print("PASS: tapping the app title opens rename; HOME cancels without changing the name")
 
 size = adb("shell", "wm", "size")
 width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
