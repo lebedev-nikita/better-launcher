@@ -97,10 +97,9 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
 
     private fun updateLetters() {
         val sections = entries.map { it.section }.toSet()
-        rail.activeLetters = sections
         // The sheet can be short even in portrait, especially with a larger system font.
         val short = height / resources.displayMetrics.density < 500 || resources.configuration.fontScale > 1.1f
-        rail.letters = AppListRules.railLetters(sections, short)
+        rail.letters = AppListRules.railLetters(sections)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {

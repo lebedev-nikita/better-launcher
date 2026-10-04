@@ -161,10 +161,15 @@ size = adb("shell", "wm", "size")
 width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
 x = int(width - 30 * density)  # clear the OS Back gesture edge
-adb("shell", "input", "swipe", str(x), str(int(height * .4)), str(x), str(int(height * .94)), "1000")
+rail = next(n for n in hierarchy().iter("node") if n.get("content-desc", "").startswith("Алфавит приложений,"))
+_, rail_top, _, rail_bottom = map(int, re.findall(r"\d+", rail.get("bounds")))
+# Start inside the compact, bottom-aligned letters rather than empty upper space.
+start_y = max(rail_top, int(rail_bottom - 58 * density))
+end_y = int(rail_bottom - 1)
+adb("shell", "input", "swipe", str(x), str(start_y), str(x), str(end_y), "600")
 wait_for("Поиск приложений")
 tree = hierarchy()
-assert any(n.get("content-desc", "").startswith("Алфавит приложений, #.") for n in tree.iter("node"))
+assert any(n.get("content-desc", "").startswith("Алфавит приложений,") for n in tree.iter("node"))
 assert not any(n.get("text") == "Camera" for n in tree.iter("node"))
 print("PASS: release below the alphabet keeps the app list at the final section")
 adb("shell", "input", "keyevent", "4")

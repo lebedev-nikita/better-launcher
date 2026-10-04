@@ -6,6 +6,7 @@ import android.os.Process
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
+import android.view.KeyEvent
 import android.widget.ListView
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
@@ -14,6 +15,37 @@ import org.junit.Test
 
 class AppNavigationTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
+
+    @Test fun compactAlphabetLeavesUpperSpaceAndBackEdgeFreeInBothHandedModes() {
+        instrumentation.runOnMainSync {
+            val context = instrumentation.targetContext
+            val rail = AlphabetRail(context).apply { letters = AppListRules.railLetters(setOf("C", "Y")) }
+            val parent = android.widget.FrameLayout(context).apply { addView(rail) }
+            rail.layout(0, 0, context.dp(92), context.dp(700))
+            val selections = mutableListOf<String>()
+            rail.onSelect = { selections.add(it) }
+            fun touch(action: Int, x: Float, y: Float): Boolean {
+                val now = SystemClock.uptimeMillis()
+                return MotionEvent.obtain(now, now, action, context.dp(x).toFloat(), context.dp(y).toFloat(), 0).let {
+                    rail.onTouchEvent(it).also { _ -> it.recycle() }
+                }
+            }
+            for (leftHanded in listOf(false, true)) {
+                rail.leftHanded = leftHanded
+                val x = if (leftHanded) 32f else 60f
+                assertFalse("Empty upper space must not navigate", touch(MotionEvent.ACTION_DOWN, x, 350f))
+                assertFalse("System Back edge must stay free", touch(MotionEvent.ACTION_DOWN, if (leftHanded) 8f else 84f, 682f))
+                assertTrue("Last section must be reachable near the bottom", touch(MotionEvent.ACTION_DOWN, x, 682f))
+                touch(MotionEvent.ACTION_UP, x, 682f)
+                assertEquals("Y", selections.last())
+                rail.onKeyDown(KeyEvent.KEYCODE_DPAD_UP, KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_UP))
+                assertEquals("C", selections.last())
+                rail.onKeyDown(KeyEvent.KEYCODE_DPAD_UP, KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_UP))
+                assertEquals("★", selections.last())
+            }
+            parent.removeAllViews()
+        }
+    }
 
     @Test fun alphabetDispatchesOnlyChangedSectionsButNewTouchReselects() {
         instrumentation.runOnMainSync {
@@ -30,14 +62,14 @@ class AppNavigationTest {
                 }
             }
             val parent = android.widget.FrameLayout(context).apply { addView(rail) }
-            touch(MotionEvent.ACTION_DOWN, 95f)
-            touch(MotionEvent.ACTION_MOVE, 96f)
-            touch(MotionEvent.ACTION_MOVE, 97f)
-            touch(MotionEvent.ACTION_MOVE, 118f)
-            touch(MotionEvent.ACTION_UP, 118f)
+            touch(MotionEvent.ACTION_DOWN, 362f)
+            touch(MotionEvent.ACTION_MOVE, 363f)
+            touch(MotionEvent.ACTION_MOVE, 364f)
+            touch(MotionEvent.ACTION_MOVE, 382f)
+            touch(MotionEvent.ACTION_UP, 382f)
             assertEquals(listOf("A", "B"), selections)
-            touch(MotionEvent.ACTION_DOWN, 118f)
-            touch(MotionEvent.ACTION_UP, 118f)
+            touch(MotionEvent.ACTION_DOWN, 382f)
+            touch(MotionEvent.ACTION_UP, 382f)
             assertEquals(listOf("A", "B", "B"), selections)
             parent.removeAllViews()
         }

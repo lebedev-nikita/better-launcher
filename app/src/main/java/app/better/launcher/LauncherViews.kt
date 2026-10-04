@@ -74,9 +74,7 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
 
 /** One continuous control, with scroll accessibility actions and keyboard alternatives. */
 class AlphabetRail(context: Context) : View(context) {
-    var letters = AppListRules.railLetters(emptySet(), shortWindow = false)
-        set(value) { field = value; invalidate() }
-    var activeLetters = emptySet<String>()
+    var letters = AppListRules.railLetters(emptySet())
         set(value) { field = value; invalidate() }
     var onSelect: (String) -> Unit = {}
     var alphabetLabel = "Алфавит приложений"
@@ -88,8 +86,9 @@ class AlphabetRail(context: Context) : View(context) {
     private var finger = -1000f
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL) }
     init { isFocusable = true; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES; selected = "★" }
-    private fun top() = height * .15f
-    private fun spacing() = (height * .76f / letters.size).coerceAtMost(context.dp(23).toFloat())
+    private fun spacing() = ((height - context.dp(16)).coerceAtLeast(1).toFloat() / letters.size)
+        .coerceAtMost(20f * resources.displayMetrics.scaledDensity)
+    private fun top() = (height - context.dp(8) - letters.size * spacing()).coerceAtLeast(0f)
     override fun onDraw(canvas: Canvas) {
         val spacing = spacing(); val start = top()
         // Keep the grab point inside Android's reserved system Back gesture edge.
@@ -100,7 +99,7 @@ class AlphabetRail(context: Context) : View(context) {
             val wave = if (dragging) exp(-distance * distance).toFloat() else 0f
             val x = edge + (if (leftHanded) 1 else -1) * context.dp(24) * wave
             paint.textSize = (11f + wave * 7f) * resources.displayMetrics.scaledDensity
-            paint.color = if (letter == selected) Color.WHITE else if (letter in activeLetters || letter == "★") 0xE6FFFFFF.toInt() else 0x9EFFFFFF.toInt()
+            paint.color = if (letter == selected) Color.WHITE else 0xE6FFFFFF.toInt()
             canvas.drawText(letter, x, y - (paint.ascent() + paint.descent()) / 2f, paint)
         }
         if (dragging) {
