@@ -148,7 +148,7 @@
       },
       "label": {
         "displayName": "Secondary label",
-        "purpose": "Settings sections, footer copy, and supporting information."
+        "purpose": "Settings sections and supporting information."
       },
       "detail": {
         "displayName": "Description",
@@ -283,7 +283,7 @@
       },
       {
         "name": "The Separate Footer Rule",
-        "body": "Keep bottom navigation outside the scrolling favorite list so long lists and larger text cannot cover its actions.",
+        "body": "Keep bottom navigation outside the scrolling favorite list so long lists and larger text cannot cover its actions. Icon-only search and settings use identical 48dp targets and 22dp side padding, separated by equal flexible gaps around the centered widget-page button. Search retains its accessible name without a visible label.",
         "section": "layout"
       },
       {

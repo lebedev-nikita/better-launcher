@@ -63,7 +63,7 @@ def tap(label):
 def home():
     adb("shell", "input", "keyevent", "3")
     time.sleep(.5)
-    wait_for("Все приложения")
+    wait_for("Все приложения и поиск")
 
 
 home()
@@ -81,11 +81,11 @@ wait_for("Виджеты")
 title = wait_for("Виджеты")
 x1, y1, x2, y2 = map(int, re.findall(r"\d+", title.get("bounds")))
 adb("shell", "input", "swipe", str(x2 - 20), str((y1 + y2) // 2), str(x1 + 20), str((y1 + y2) // 2), "350")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 tap("Экран виджетов")
 wait_for("Виджеты")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 tap("Экран виджетов")
 home()
 print("PASS: widget page swipe, button, Back and Home navigation")
@@ -93,10 +93,10 @@ print("PASS: widget page swipe, button, Back and Home navigation")
 tap("Настройки лаунчера")
 wait_for("Домашний экран")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 print("PASS: settings entry and system Back")
 
-tap("Все приложения")
+tap("Все приложения и поиск")
 wait_for("Поиск приложений")
 # Pace injected keys on cold / busy emulators, then wait for the actual query.
 for character in "camera":
@@ -127,6 +127,8 @@ wait_for("Открыть Phone")
 adb("shell", "input", "keyevent", "4")
 print("PASS: horizontal app swipe opens its pop-up")
 
+# The menu also has a Phone title; wait for the home window before targeting its row.
+wait_for("Все приложения и поиск")
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 wait_for("О приложении")
@@ -143,7 +145,7 @@ if not any(n.get("content-desc") == "Скрыть приложение" for n in
 wait_for("Скрыть приложение")
 adb("shell", "input", "keyevent", "4")
 print("PASS: app long press exposes management actions")
-wait_for("Все приложения")
+wait_for("Все приложения и поиск")
 
 size = adb("shell", "wm", "size")
 width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
