@@ -129,11 +129,14 @@ class WidgetController(private val activity: MainActivity, private val store: La
         val size = store.widgetSize(id)
         val (widths, heights) = ranges(info, frame)
         val params = view.layoutParams as FrameLayout.LayoutParams
-        params.width = if (size == null || size.width == 0 || info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL == 0) -1
-            else activity.dp(size.width.coerceIn(widths))
+        params.width = if (info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL == 0) -1
+            else activity.dp(WidgetResizeGeometry.snap(size?.width?.takeIf { it > 0 } ?: widths.last, widths))
         params.topMargin = activity.dp(size?.top ?: 0)
-        params.height = if (size == null || info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL == 0) defaultHeight(info)
-            else activity.dp(size.height.coerceIn(heights))
+        params.height = if (info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL == 0) defaultHeight(info)
+            else activity.dp(WidgetResizeGeometry.snap(size?.height ?: (defaultHeight(info) / activity.resources.displayMetrics.density).roundToInt(), heights))
+        val renderedWidth = params.width.takeIf { it > 0 } ?: frame.width
+        val horizontalLimit = ((frame.width - renderedWidth).coerceAtLeast(0) / (2 * activity.resources.displayMetrics.density)).toInt()
+        view.translationX = activity.dp((size?.offsetX ?: 0).coerceIn(-horizontalLimit, horizontalLimit)).toFloat()
         view.layoutParams = params
     }
 
@@ -145,7 +148,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
                 runCatching { activity.catalog.launcherApps.startAppDetailsActivity(info.provider, info.profile, null, null) }
                     .onFailure { activity.message("Не удалось открыть настройки приложения") }
             }
-            command(Glyph.RESIZE, "Изменить размер") { resize(id, info, frame, view) }
+            command(Glyph.RESIZE, "Переместить и изменить размер") { resize(id, info, frame, view) }
             if (info.configure != null) command(Glyph.EDIT, "Настройки виджета") {
                 runCatching { host.startAppWidgetConfigureActivityForResult(activity, id, 0, RECONFIGURE, null) }
                     .onFailure { activity.message("Приложение не смогло открыть настройки виджета") }
@@ -153,7 +156,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
             command(if (home) Glyph.WIDGETS else Glyph.STAR, if (home) "На экран виджетов" else "На главный экран") {
                 store.homeWidgetId = if (home) null else id; showDestination(home)
             }
-            if (store.widgetSize(id) != null) command(Glyph.RESIZE, "Сбросить размер") {
+            if (store.widgetSize(id) != null) command(Glyph.RESIZE, "Сбросить размер и положение") {
                 store.setWidgetSize(id, null); applySize(id, info, frame, view)
             }
             command(Glyph.PLUS, "Добавить виджет") { add() }
@@ -172,7 +175,8 @@ class WidgetController(private val activity: MainActivity, private val store: La
         finishResize(false)
         val density = activity.resources.displayMetrics.density
         var original: WidgetSize? = store.widgetSize(id)
-        var editingSize = WidgetSize((view.width / density).roundToInt().coerceAtMost((frame.width / density).toInt()), (view.height / density).roundToInt(), original?.top ?: 0)
+        var editingSize = WidgetSize((view.width / density).roundToInt().coerceAtMost((frame.width / density).toInt()),
+            (view.height / density).roundToInt(), original?.top ?: 0, (view.translationX / density).roundToInt())
         var gestureStart = editingSize
         val layer = widgetResizeOverlay(activity, view,
             info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0,

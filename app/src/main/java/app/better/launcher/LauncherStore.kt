@@ -6,7 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
-data class WidgetSize(val width: Int, val height: Int, val top: Int = 0)
+data class WidgetSize(val width: Int, val height: Int, val top: Int = 0, val offsetX: Int = 0)
 
 data class AppFolder(val id: String, val name: String, val apps: List<String>)
 
@@ -66,14 +66,14 @@ class LauncherStore(context: Context) {
     val pageWidgets: List<Int> get() { val home = homeWidgetId; return widgets.filter { it != home } }
     fun widgetSize(id: Int): WidgetSize? = runCatching {
         val size = JSONObject(string("widgetSizes", "{}")).getJSONObject(id.toString())
-        WidgetSize(size.getInt("width"), size.getInt("height"), size.optInt("top", 0))
+        WidgetSize(size.getInt("width"), size.getInt("height"), size.optInt("top", 0), size.optInt("offsetX", 0))
     }.getOrNull()
     fun setWidgetSize(id: Int, size: WidgetSize?) {
         require(id in widgets)
-        require(size == null || size.width in 0..1600 && size.height in 32..1600 && size.top in 0..1600)
+        require(size == null || size.width in 0..1600 && size.height in 32..1600 && size.top in 0..1600 && size.offsetX in -1600..1600)
         val sizes = JSONObject(string("widgetSizes", "{}"))
         if (size == null) sizes.remove(id.toString())
-        else sizes.put(id.toString(), JSONObject().put("width", size.width).put("height", size.height).put("top", size.top))
+        else sizes.put(id.toString(), JSONObject().put("width", size.width).put("height", size.height).put("top", size.top).put("offsetX", size.offsetX))
         set("widgetSizes", sizes.toString())
     }
     var wallpaperDimming: Int
@@ -140,10 +140,12 @@ class LauncherStore(context: Context) {
             sizes.keys().forEach { key ->
                 require(key.toIntOrNull()?.let { it > 0 } == true)
                 val size = sizes.getJSONObject(key)
-                require(size.keys().asSequence().toSet() in listOf(setOf("width", "height"), setOf("width", "height", "top")))
+                val keys = size.keys().asSequence().toSet()
+                require(keys.containsAll(setOf("width", "height")) && keys.all { it in setOf("width", "height", "top", "offsetX") })
                 require(size.get("width") is Int && size.get("height") is Int)
                 require(size.getInt("width") in 0..1600 && size.getInt("height") in 32..1600)
                 require(!size.has("top") || size.get("top") is Int && size.getInt("top") in 0..1600)
+                require(!size.has("offsetX") || size.get("offsetX") is Int && size.getInt("offsetX") in -1600..1600)
             }
         }
         // Widget ids belong to this device and this host, never to a portable backup.

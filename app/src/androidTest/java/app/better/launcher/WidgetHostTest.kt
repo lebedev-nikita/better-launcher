@@ -65,9 +65,9 @@ class WidgetHostTest {
                 assertTrue(instrumentation.uiAutomation.injectInputEvent(event, true)); event.recycle()
             }
             touch(MotionEvent.ACTION_DOWN)
-            await(instrumentation) { activeNode("Изменить размер") != null }
+            await(instrumentation) { activeNode("Переместить и изменить размер") != null }
             touch(MotionEvent.ACTION_UP)
-            assertTrue(activeNode("Изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            assertTrue(activeNode("Переместить и изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { activeNode("Правая граница виджета") != null }
             assertFalse("Provider content is excluded from accessibility while editing", activeNode("Виджет A00 Layout preview")?.isImportantForAccessibility ?: false)
             fun progress(label: String, value: Float) {
@@ -76,7 +76,7 @@ class WidgetHostTest {
             }
             progress("Правая граница виджета", 180f)
             progress("Нижняя граница виджета", 320f)
-            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 320) }
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 324) }
             await(instrumentation) {
                 manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) > oldOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
             }
@@ -92,6 +92,7 @@ class WidgetHostTest {
                     when (label) {
                         "Правая граница виджета" -> kotlin.math.abs(rect.centerX() - widgetBounds.right) <= 2
                         "Левая граница виджета" -> kotlin.math.abs(rect.centerX() - widgetBounds.left) <= 2
+                        "Переместить виджет" -> kotlin.math.abs(rect.centerX() - widgetBounds.centerX()) <= 2 && kotlin.math.abs(rect.centerY() - widgetBounds.centerY()) <= 2
                         else -> kotlin.math.abs(rect.centerY() - widgetBounds.top) <= 2
                     }
                 }
@@ -106,20 +107,37 @@ class WidgetHostTest {
                 event(if (cancel) MotionEvent.ACTION_CANCEL else MotionEvent.ACTION_UP, rect.centerX() + dx, rect.centerY() + dy)
             }
             drag("Правая граница виджета", -activity.dp(8), 0)
-            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(164, 320) }
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(168, 324) }
             progress("Правая граница виджета", 180f)
             drag("Левая граница виджета", activity.dp(8), 0, cancel = true)
-            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 320) }
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 324) }
             drag("Верхняя граница виджета", 0, activity.dp(24))
-            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 296, 24) }
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 300, 24) }
             progress("Верхняя граница виджета", 320f)
-            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 320) }
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 324) }
+            progress("Правая граница виджета", 186f)
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(192, 324) }
+            progress("Правая граница виджета", 180f)
+            drag("Переместить виджет", activity.dp(19), activity.dp(23))
+            val moved = WidgetSize(180, 324, 24, 24)
+            await(instrumentation) { activity.store.widgetSize(id) == moved }
+            drag("Переместить виджет", -activity.dp(23), activity.dp(15), cancel = true)
+            await(instrumentation) { activity.store.widgetSize(id) == moved }
+            // Dragging focuses the movement surface; keys and TalkBack actions use the same grid.
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_RIGHT)
+            await(instrumentation) { activity.store.widgetSize(id) == moved.copy(offsetX = 36) }
+            assertTrue(activeNode("Переместить виджет")!!.performAction(R.id.widget_move_left))
+            assertTrue(activeNode("Переместить виджет")!!.performAction(R.id.widget_move_up))
+            await(instrumentation) { activity.store.widgetSize(id) == moved.copy(top = 12) }
+            assertTrue(activeNode("Переместить виджет")!!.performAction(R.id.widget_move_down))
+            await(instrumentation) { activity.store.widgetSize(id) == moved }
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             assertFalse("Back finishes editing on the same page", activity.widgets.isResizing)
             instrumentation.runOnMainSync { activity.showWidgets() }
             await(instrumentation) {
                 val widget = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>().single { it.appWidgetId == id }
-                widget.width == activity.dp(180) && widget.height == activity.dp(320)
+                widget.width == activity.dp(180) && widget.height == activity.dp(324) &&
+                    widget.translationX == activity.dp(24).toFloat() && (widget.layoutParams as android.widget.FrameLayout.LayoutParams).topMargin == activity.dp(24)
             }
             // Updates must reach the view registered by the real WidgetController host.
             val resources = instrumentation.context.resources
@@ -149,21 +167,21 @@ class WidgetHostTest {
                     assertTrue(descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().single()
                         .performAccessibilityAction(AccessibilityNodeInfo.ACTION_LONG_CLICK, null))
                 }
-                await(instrumentation) { activeNode("Изменить размер") != null }
+                await(instrumentation) { activeNode("Переместить и изменить размер") != null }
             }
             openControls()
             assertTrue(activeNode("На главный экран")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { activity.store.homeWidgetId == id }
             instrumentation.runOnMainSync { activity.showHome() }
             await(instrumentation) { hasWidgetText(activity, id, "Live widget update") }
-            assertEquals(WidgetSize(180, 320), activity.store.widgetSize(id))
+            assertEquals(moved, activity.store.widgetSize(id))
             openControls()
-            assertTrue(activeNode("Изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            assertTrue(activeNode("Переместить и изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { activeNode("Готово") != null }
             assertTrue(activeNode("Готово")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             openControls()
-            await(instrumentation) { activeNode("Сбросить размер") != null }
-            assertTrue(activeNode("Сбросить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { activeNode("Сбросить размер и положение") != null }
+            assertTrue(activeNode("Сбросить размер и положение")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { activity.store.widgetSize(id) == null }
             instrumentation.waitForIdleSync()
             openControls()
