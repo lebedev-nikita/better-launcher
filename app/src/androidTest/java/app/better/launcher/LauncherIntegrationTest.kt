@@ -116,17 +116,21 @@ class LauncherIntegrationTest {
     }
     @Test fun widgetSizesStayLocalSurviveImportAndAreRemovedWithWidget() = isolated { store ->
         store.widgets = listOf(41, 42)
-        store.setWidgetSize(42, WidgetSize(180, 320))
-        assertEquals(WidgetSize(180, 320), LauncherStore(context).widgetSize(42))
+        store.set("widgetSizes", """{"42":{"width":180,"height":320}}""")
+        assertEquals("Existing rc.21 sizes keep their default position", WidgetSize(180, 320), store.widgetSize(42))
+        store.setWidgetSize(42, WidgetSize(180, 320, 24))
+        assertEquals(WidgetSize(180, 320, 24), LauncherStore(context).widgetSize(42))
         val backup = store.export()
         assertFalse(backup.contains("widgetSizes"))
         store.import(backup)
-        assertEquals(WidgetSize(180, 320), store.widgetSize(42))
+        assertEquals(WidgetSize(180, 320, 24), store.widgetSize(42))
         store.import("""{"version":1,"preferences":{"widgetSizes":"{\"42\":{\"width\":100,\"height\":100}}"}}""")
-        assertEquals(WidgetSize(180, 320), store.widgetSize(42))
+        assertEquals(WidgetSize(180, 320, 24), store.widgetSize(42))
         val before = store.prefs.all
         listOf(
             """{"widgetSizes":true}""",
+            """{"widgetSizes":"{\"42\":{\"width\":100,\"height\":100,\"top\":-1}}"}""",
+            """{"widgetSizes":"{\"42\":{\"width\":100,\"height\":100,\"top\":1.5}}"}""",
             """{"widgetSizes":"broken"}""",
             """{"widgetSizes":"{\"42\":{\"width\":-1,\"height\":100}}"}""",
             """{"widgetSizes":"{\"42\":{\"width\":100,\"height\":1.5}}"}""",
@@ -136,7 +140,7 @@ class LauncherIntegrationTest {
             assertEquals(before, store.prefs.all)
         }
         store.homeWidgetId = 42
-        assertEquals(WidgetSize(180, 320), store.widgetSize(42))
+        assertEquals(WidgetSize(180, 320, 24), store.widgetSize(42))
         store.widgets = listOf(41)
         assertNull(store.widgetSize(42))
         store.widgets = listOf(41, 42)

@@ -12,18 +12,19 @@ import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import com.google.android.material.slider.Slider
-import com.google.android.material.slider.TickVisibilityMode
 import kotlin.math.ceil
+import kotlin.math.roundToInt
 
 class WidgetController(private val activity: MainActivity, private val store: LauncherStore) {
     private val manager = AppWidgetManager.getInstance(activity)
     private val host = AppWidgetHost(activity, 1201)
     private val hostContext = widgetHostContext(activity)
     private var pending = store.string("pendingWidgetId").toIntOrNull() ?: -1
+    private var editor: View? = null
+    val isResizing: Boolean get() = editor != null
     private var pendingHome = store.string("pendingWidgetDestination") == "home"
     fun start() { runCatching { host.startListening() } }
-    fun stop() { host.stopListening() }
+    fun stop() { finishResize(false); host.stopListening() }
     fun add(toHome: Boolean = false) {
         activity.sheet(if (toHome) "Виджет на главном экране" else "Добавить виджет", scrollContent = false) { body, dialog ->
             body.addView(WidgetPickerView(activity).apply { onChoose = { provider -> dialog.dismiss(); bind(provider, toHome) } },
@@ -130,67 +131,71 @@ class WidgetController(private val activity: MainActivity, private val store: La
         val params = view.layoutParams as FrameLayout.LayoutParams
         params.width = if (size == null || size.width == 0 || info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL == 0) -1
             else activity.dp(size.width.coerceIn(widths))
+        params.topMargin = activity.dp(size?.top ?: 0)
         params.height = if (size == null || info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL == 0) defaultHeight(info)
             else activity.dp(size.height.coerceIn(heights))
         view.layoutParams = params
     }
 
     private fun showControls(id: Int, info: AppWidgetProviderInfo, home: Boolean, frame: View, view: AppWidgetHostView) {
-        activity.sheet(info.loadLabel(activity.packageManager)) { body, dialog ->
-            body.addView(activity.action("Изменить размер") { dialog.dismiss(); resize(id, info, frame, view) })
-            if (info.configure != null) body.addView(activity.action("Настройки виджета") {
-                dialog.dismiss()
+        val icon = runCatching { info.loadIcon(activity, activity.resources.displayMetrics.densityDpi) }.getOrNull()
+        activity.managementSheet(info.loadLabel(activity.packageManager), icon) { body, dialog ->
+            fun command(glyph: Glyph, label: String, action: () -> Unit) = activity.managementAction(body, dialog, glyph, label, action)
+            command(Glyph.INFO, "О приложении") {
+                runCatching { activity.catalog.launcherApps.startAppDetailsActivity(info.provider, info.profile, null, null) }
+                    .onFailure { activity.message("Не удалось открыть настройки приложения") }
+            }
+            command(Glyph.RESIZE, "Изменить размер") { resize(id, info, frame, view) }
+            if (info.configure != null) command(Glyph.EDIT, "Настройки виджета") {
                 runCatching { host.startAppWidgetConfigureActivityForResult(activity, id, 0, RECONFIGURE, null) }
-                    .onFailure { activity.sheet("Настройки недоступны") { content, _ ->
-                        content.addView(activity.text("Приложение не смогло открыть настройки виджета.", 16f, activity.secondary))
-                    } }
-            })
-            body.addView(activity.action(if (home) "На экран виджетов" else "На главный экран") {
-                dialog.dismiss(); store.homeWidgetId = if (home) null else id; showDestination(home)
-            })
-            body.addView(activity.action("Удалить виджет") {
-                dialog.dismiss(); host.deleteAppWidgetId(id); store.widgets = store.widgets - id; showDestination(home)
-            })
+                    .onFailure { activity.message("Приложение не смогло открыть настройки виджета") }
+            }
+            command(if (home) Glyph.WIDGETS else Glyph.STAR, if (home) "На экран виджетов" else "На главный экран") {
+                store.homeWidgetId = if (home) null else id; showDestination(home)
+            }
+            if (store.widgetSize(id) != null) command(Glyph.RESIZE, "Сбросить размер") {
+                store.setWidgetSize(id, null); applySize(id, info, frame, view)
+            }
+            command(Glyph.PLUS, "Добавить виджет") { add() }
+            command(Glyph.DELETE, "Удалить виджет") {
+                host.deleteAppWidgetId(id); store.widgets = store.widgets - id; showDestination(home)
+            }
+            body.addView(activity.gap(16))
+            body.addView(View(activity).apply { setBackgroundColor(activity.getColor(R.color.app_menu_foreground)) },
+                LinearLayout.LayoutParams(-1, activity.dp(1)).apply { marginStart = activity.dp(8); marginEnd = activity.dp(8) })
+            body.addView(activity.gap(8))
+            command(Glyph.SETTINGS, "Настройки Better Launcher") { activity.showSettings() }
         }
     }
 
     private fun resize(id: Int, info: AppWidgetProviderInfo, frame: View, view: AppWidgetHostView) {
-        val (widths, heights) = ranges(info, frame)
-        val horizontal = info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0
-        val vertical = info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0
-        var size = store.widgetSize(id) ?: WidgetSize(0, (view.height / activity.resources.displayMetrics.density).toInt().coerceIn(32, 1600))
-        activity.sheet("Размер виджета") { body, dialog ->
-            body.addView(activity.text("Изменения сохраняются сразу", 14f, activity.secondary))
-            body.addView(activity.gap(16))
-            fun dimension(label: String, range: IntRange, value: Int, enabled: Boolean, update: (Int) -> Unit) {
-                val heading = activity.text(activity.getString(R.string.widget_dimension, label, value), 17f)
-                body.addView(heading)
-                if (enabled && range.first < range.last) body.addView(Slider(activity).apply {
-                    valueFrom = range.first.toFloat(); valueTo = range.last.toFloat(); stepSize = 1f
-                    this.value = value.coerceIn(range).toFloat()
-                    contentDescription = label
-                    importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
-                    setTickVisibilityMode(TickVisibilityMode.TICK_VISIBILITY_HIDDEN)
-                    setLabelFormatter { activity.getString(R.string.widget_dimension_value, it.toInt()) }
-                    addOnChangeListener { _, selected, fromUser ->
-                        if (fromUser) {
-                            val number = selected.toInt()
-                            heading.text = activity.getString(R.string.widget_dimension, label, number)
-                            update(number)
-                            store.setWidgetSize(id, size)
-                            applySize(id, info, frame, view)
-                        }
-                    }
-                }, LinearLayout.LayoutParams(-1, activity.dp(48)))
-                else body.addView(activity.text(if (enabled) "Доступный размер ограничен шириной экрана" else "Приложение не поддерживает изменение этой стороны", 14f, activity.secondary))
-                body.addView(activity.gap(16))
-            }
-            dimension("Ширина", widths, (view.width / activity.resources.displayMetrics.density).toInt(), horizontal) { size = size.copy(width = it) }
-            dimension("Высота", heights, (view.height / activity.resources.displayMetrics.density).toInt(), vertical) { size = size.copy(height = it) }
-            body.addView(activity.action("Сбросить размер") {
-                store.setWidgetSize(id, null); applySize(id, info, frame, view); dialog.dismiss()
-            })
-        }
+        finishResize(false)
+        val density = activity.resources.displayMetrics.density
+        var original: WidgetSize? = store.widgetSize(id)
+        var editingSize = WidgetSize((view.width / density).roundToInt().coerceAtMost((frame.width / density).toInt()), (view.height / density).roundToInt(), original?.top ?: 0)
+        var gestureStart = editingSize
+        val layer = widgetResizeOverlay(activity, view,
+            info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0,
+            info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0,
+            readSize = { editingSize },
+            ranges = { ranges(info, frame) },
+            onChange = { size ->
+                editingSize = size
+                store.setWidgetSize(id, if (size.width == (frame.width / density).toInt()) size.copy(width = 0) else size)
+                applySize(id, info, frame, view)
+            },
+            onGestureStart = { original = store.widgetSize(id); gestureStart = editingSize },
+            onCancel = { editingSize = gestureStart; store.setWidgetSize(id, original); applySize(id, info, frame, view) },
+            onFinish = { finishResize() })
+        editor = layer
+        activity.attachWidgetEditor(layer)
+    }
+
+    fun finishResize(refresh: Boolean = true): Boolean {
+        val layer = editor ?: return false
+        editor = null
+        activity.detachWidgetEditor(layer, refresh)
+        return true
     }
     companion object { const val BIND = 41; const val CONFIGURE = 42; const val RECONFIGURE = 43 }
 }

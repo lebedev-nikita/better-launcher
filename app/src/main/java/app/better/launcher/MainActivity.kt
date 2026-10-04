@@ -71,6 +71,7 @@ class MainActivity : AppCompatActivity() {
     private var refreshQueued = false
     private var resumed = false
     private var notificationRefreshPending = false
+    private var screenFocusBeforeWidgetEditor = ViewGroup.FOCUS_BEFORE_DESCENDANTS
     private val weatherTicker = object : Runnable {
         override fun run() { refreshWeather(); handler.postDelayed(this, 30_000) }
     }
@@ -135,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume(); resumed = true
         NotificationHub.onChanged = {
             if (page == "home" && resumed) {
-                if (currentDialog == null) refreshHomePreservingScroll() else notificationRefreshPending = true
+                if (currentDialog == null && !widgets.isResizing) refreshHomePreservingScroll() else notificationRefreshPending = true
             }
         }
         handler.post(weatherTicker); applyAppearance(); refreshApps(); refreshWeather()
@@ -146,6 +147,7 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacksAndMessages(null); executor.shutdownNow(); currentDialog?.dismiss(); super.onDestroy()
     }
     private fun handleBack() {
+        if (widgets.finishResize()) return
         if (currentDialog != null) currentDialog?.dismiss()
         else if (page == "widgets") returnFromWidgets()
         else if (page != "home") { hideKeyboard(); showHome() }
@@ -185,6 +187,7 @@ class MainActivity : AppCompatActivity() {
     }
     fun gap(height: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
     private fun clearScreen(newPage: String) {
+        widgets.finishResize(false)
         if (page == "home" && newPage == "widgets") homeScrollPosition = homeScroll?.scrollY ?: 0
         widgetScroll?.let { widgetScrollPosition = it.scrollY }
         keyboardRequest?.let(handler::removeCallbacks); keyboardRequest = null
@@ -218,6 +221,7 @@ class MainActivity : AppCompatActivity() {
         rail.letters = AppListRules.railLetters(sections)
     }
     private fun refreshHomePreservingScroll() {
+        if (widgets.isResizing) { notificationRefreshPending = true; return }
         val y = homeScroll?.scrollY ?: 0
         showHome(); homeScroll?.post { homeScroll?.scrollTo(0, y) }
     }
@@ -478,6 +482,51 @@ class MainActivity : AppCompatActivity() {
         body.addView(header); body.addView(gap(12))
         build(body, dialog)
         return presentSheet(dialog, body, scrollContent = scrollContent)
+    }
+    fun attachWidgetEditor(editor: View) {
+        screenFocusBeforeWidgetEditor = screen.descendantFocusability
+        screen.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        screen.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        rail.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        rail.isFocusable = false
+        root.addView(editor, FrameLayout.LayoutParams(-1, -1))
+        editor.accessibilityPaneTitle = "Размер виджета"; editor.isFocusableInTouchMode = true; editor.requestFocus()
+    }
+    fun detachWidgetEditor(editor: View, refresh: Boolean) {
+        root.removeView(editor)
+        screen.descendantFocusability = screenFocusBeforeWidgetEditor
+        screen.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+        rail.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES; rail.isFocusable = true
+        if (refresh && notificationRefreshPending && page == "home" && resumed) refreshHomePreservingScroll()
+    }
+    fun managementSheet(title: String, icon: android.graphics.drawable.Drawable?, build: (LinearLayout, Dialog) -> Unit): Dialog {
+        currentDialog?.dismiss(); hideKeyboard()
+        val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
+        val foreground = getColor(R.color.app_menu_foreground)
+        val body = vertical().apply {
+            background = rounded(getColor(R.color.app_menu_surface), dp(24).toFloat()).apply {
+                cornerRadii = floatArrayOf(dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), 0f, 0f, 0f, 0f)
+            }
+        }
+        val header = horizontal().apply { minimumHeight = dp(64); setPadding(0, dp(8), 0, dp(8)) }
+        header.addView(ImageView(this).apply {
+            setImageDrawable(icon); setPadding(dp(8), dp(8), dp(8), dp(8)); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
+        header.addView(text(title, 23f, foreground).apply { isAccessibilityHeading = true }, LinearLayout.LayoutParams(0, -2, 1f))
+        body.addView(header); body.addView(gap(4)); build(body, dialog)
+        return presentSheet(dialog, body, appMenu = true)
+    }
+    fun managementAction(body: LinearLayout, dialog: Dialog, glyph: Glyph, label: String, action: () -> Unit) {
+        body.addView(horizontal().apply {
+            minimumHeight = dp(52); background = touchBackground(); isFocusable = true; contentDescription = label
+            setPadding(0, dp(4), dp(8), dp(4)); setOnClickListener { dialog.dismiss(); action() }
+            addView(GlyphView(this@MainActivity, glyph, getColor(R.color.app_menu_foreground)).apply {
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
+            addView(text(label, 17f, getColor(R.color.app_menu_foreground)).apply {
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            }, LinearLayout.LayoutParams(0, -2, 1f))
+        })
     }
     private fun presentSheet(dialog: Dialog, body: LinearLayout, appMenu: Boolean = false, scrollContent: Boolean = true): Dialog {
         val scroll = if (scrollContent) object : ScrollView(this) {
@@ -766,7 +815,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // The settings and optional integrations below use the same native surfaces as the launcher.
-    private fun showSettings() {
+    fun showSettings() {
         clearScreen("settings"); hideKeyboard()
         val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; background = rounded(surface, 0f) }
         val body = vertical().apply { setPadding(dp(16), dp(10), dp(16), dp(30)) }

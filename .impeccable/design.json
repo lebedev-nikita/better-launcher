@@ -265,6 +265,11 @@
       "kind": "container",
       "refersTo": "bottom-sheet",
       "description": "Native provider picker: fixed title and Close, recycled list with wrapping 18sp widget label, 13sp app name and 144dp inert preview. Static previewLayout takes precedence over previewImage; missing previews are explicitly labeled. Shared 92dp AlphabetRail on the right, 72dp list reservation, star jumps to start, final #, populated sections at every height, with spacing adapting to font scale and available height. Background resource loading is cancelled on row reuse and dismissal. No IDs are allocated while browsing. Android source is authoritative; no HTML sample substitutes for device verification."
+    },
+    {
+      "name": "Widget edge editor",
+      "kind": "custom",
+      "description": "Native editor over the real hosted AppWidgetHostView. Four 36dp circular navy handles inside 48dp touch targets carry pale blue paired chevrons; 2dp navy lines track bounds. There are no circular reset arrows. A bottom strip outside system bars shows live width × height and Done, with an 8dp gap from handle touch bounds. Supported axes/min/max come from the provider; width stays centered and upper-edge changes preserve the lower edge through a local top offset. Mouse/touch cancellation restores the gesture snapshot; keyboard arrows and accessibility range actions edit the same dimensions. Done, outside tap, Back/HOME and lifecycle cleanup finish; ordinary provider touches work outside editing. Reset lives in the navy icon/title management menu. Android screenshots are authoritative; no HTML mock is used."
     }
   ],
   "narrative": {
@@ -299,7 +304,7 @@
       },
       {
         "name": "The Separate Widget Page Rule",
-        "body": "Home hosts at most one widget. The separate wallpaper-backed page to its left opens with a rightward swipe on free home space or the footer widget button and returns with a leftward swipe, Home, or Android Back. App rows and hosted widget content keep their gestures; the outer 24dp Back edge is reserved. The page hides the alphabet, uses a wrapping 26sp header, 28dp list margins, 24dp widget gaps, and a separate Home footer. Added widgets have no title or persistent menu button. Long press opens resize, optional provider configuration, move and delete. Native width/height sliders save local dp sizes immediately, respect provider resize directions/min/max and window width, and offer reset. Narrower widgets are centered. Provider taps/scrolling remain available, with Menu/Shift+F10 and accessibility long-click alternatives. A 180ms directional slide/fade honors disabled system animations. The alphabet reserves system/IME insets and the measured home footer height, preserving footer touch targets at large font sizes.",
+        "body": "Home hosts at most one widget. The separate wallpaper-backed page to its left opens with a rightward swipe on free home space or the footer widget button and returns with a leftward swipe, Home, or Android Back. App rows and hosted widget content keep their gestures; the outer 24dp Back edge is reserved. The page hides the alphabet, uses a wrapping 26sp header, 28dp list margins, 24dp widget gaps, and a separate Home footer. Added widgets have no title or persistent menu button. Long press opens resize, optional provider configuration, move and delete. Four native 48dp edge handles edit live width/height directly with navy 2dp boundary lines. No circular reset buttons or slider sheet appear. Sizes and top offset save locally; provider directions/min/max and window bounds apply. Keyboard/range actions resize the same edges; Done, outside tap, Back/HOME finish. Reset remains in the navy icon/title management menu. Narrower widgets are centered. Provider taps/scrolling remain available, with Menu/Shift+F10 and accessibility long-click alternatives. A 180ms directional slide/fade honors disabled system animations. The alphabet reserves system/IME insets and the measured home footer height, preserving footer touch targets at large font sizes.",
         "section": "layout"
       },
       {

@@ -85,10 +85,14 @@ class FavoritesOrderTest {
     }
 
     private fun openEditor(label: String) {
-        var row = node(label)
-        while (!row.isLongClickable) row = row.parent ?: error("Missing app row")
-        assertTrue(row.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK))
-        assertTrue(node("Изменить порядок").performAction(AccessibilityNodeInfo.ACTION_CLICK))
+        // HOME and sheet exit animations may briefly leave an old accessibility node in the cache.
+        // Retry only rejected actions, resolving a fresh node each time.
+        await {
+            var row = node(label)
+            while (!row.isLongClickable) row = row.parent ?: error("Missing app row")
+            row.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
+        }
+        await { node("Изменить порядок").performAction(AccessibilityNodeInfo.ACTION_CLICK) }
         node("Перетащить $label")
     }
 

@@ -22,6 +22,7 @@ class ImagePreviewProvider : AppWidgetProvider()
 class NoPreviewProvider : AppWidgetProvider()
 class BrokenPreviewProvider : AppWidgetProvider()
 class NumericPreviewProvider : AppWidgetProvider()
+class ResizeReviewProvider : AppWidgetProvider()
 
 class WidgetPickerTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()

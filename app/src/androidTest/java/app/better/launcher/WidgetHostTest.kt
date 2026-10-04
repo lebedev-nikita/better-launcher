@@ -68,25 +68,54 @@ class WidgetHostTest {
             await(instrumentation) { activeNode("Изменить размер") != null }
             touch(MotionEvent.ACTION_UP)
             assertTrue(activeNode("Изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
-            await(instrumentation) { activeNode("Ширина") != null }
+            await(instrumentation) { activeNode("Правая граница виджета") != null }
+            assertFalse("Provider content is excluded from accessibility while editing", activeNode("Виджет A00 Layout preview")?.isImportantForAccessibility ?: false)
             fun progress(label: String, value: Float) {
                 val arguments = Bundle().apply { putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, value) }
-                fun adjustable(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
-                    if (node.actionList.any { it.id == android.R.id.accessibilityActionSetProgress }) return node
-                    for (index in 0 until node.childCount) node.getChild(index)?.let { adjustable(it)?.let { found -> return found } }
-                    return null
-                }
-                val slider = adjustable(activeNode(label)!!) ?: error("Missing adjustable thumb for $label")
-                assertTrue(slider.performAction(android.R.id.accessibilityActionSetProgress, arguments))
+                assertTrue(activeNode(label)!!.performAction(android.R.id.accessibilityActionSetProgress, arguments))
             }
-            progress("Ширина", 180f)
-            progress("Высота", 320f)
+            progress("Правая граница виджета", 180f)
+            progress("Нижняя граница виджета", 320f)
             await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 320) }
             await(instrumentation) {
                 manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) > oldOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
             }
             assertTrue(manager.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH) < oldOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH))
+            fun drag(label: String, dx: Int, dy: Int, cancel: Boolean = false) {
+                val rect = Rect()
+                await(instrumentation) {
+                    val views = descendants(activity.window.decorView)
+                    val widget = views.filterIsInstance<AppWidgetHostView>().single { it.appWidgetId == id }
+                    val widgetBounds = Rect().also { widget.getGlobalVisibleRect(it) }
+                    val handle = views.first { it.contentDescription?.toString() == label }
+                    handle.getGlobalVisibleRect(rect)
+                    when (label) {
+                        "Правая граница виджета" -> kotlin.math.abs(rect.centerX() - widgetBounds.right) <= 2
+                        "Левая граница виджета" -> kotlin.math.abs(rect.centerX() - widgetBounds.left) <= 2
+                        else -> kotlin.math.abs(rect.centerY() - widgetBounds.top) <= 2
+                    }
+                }
+                val started = SystemClock.uptimeMillis()
+                fun event(action: Int, x: Int, y: Int) {
+                    val motion = MotionEvent.obtain(started, SystemClock.uptimeMillis(), action, x.toFloat(), y.toFloat(), 0)
+                    motion.source = InputDevice.SOURCE_TOUCHSCREEN
+                    assertTrue(instrumentation.uiAutomation.injectInputEvent(motion, true)); motion.recycle()
+                }
+                event(MotionEvent.ACTION_DOWN, rect.centerX(), rect.centerY())
+                event(MotionEvent.ACTION_MOVE, rect.centerX() + dx, rect.centerY() + dy)
+                event(if (cancel) MotionEvent.ACTION_CANCEL else MotionEvent.ACTION_UP, rect.centerX() + dx, rect.centerY() + dy)
+            }
+            drag("Правая граница виджета", -activity.dp(8), 0)
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(164, 320) }
+            progress("Правая граница виджета", 180f)
+            drag("Левая граница виджета", activity.dp(8), 0, cancel = true)
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 320) }
+            drag("Верхняя граница виджета", 0, activity.dp(24))
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 296, 24) }
+            progress("Верхняя граница виджета", 320f)
+            await(instrumentation) { activity.store.widgetSize(id) == WidgetSize(180, 320) }
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            assertFalse("Back finishes editing on the same page", activity.widgets.isResizing)
             instrumentation.runOnMainSync { activity.showWidgets() }
             await(instrumentation) {
                 val widget = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>().single { it.appWidgetId == id }
@@ -130,6 +159,9 @@ class WidgetHostTest {
             assertEquals(WidgetSize(180, 320), activity.store.widgetSize(id))
             openControls()
             assertTrue(activeNode("Изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            await(instrumentation) { activeNode("Готово") != null }
+            assertTrue(activeNode("Готово")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+            openControls()
             await(instrumentation) { activeNode("Сбросить размер") != null }
             assertTrue(activeNode("Сбросить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { activity.store.widgetSize(id) == null }
@@ -179,6 +211,6 @@ class WidgetHostTest {
             if (found) return
             SystemClock.sleep(100)
         }
-        fail("Added widget did not display provider content")
+        fail("Widget did not reach expected state; stored sizes: ${LauncherStore(instrumentation.targetContext).string("widgetSizes", "{}")}")
     }
 }
