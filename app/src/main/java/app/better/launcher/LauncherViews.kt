@@ -77,6 +77,8 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
 class AlphabetRail(context: Context) : View(context) {
     var letters = AppListRules.railLetters(emptySet())
         set(value) { field = value; invalidate() }
+    var activeLetters = emptySet<String>()
+        set(value) { field = value; invalidate() }
     var onSelect: (String) -> Unit = {}
     var alphabetLabel = "Алфавит приложений"
         set(value) { field = value; selected = selected }
@@ -90,7 +92,7 @@ class AlphabetRail(context: Context) : View(context) {
     // Anchor the compact alphabet above the footer/insets reserved by its parent.
     private fun top() = (height - context.dp(24) - letters.size * spacing()).coerceAtLeast(0f)
     private fun spacing(): Float {
-        val preferred = context.dp(16) * resources.configuration.fontScale.coerceAtLeast(1f)
+        val preferred = context.dp(22) * resources.configuration.fontScale.coerceAtLeast(1f)
         val available = (height - context.dp(48)).coerceAtLeast(1).toFloat() / letters.size
         return min(preferred, available)
     }
@@ -103,8 +105,10 @@ class AlphabetRail(context: Context) : View(context) {
             val distance = (y - finger) / context.dp(58)
             val wave = if (dragging) exp(-distance * distance).toFloat() else 0f
             val x = edge + (if (leftHanded) 1 else -1) * context.dp(24) * wave
-            paint.textSize = (11f + wave * 7f) * resources.displayMetrics.scaledDensity
-            paint.color = if (letter == selected) Color.WHITE else 0xE6FFFFFF.toInt()
+            // Keep the larger letters readable without overlap in a short window.
+            val restingSize = min(16f * resources.displayMetrics.scaledDensity, spacing * .8f)
+            paint.textSize = min(restingSize + wave * 7f * resources.displayMetrics.scaledDensity, spacing * 1.05f)
+            paint.color = if (letter == selected) Color.WHITE else if (letter in activeLetters || letter == "★") 0xE6FFFFFF.toInt() else 0x9EFFFFFF.toInt()
             canvas.drawText(letter, x, y - (paint.ascent() + paint.descent()) / 2f, paint)
         }
         if (dragging) {

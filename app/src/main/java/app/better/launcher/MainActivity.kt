@@ -211,7 +211,9 @@ class MainActivity : AppCompatActivity() {
         rail.layoutParams = params
     }
     private fun updateAlphabet() {
-        rail.letters = AppListRules.railLetters(catalog.sections())
+        val sections = catalog.sections()
+        rail.activeLetters = sections
+        rail.letters = AppListRules.railLetters(sections)
     }
     private fun refreshHomePreservingScroll() {
         val y = homeScroll?.scrollY ?: 0
