@@ -132,7 +132,7 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 
 AppWidgetHost слушает обновления между `onStart` и `onStop`. Обновление уведомлений при открытом диалоге откладывает перестроение главного экрана до закрытия диалога, сохраняя прокрутку. Эти сценарии важны при изменениях навигации и фонового обновления.
 
-Алфавит содержит ★, латинские A–Z и заключительный «#». Кириллические названия группируются по первой латинской букве транслитерации Android ICU Russian-Latin/BGN: Яндекс → Yandeks → Y, Банк → Bank → B. Цифры, символы и начальные буквы без латинской транслитерации (например, Ь и Ъ) относятся к «#». В коротком окне ряд оставляет только доступные латинские группы, ★ и «#».
+Алфавит содержит ★ и только непустые разделы приложений: латинские буквы A–Z и заключительный «#», если для него есть приложения. Кириллические названия группируются по первой латинской букве транслитерации Android ICU Russian-Latin/BGN: Яндекс → Yandeks → Y, Банк → Bank → B. Цифры, символы и начальные буквы без латинской транслитерации (например, Ь и Ъ) относятся к «#». Ряд прижат к нижней части экрана с отступом 8 dp над местом нижней панели; шаг букв — 20 dp при обычном масштабе шрифта, растёт с системным шрифтом и уменьшается при нехватке высоты. Положение сохраняется при переходе между избранным и списком приложений; system/IME insets и край жеста «Назад» учитываются.
 
 ## Хранение данных и интеграции
 
@@ -178,8 +178,8 @@ AppWidgetHost слушает обновления между `onStart` и `onSto
 | [LauncherIntegrationTest](app/src/androidTest/java/app/better/launcher/LauncherIntegrationTest.kt) | Сохранение, папки, backup, атомарный отказ импорта, реальный каталог и aliases/hidden; `app/build/reports/androidTests/connected/debug/index.html` |
 | [SystemTransliterationTest](app/src/androidTest/java/app/better/launcher/SystemTransliterationTest.kt) | Системные правила Russian-Latin/BGN, Яндекс/Y, Й, порядок разделов и поиск по aliases |
 | [AppSearchIndexTest](app/src/test/java/app/better/launcher/AppSearchIndexTest.kt) | Подготовленный поиск по aliases/исходным названиям и отсутствие повторного чтения названий |
-| [AppNavigationTest](app/src/androidTest/java/app/better/launcher/AppNavigationTest.kt) | Алфавит без повторных переходов внутри буквы, ограничение создаваемых строк, переиспользование и переход к последнему выбранному разделу |
-| [LauncherNavigationTest](app/src/androidTest/java/app/better/launcher/LauncherNavigationTest.kt) | Кнопки экрана виджетов, отмена выбора, Back и HOME |
+| [AppNavigationTest](app/src/androidTest/java/app/better/launcher/AppNavigationTest.kt) | Непустые разделы, компактный алфавит с доступным нижним разделом, свободным краем Back и управлением с клавиатуры; отсутствие повторных переходов внутри буквы, ограничение создаваемых строк, переиспользование и переход к последнему выбранному разделу |
+| [LauncherNavigationTest](app/src/androidTest/java/app/better/launcher/LauncherNavigationTest.kt) | Кнопки экрана виджетов, отмена выбора, Back и HOME; стабильное положение алфавита между избранным и списком приложений |
 | Android lint | `app/build/reports/lint-results-debug.html` |
 | [smoke-test.py](scripts/smoke-test.py) | Отсутствие встроенных часов и даты, UI-сценарии, включая экран виджетов, через adb и отсутствие аварий процесса лаунчера |
 
@@ -203,6 +203,8 @@ python3 scripts/smoke-test.py --serial emulator-5580
 ```
 
 Команда назначения HOME выше предназначена для тестового эмулятора. Скрипт проверяет отсутствие встроенных часов/даты, настройки/Back, поиск, запуск Camera/HOME, свайп меню, долгое нажатие, алфавит и переходы на экран виджетов; он не проверяет полный набор интеграций. Для UI-изменений отдельно проверяйте портрет, узкий экран с font scale 1.3, горизонтальную ориентацию, клавиатуру и системный Back. Снимки текущей проверки храните в локальной `.impeccable/review/`.
+
+Проверки рабочей правки компактного алфавита и ограничения UI-проверки записаны в [отчёте](docs/compact-alphabet-verification.md).
 
 Результаты проверок 0.1.7 записаны в [release notes](docs/releases/0.1.7.md). Результаты проверок 0.1.5 записаны в [проверке меню](docs/app-menu-verification.md) и [release notes](docs/releases/0.1.5.md). Результаты проверок 0.1.4 записаны в [release notes](docs/releases/0.1.4.md). Результаты проверок 0.1.3 записаны в [отчёте](docs/verification-0.1.3.md). Результаты текущей проверки экрана виджетов записаны в [отчёте](docs/widgets-verification.md). Результаты проверок 0.1.2 записаны в [проверке плавности](docs/app-navigation-verification.md) и [release notes](docs/releases/0.1.2.md). Результаты проверок 0.1.1 записаны в [release notes](docs/releases/0.1.1.md).
 

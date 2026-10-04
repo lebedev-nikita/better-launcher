@@ -55,6 +55,7 @@ class MainActivity : AppCompatActivity() {
     private var keyboardRequest: Runnable? = null
     private var homeScroll: ScrollView? = null
     private var homeFooter: View? = null
+    private var homeFooterHeight = 0
     private var widgetScroll: ScrollView? = null
     private var homeScrollPosition = 0
     private var widgetScrollPosition = 0
@@ -203,14 +204,13 @@ class MainActivity : AppCompatActivity() {
         val params = rail.layoutParams as FrameLayout.LayoutParams
         params.topMargin = screen.paddingTop
         params.leftMargin = screen.paddingLeft; params.rightMargin = screen.paddingRight
-        params.bottomMargin = screen.paddingBottom + if (page == "home") homeFooter?.height?.takeIf { it > 0 } ?: dp(66) else 0
+        homeFooter?.height?.takeIf { it > 0 }?.let { homeFooterHeight = it }
+        // Keep the alphabet under the finger when a drag opens the app list.
+        params.bottomMargin = screen.paddingBottom + homeFooterHeight.coerceAtLeast(dp(66))
         rail.layoutParams = params
     }
     private fun updateAlphabet() {
-        val sections = catalog.sections()
-        rail.activeLetters = sections
-        rail.letters = AppListRules.railLetters(sections,
-            shortWindow = resources.displayMetrics.heightPixels / resources.displayMetrics.density < 500)
+        rail.letters = AppListRules.railLetters(catalog.sections())
     }
     private fun refreshHomePreservingScroll() {
         val y = homeScroll?.scrollY ?: 0

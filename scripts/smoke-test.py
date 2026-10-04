@@ -161,7 +161,12 @@ size = adb("shell", "wm", "size")
 width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
 x = int(width - 30 * density)  # clear the OS Back gesture edge
-adb("shell", "input", "swipe", str(x), str(int(height * .4)), str(x), str(int(height * .75)), "600")
+rail = next(n for n in hierarchy().iter("node") if n.get("content-desc", "").startswith("Алфавит приложений,"))
+_, rail_top, _, rail_bottom = map(int, re.findall(r"\d+", rail.get("bounds")))
+# Start inside the compact, bottom-aligned letters rather than empty upper space.
+start_y = int(rail_bottom - 18 * density)
+end_y = max(rail_top, int(rail_bottom - 58 * density))
+adb("shell", "input", "swipe", str(x), str(start_y), str(x), str(end_y), "600")
 wait_for("Поиск приложений")
 adb("shell", "input", "keyevent", "4")
 home()

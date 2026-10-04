@@ -18,6 +18,41 @@ import org.junit.runner.RunWith
 class LauncherNavigationTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
 
+    @Test fun alphabetStaysInPlaceWhenOpeningAppsAndReturningHome() {
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
+        try {
+            bounds(activity, "Все приложения")
+            val before = Rect()
+            lateinit var rail: AlphabetRail
+            instrumentation.runOnMainSync {
+                val root = activity.window.decorView as ViewGroup
+                fun findRail(view: View): AlphabetRail? {
+                    if (view is AlphabetRail) return view
+                    if (view is ViewGroup) for (i in 0 until view.childCount) findRail(view.getChildAt(i))?.let { return it }
+                    return null
+                }
+                rail = findRail(root)!!
+                assertTrue(rail.getGlobalVisibleRect(before))
+            }
+            instrumentation.runOnMainSync { rail.onSelect("C") }
+            bounds(activity, "Поиск приложений")
+            instrumentation.waitForIdleSync()
+            instrumentation.runOnMainSync {
+                val after = Rect()
+                assertTrue(rail.getGlobalVisibleRect(after))
+                assertEquals("Opening apps must keep letters under the finger", before, after)
+                rail.onSelect("★")
+            }
+            bounds(activity, "Все приложения")
+            instrumentation.runOnMainSync {
+                val after = Rect()
+                assertTrue(rail.getGlobalVisibleRect(after))
+                assertEquals(before, after)
+            }
+        } finally { instrumentation.runOnMainSync { activity.finish() } }
+    }
+
     @Test fun widgetPageHasAccessibleNavigationAndHomeAlwaysReturnsHome() {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
@@ -55,7 +90,7 @@ class LauncherNavigationTest {
     }
 
     private fun find(view: View, label: String): View? {
-        if (view.contentDescription?.toString() == label || view is TextView && view.text.toString() == label) return view
+        if (view.contentDescription?.toString() == label || view is TextView && (view.text.toString() == label || view.hint?.toString() == label)) return view
         if (view is ViewGroup) for (index in 0 until view.childCount) find(view.getChildAt(index), label)?.let { return it }
         return null
     }
