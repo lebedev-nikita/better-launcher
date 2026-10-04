@@ -37,4 +37,12 @@ class AppListRulesTest {
         assertEquals(items, AppListRules.move(items, work, 0))
         assertEquals(emptyList<String>(), AppListRules.move(emptyList(), personal, 1))
     }
+    @Test fun `number and symbol section follows every alphabet section`() {
+        // Catalog supplies Latin sections after ICU transliteration; Android tests cover Cyrillic mapping.
+        val letters = 'A'..'Z'
+        for (letter in letters) {
+            assertTrue("# must follow $letter as it does on the rail",
+                AppListRules.sectionOrder("#") > AppListRules.sectionOrder(letter.toString()))
+        }
+    }
 }
