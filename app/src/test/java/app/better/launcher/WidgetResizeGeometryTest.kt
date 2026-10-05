@@ -41,7 +41,7 @@ class WidgetResizeGeometryTest {
     @Test fun sizesSnapInsideOddProviderBoundsAndExpandingKeepsAMovedWidgetVisible() {
         val geometry = WidgetResizeGeometry(133..359, 95..701, 600, 360)
         assertEquals(144, geometry.resizeWidth(WidgetSize(180, 320), 1).width)
-        assertEquals(348, geometry.resizeWidth(WidgetSize(180, 320), 1000).width)
+        assertEquals(359, geometry.resizeWidth(WidgetSize(180, 320), 1000).width)
         assertEquals(WidgetSize(324, 320, 0, 12), geometry.resizeWidth(WidgetSize(180, 320, 0, 80), 320))
         assertEquals(324, geometry.drag(WidgetSize(180, 320), WidgetEdge.BOTTOM, 3).height)
         assertEquals(312, geometry.drag(WidgetSize(180, 320), WidgetEdge.TOP, 3).height)
@@ -50,5 +50,10 @@ class WidgetResizeGeometryTest {
         assertEquals(133, WidgetResizeGeometry.snap(132, 133..134))
         assertEquals(134, WidgetResizeGeometry.snap(140, 133..134))
         assertEquals(0, WidgetResizeGeometry.snap(-5, -7..7))
+    }
+    @Test fun fullWindowWidthIsReachableEvenBetweenGridPointsAndRecentersTheWidget() {
+        val geometry = WidgetResizeGeometry(100..411, 60..700, 600, 411)
+        assertEquals(WidgetSize(411, 324), geometry.drag(WidgetSize(336, 324, 0, 24), WidgetEdge.RIGHT, 100))
+        assertEquals(408, geometry.resizeWidth(WidgetSize(411, 324), 405).width)
     }
 }

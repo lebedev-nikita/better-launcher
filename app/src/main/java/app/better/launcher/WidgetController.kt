@@ -95,7 +95,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
         frame.addView(view, FrameLayout.LayoutParams(-1, defaultHeight(info), Gravity.CENTER_HORIZONTAL))
         // The wrapper keeps the page width even when the hosted widget becomes narrower.
         frame.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-            if (right > left && right - left != oldRight - oldLeft) applySize(id, info, frame, view)
+            if (right > left && right - left != oldRight - oldLeft) applySize(id, info, frame, view, home)
         }
         view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (right > left && bottom > top && (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop)) {
@@ -125,12 +125,19 @@ class WidgetController(private val activity: MainActivity, private val store: La
             sizeRange(info.minHeight, info.minResizeHeight, info.maxResizeHeight, padding.top + padding.bottom, 1600)
     }
 
-    private fun applySize(id: Int, info: AppWidgetProviderInfo, frame: View, view: AppWidgetHostView) {
+    private fun applySize(id: Int, info: AppWidgetProviderInfo, frame: View, view: AppWidgetHostView, home: Boolean) {
         val size = store.widgetSize(id)
         val (widths, heights) = ranges(info, frame)
         val params = view.layoutParams as FrameLayout.LayoutParams
-        params.width = if (info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL == 0) -1
-            else activity.dp(WidgetResizeGeometry.snap(size?.width?.takeIf { it > 0 } ?: widths.last, widths))
+        val preferredWidth = if (home) ((frame.width / activity.resources.displayMetrics.density).toInt() - 72)
+            .coerceIn(widths) else widths.last
+        val requestedWidth = size?.width?.let { if (it == 0) widths.last else it } ?: preferredWidth
+        params.width = if (info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL == 0) {
+            if (home) activity.dp(preferredWidth) else -1
+        } else if (requestedWidth >= widths.last && widths.last == (frame.width / activity.resources.displayMetrics.density).toInt()) {
+            // Keep full width exact even when the window is not a multiple of the editing grid.
+            frame.width
+        } else activity.dp(if (requestedWidth >= widths.last) widths.last else WidgetResizeGeometry.snap(requestedWidth, widths))
         params.topMargin = activity.dp(size?.top ?: 0)
         params.height = if (info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL == 0) defaultHeight(info)
             else activity.dp(WidgetResizeGeometry.snap(size?.height ?: (defaultHeight(info) / activity.resources.displayMetrics.density).roundToInt(), heights))
@@ -157,7 +164,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
                 store.homeWidgetId = if (home) null else id; showDestination(home)
             }
             if (store.widgetSize(id) != null) command(Glyph.RESIZE, "Сбросить размер и положение") {
-                store.setWidgetSize(id, null); applySize(id, info, frame, view)
+                store.setWidgetSize(id, null); applySize(id, info, frame, view, home)
             }
             command(Glyph.PLUS, "Добавить виджет") { add() }
             command(Glyph.DELETE, "Удалить виджет") {
@@ -186,10 +193,10 @@ class WidgetController(private val activity: MainActivity, private val store: La
             onChange = { size ->
                 editingSize = size
                 store.setWidgetSize(id, if (size.width == (frame.width / density).toInt()) size.copy(width = 0) else size)
-                applySize(id, info, frame, view)
+                applySize(id, info, frame, view, store.homeWidgetId == id)
             },
             onGestureStart = { original = store.widgetSize(id); gestureStart = editingSize },
-            onCancel = { editingSize = gestureStart; store.setWidgetSize(id, original); applySize(id, info, frame, view) },
+            onCancel = { editingSize = gestureStart; store.setWidgetSize(id, original); applySize(id, info, frame, view, store.homeWidgetId == id) },
             onFinish = { finishResize() })
         editor = layer
         activity.attachWidgetEditor(layer)
