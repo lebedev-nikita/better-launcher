@@ -10,6 +10,10 @@ FIRST VIEWPORT: An unboxed vertical favorite list without a launcher clock or da
 FORM: User-pinned Niagara composition; no concept roll replaces an explicit reference. Native implementation, code-led because composition is specified.
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
+## Hidden apps and search
+
+Hidden apps are excluded from the empty app list and alphabet. A nonblank search includes them using the same original-name/alias matching as visible apps. Long press on a hidden result exposes “Показывать снова” directly in the shared navy menu. The action removes hiding immediately while retaining the query/results; favorites stay as selected. Visible apps retain “Скрыть приложение” under “Дополнительно”.
+
 ## Favorites order
 
 Home has no reorder button below favorites. “Изменить порядок” in a favorite app’s long-press menu enables ordering on home. Ordering retains the actual app/folder rows with one trailing 48dp handle on the same title line, centered with the name, including wrapped labels and notification previews below. There is no separate controls line or visible up/down button. Keyboard up/down and named accessibility moves live on the focused handle; boundaries omit the corresponding action. Favorites stay transparent over the wallpaper throughout dragging, including apps and folders; elevation keeps the moving row above its neighbors. Dropping saves, cancel preserves order, and edge scrolling supports long lists. Done remains in the fixed footer; Back ends the mode and HOME restores normal home. Unavailable IDs and existing selection/folder management remain intact.

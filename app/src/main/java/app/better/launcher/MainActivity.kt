@@ -496,7 +496,7 @@ class MainActivity : AppCompatActivity() {
             if (apps.isEmpty()) {
                 addView(text(if (query.isBlank()) "Приложений пока нет" else "Ничего не найдено", 22f))
                 addView(gap(12))
-                addView(text(if (query.isBlank()) "Скрытые приложения доступны в настройках." else "Попробуйте другое название", 15f, secondary))
+                addView(text(if (query.isBlank()) "Скрытые приложения можно найти через поиск." else "Попробуйте другое название", 15f, secondary))
                 if (query.isNotBlank()) addView(action("Искать в интернете") { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${Uri.encode(query)}"))) })
             }
         }
@@ -659,6 +659,7 @@ class MainActivity : AppCompatActivity() {
     private fun showAppMenu(app: AppEntry) {
         currentDialog?.dismiss(); hideKeyboard()
         val favorite = app.id in store.favorites
+        val hidden = app.id in store.hidden
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
         val foreground = getColor(R.color.app_menu_foreground)
         val body = menuBody()
@@ -675,6 +676,12 @@ class MainActivity : AppCompatActivity() {
             return row
         }
         val commands = vertical()
+        if (hidden) menuAction(commands, Glyph.SHOW, "Показывать снова") {
+            store.hidden = store.hidden - app.id
+            updateAlphabet()
+            if (page == "apps") populateApps(search?.text?.toString().orEmpty()) else showHome()
+            message("Приложение снова показывается")
+        }
         menuAction(commands, Glyph.STAR, if (favorite) "Убрать из избранного" else "В избранное") {
             store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id
             showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное")
@@ -697,7 +704,7 @@ class MainActivity : AppCompatActivity() {
         }
         expand.stateDescription = "Свёрнуто"
         menuAction(extra, Glyph.FOLDER, "Приложения во всплывающем меню") { selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } }
-        menuAction(extra, Glyph.HIDE, "Скрыть приложение") {
+        if (!hidden) menuAction(extra, Glyph.HIDE, "Скрыть приложение") {
             store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome()
             message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - app.id; if (favorite) store.favorites = store.favorites + app.id; showHome() }
         }
