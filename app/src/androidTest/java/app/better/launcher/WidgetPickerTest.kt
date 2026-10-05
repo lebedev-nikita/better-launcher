@@ -110,7 +110,15 @@ class WidgetPickerTest {
             await { descendants(picker).filterIsInstance<ListView>().single().count > 0 }
             val list = onMain { descendants(picker).filterIsInstance<ListView>().single() }
             val rail = onMain { descendants(picker).filterIsInstance<AlphabetRail>().single() }
-            fun jump(letter: String, label: String): View {
+            fun visibleRow(label: String): View? = (0 until list.childCount).map(list::getChildAt).firstOrNull { row ->
+                descendants(row).filterIsInstance<TextView>().any { it.text.toString() == label }
+            }
+            fun previewReady(label: String, predicate: (View) -> Boolean) {
+                // Preview completion can relayout the list and recycle a previously found row.
+                // Resolve the currently displayed provider on every observation.
+                await { visibleRow(label)?.let(predicate) == true }
+            }
+            fun jump(letter: String, label: String) {
                 instrumentation.runOnMainSync { rail.onSelect(letter) }
                 // Wait for earlier sections to reach the top before retaining a recycled
                 // preview row. The final section can be clamped at the end of the list;
@@ -122,23 +130,20 @@ class WidgetPickerTest {
                     candidates.any { row -> descendants(row).filterIsInstance<TextView>()
                         .any { it.text.toString() == label } }
                 }
-                return onMain { (0 until list.childCount).map(list::getChildAt).first { row ->
-                    descendants(row).filterIsInstance<TextView>().any { it.text.toString() == label }
-                } }
             }
-            val layout = jump("A", "A00 Layout preview")
-            await { descendants(layout).filterIsInstance<TextView>().any { it.text.toString() == "Layout preview content" } }
-            await {
-                val last = descendants(layout).filterIsInstance<TextView>().firstOrNull { it.text.toString() == "Last preview line" }
+            jump("A", "A00 Layout preview")
+            previewReady("A00 Layout preview") { row -> descendants(row).filterIsInstance<TextView>().any { it.text.toString() == "Layout preview content" } }
+            previewReady("A00 Layout preview") { row ->
+                val last = descendants(row).filterIsInstance<TextView>().firstOrNull { it.text.toString() == "Last preview line" }
                 val bounds = Rect()
                 last != null && last.getGlobalVisibleRect(bounds) && bounds.height() > 0
             }
-            val image = jump("B", "B00 Image preview")
-            await { descendants(image).filterIsInstance<ImageView>().any { it.drawable != null } }
-            val missing = jump("C", "C00 No preview")
-            await { descendants(missing).filterIsInstance<TextView>().any { it.text.toString() == "Превью недоступно" } }
-            val broken = jump("D", "D00 Broken layout")
-            await { descendants(broken).filterIsInstance<ImageView>().any { it.drawable != null } }
+            jump("B", "B00 Image preview")
+            previewReady("B00 Image preview") { row -> descendants(row).filterIsInstance<ImageView>().any { it.drawable != null } }
+            jump("C", "C00 No preview")
+            previewReady("C00 No preview") { row -> descendants(row).filterIsInstance<TextView>().any { it.text.toString() == "Превью недоступно" } }
+            jump("D", "D00 Broken layout")
+            previewReady("D00 Broken layout") { row -> descendants(row).filterIsInstance<ImageView>().any { it.drawable != null } }
             jump("#", "000 Numeric preview")
             assertEquals("Browsing must not allocate IDs", before, host.appWidgetIds.toSet())
             assertEquals("#", onMain { rail.letters.last() })
@@ -148,8 +153,12 @@ class WidgetPickerTest {
                 rail.performAccessibilityAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD, null)
             }
             assertTrue(onMain { rail.selected != "D" })
-            val selectedRow = jump("B", "B00 Image preview")
-            instrumentation.runOnMainSync { val position = list.firstVisiblePosition + list.indexOfChild(selectedRow); list.performItemClick(selectedRow, position, list.adapter.getItemId(position)) }
+            jump("B", "B00 Image preview")
+            instrumentation.runOnMainSync {
+                val selectedRow = requireNotNull(visibleRow("B00 Image preview"))
+                val position = list.firstVisiblePosition + list.indexOfChild(selectedRow)
+                list.performItemClick(selectedRow, position, list.adapter.getItemId(position))
+            }
             assertEquals(ComponentName(instrumentation.context.packageName, ImagePreviewProvider::class.java.name), chosen)
             assertFalse(onMain { dialog?.isShowing == true })
             assertEquals("Picking delegates binding to the controller", before, host.appWidgetIds.toSet())
