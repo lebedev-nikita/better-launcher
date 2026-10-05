@@ -88,7 +88,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
             dragBackgroundColor = Color.TRANSPARENT) }
         labels.forEachIndexed { index, (id, label) ->
             if (order == null) {
-                if (index > 0) container.addView(activity.gap(24))
+                if (index > 0) container.addView(activity.gap(store.widgetSpacing))
                 render(container, id, false)
             } else {
                 val number = occurrences.getOrDefault(label, 0) + 1
@@ -96,7 +96,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
                 val name = if (labels.count { it.second == label } > 1) "$label · $number" else label
                 val content = activity.vertical()
                 render(content, id, false)
-                order.add(id.toString(), name, content, 24)
+                order.add(id.toString(), name, content, store.widgetSpacing)
             }
         }
         return order

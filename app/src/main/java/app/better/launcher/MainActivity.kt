@@ -250,8 +250,6 @@ class MainActivity : AppCompatActivity() {
         homeScroll = scroll
         val content = vertical()
         val (start, end) = contentMargins()
-        val viewportDp = resources.displayMetrics.heightPixels / resources.displayMetrics.density
-        val shortWindow = viewportDp < 500
         val widgetBox = vertical(); widgets.renderHome(widgetBox)
         val hasWidget = widgetBox.childCount > 0
         // Widgets have their own inset-safe width; only app/information rows reserve the alphabet.
@@ -266,14 +264,14 @@ class MainActivity : AppCompatActivity() {
             line.setOnClickListener { showWeather() }; content.addView(insetColumn().apply { addView(line) })
         }
         if (hasWidget) {
-            if (content.isNotEmpty()) content.addView(gap(14))
+            if (content.isNotEmpty()) content.addView(gap(store.widgetSpacing))
             content.addView(widgetBox)
         }
         mediaView()?.let {
-            if (content.isNotEmpty()) content.addView(gap(12))
+            if (content.isNotEmpty()) content.addView(gap(store.widgetSpacing))
             content.addView(insetColumn().apply { addView(it) })
         }
-        if (content.isNotEmpty()) content.addView(gap(if (shortWindow) 18 else 30))
+        if (content.isNotEmpty()) content.addView(gap(store.widgetSpacing))
         val favoriteColumn = insetColumn()
         val favorites = store.favorites.filter { catalog.find(it) != null || store.folder(it) != null }
         if (favorites.isEmpty()) {
@@ -897,6 +895,7 @@ class MainActivity : AppCompatActivity() {
             choose("Шрифт", listOf("Системный", "Лёгкий", "Компактный", "С засечками"), names.indexOf(store.string("font", "sans-serif"))) { store.set("font", names[it]); showSettings() }
         })
         body.addView(wallpaperDimmingSetting())
+        body.addView(widgetSpacingSetting())
         body.addView(toggle("Скрыть значки", "Оставить только названия приложений", "hideIcons"))
         body.addView(toggle("Крупные названия", "Увеличить текст приложений", "largeText"))
         body.addView(toggle("Компактный список", "Уменьшить расстояние между приложениями", "compact"))
@@ -939,6 +938,30 @@ class MainActivity : AppCompatActivity() {
                     store.wallpaperDimming = value.toInt()
                     percentage.text = getString(R.string.wallpaper_dimming_percentage, store.wallpaperDimming)
                     applyAppearance()
+                }
+            }
+        }, LinearLayout.LayoutParams(-1, dp(48)))
+    }
+    private fun widgetSpacingSetting(): View = vertical().apply {
+        setPadding(dp(16), dp(10), dp(16), dp(10))
+        val dimension = menuText(getString(R.string.widget_dimension_value, store.widgetSpacing), 17f).apply {
+            minWidth = dp(60); gravity = Gravity.END or Gravity.CENTER_VERTICAL
+        }
+        addView(horizontal().apply {
+            addView(menuText("Отступ между виджетами", 17f), LinearLayout.LayoutParams(0, -2, 1f))
+            addView(dimension)
+        })
+        addView(menuText("Такой же отступ перед избранным · 0–32 dp", 13f).apply { setPadding(0, dp(5), 0, 0) })
+        addView(Slider(this@MainActivity).apply {
+            valueFrom = 0f; valueTo = 32f; stepSize = 1f; value = store.widgetSpacing.toFloat()
+            setTickVisibilityMode(TickVisibilityMode.TICK_VISIBILITY_HIDDEN)
+            contentDescription = "Отступ между виджетами"
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            setLabelFormatter { getString(R.string.widget_dimension_value, it.toInt()) }
+            addOnChangeListener { _, value, fromUser ->
+                if (fromUser) {
+                    store.widgetSpacing = value.toInt()
+                    dimension.text = getString(R.string.widget_dimension_value, store.widgetSpacing)
                 }
             }
         }, LinearLayout.LayoutParams(-1, dp(48)))

@@ -178,6 +178,62 @@ class LauncherIntegrationTest {
         store.import("""{"version":1,"preferences":{"dimWallpaper":true}}""")
         assertEquals(20, store.wallpaperDimming)
     }
+    @Test fun widgetSpacingSurvivesBackupAndRejectsInvalidValuesAtomically() = isolated { store ->
+        assertEquals(8, store.widgetSpacing)
+        store.favorites = listOf("keep-me")
+        store.widgets = listOf(42)
+        store.homeWidgetId = 42
+        store.setWidgetSize(42, WidgetSize(180, 324, 24, 12))
+        for (spacing in listOf(0, 8, 19, 32)) {
+            store.widgetSpacing = spacing
+            val backup = store.export()
+            store.widgetSpacing = 16
+            store.import(backup)
+            assertEquals(spacing, LauncherStore(context).widgetSpacing)
+            assertEquals(listOf(42), store.widgets)
+            assertEquals(42, store.homeWidgetId)
+            assertEquals(WidgetSize(180, 324, 24, 12), store.widgetSize(42))
+        }
+        val before = store.prefs.all
+        for (invalid in listOf("-1", "33", "8.5", "\"8\"", "true", "null")) {
+            assertTrue(runCatching { store.import("""{"version":1,"preferences":{"favorites":"[]","widgetSpacing":$invalid}}""") }.isFailure)
+            assertEquals(before, store.prefs.all)
+        }
+        for (invalid in listOf(-1, 33)) {
+            assertTrue(runCatching { store.widgetSpacing = invalid }.isFailure)
+            assertEquals(before, store.prefs.all)
+        }
+        store.import("""{"version":1,"preferences":{"favorites":"[]"}}""")
+        assertEquals("Old backups use the reduced default", 8, store.widgetSpacing)
+        assertEquals(listOf(42), store.widgets)
+    }
+    @Test fun widgetSpacingSliderSupportsKeyboardAccessibilityAndRecreation() = isolated { store ->
+        store.set("initialized", true)
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.showSettings()
+                val slider = descendants(activity.window.decorView).filterIsInstance<Slider>()
+                    .single { it.contentDescription == "Отступ между виджетами" }
+                assertEquals(8f, slider.value, 0f)
+                slider.requestFocus()
+                for (key in listOf(KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_DPAD_RIGHT)) {
+                    slider.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, key))
+                    slider.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, key))
+                }
+                assertEquals(9, activity.store.widgetSpacing)
+                val progress = Bundle().apply { putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, 19f) }
+                assertTrue(slider.accessibilityNodeProvider.performAction(0, android.R.id.accessibilityActionSetProgress, progress))
+                assertEquals(19, activity.store.widgetSpacing)
+            }
+            scenario.recreate()
+            scenario.onActivity { activity ->
+                activity.showSettings()
+                assertEquals(19f, descendants(activity.window.decorView).filterIsInstance<Slider>()
+                    .single { it.contentDescription == "Отступ между виджетами" }.value, 0f)
+                assertEquals(19, LauncherStore(context).widgetSpacing)
+            }
+        }
+    }
     private fun descendants(view: View): List<View> = listOf(view) + if (view is ViewGroup) {
         (0 until view.childCount).flatMap { descendants(view.getChildAt(it)) }
     } else emptyList()
@@ -187,7 +243,7 @@ class LauncherIntegrationTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 descendants(activity.window.decorView).first { it.contentDescription == "Настройки лаунчера" }.performClick()
-                val slider = descendants(activity.window.decorView).filterIsInstance<Slider>().single()
+                val slider = descendants(activity.window.decorView).filterIsInstance<Slider>().single { it.contentDescription == "Затемнение обоев" }
                 assertEquals(20f, slider.value, 0f)
                 slider.requestFocus()
                 slider.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER))
@@ -207,7 +263,7 @@ class LauncherIntegrationTest {
                 assertEquals((.37f * 255).toInt(), Color.alpha(bitmap.getPixel(0, 0)))
                 bitmap.recycle()
                 descendants(activity.window.decorView).first { it.contentDescription == "Настройки лаунчера" }.performClick()
-                assertEquals(37f, descendants(activity.window.decorView).filterIsInstance<Slider>().single().value, 0f)
+                assertEquals(37f, descendants(activity.window.decorView).filterIsInstance<Slider>().single { it.contentDescription == "Затемнение обоев" }.value, 0f)
             }
         }
     }

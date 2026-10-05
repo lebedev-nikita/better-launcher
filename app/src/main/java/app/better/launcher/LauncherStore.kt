@@ -76,6 +76,12 @@ class LauncherStore(context: Context) {
         else sizes.put(id.toString(), JSONObject().put("width", size.width).put("height", size.height).put("top", size.top).put("offsetX", size.offsetX))
         set("widgetSizes", sizes.toString())
     }
+    var widgetSpacing: Int
+        get() = prefs.getInt("widgetSpacing", 8).coerceIn(0, 32)
+        set(value) {
+            require(value in 0..32)
+            prefs.edit { putInt("widgetSpacing", value) }
+        }
     var wallpaperDimming: Int
         get() = prefs.getInt("wallpaperDimming", if (bool("dimWallpaper", true)) 20 else 0).coerceIn(0, 100)
         set(value) {
@@ -107,6 +113,7 @@ class LauncherStore(context: Context) {
             require(key.length <= 300)
             when {
                 key == "wallpaperDimming" && value is Int && value in 0..100 -> accepted[key] = value
+                key == "widgetSpacing" && value is Int && value in 0..32 -> accepted[key] = value
                 key == "hidden" && value is JSONArray -> accepted[key] = List(value.length()) { value.getString(it) }.toSet()
                 key in booleanKeys && value is Boolean -> accepted[key] = value
                 (key in stringKeys || key.startsWith("alias:") || key.startsWith("folder:") || key.startsWith("popup:")) && value is String -> accepted[key] = value

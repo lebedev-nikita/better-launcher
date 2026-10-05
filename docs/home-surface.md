@@ -129,3 +129,7 @@ The rail derives its sections from visible apps whenever home is shown. Hiding t
 ## App search width
 
 The app toolbar fills the inset-safe width, with equal 20dp side padding and 48dp Back/Clear actions. The text field takes the remaining width. Only the results retain the alphabet reservation; left-handed mode leaves the toolbar geometry unchanged. The rail begins below the 56dp toolbar and 12dp top gap, including narrow windows and landscape.
+
+## Shared widget spacing
+
+The widget page and home information-to-favorites boundary use one saved `widgetSpacing` value: default 8dp, 0–32dp in 1dp steps. Appearance settings expose an inline Material slider with autosave, keyboard and accessibility input. The value stays identical in portrait, short windows and either rail mode. Widget ordering uses the same spacing around its existing handles. Provider padding and explicit saved top offsets belong to the widget geometry, not this gap.
