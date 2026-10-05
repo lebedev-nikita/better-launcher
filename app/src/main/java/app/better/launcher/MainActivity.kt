@@ -496,7 +496,7 @@ class MainActivity : AppCompatActivity() {
             if (apps.isEmpty()) {
                 addView(text(if (query.isBlank()) "Приложений пока нет" else "Ничего не найдено", 22f))
                 addView(gap(12))
-                addView(text(if (query.isBlank()) "Скрытые приложения доступны в настройках." else "Попробуйте другое название", 15f, secondary))
+                addView(text(if (query.isBlank()) "Скрытые приложения можно найти через поиск." else "Попробуйте другое название", 15f, secondary))
                 if (query.isNotBlank()) addView(action("Искать в интернете") { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?q=${Uri.encode(query)}"))) })
             }
         }
@@ -659,6 +659,7 @@ class MainActivity : AppCompatActivity() {
     private fun showAppMenu(app: AppEntry) {
         currentDialog?.dismiss(); hideKeyboard()
         val favorite = app.id in store.favorites
+        val hidden = app.id in store.hidden
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
         val foreground = getColor(R.color.app_menu_foreground)
         val body = menuBody()
@@ -669,12 +670,16 @@ class MainActivity : AppCompatActivity() {
             contentDescription = "Переименовать ${catalog.label(app)}"; tooltipText = "Переименовать"
         }
         body.addView(header); body.addView(gap(4))
-        fun menuAction(container: LinearLayout, glyph: Glyph, label: String, dismiss: Boolean = true, action: () -> Unit): LinearLayout {
-            val row = this.menuAction(label, glyph) { if (dismiss) dialog.dismiss(); action() }
-            container.addView(row)
-            return row
+        fun menuAction(container: LinearLayout, glyph: Glyph, label: String, action: () -> Unit) {
+            container.addView(this.menuAction(label, glyph) { dialog.dismiss(); action() })
         }
         val commands = vertical()
+        if (hidden) menuAction(commands, Glyph.SHOW, "Показывать снова") {
+            store.hidden = store.hidden - app.id
+            updateAlphabet()
+            if (page == "apps") populateApps(search?.text?.toString().orEmpty()) else showHome()
+            message("Приложение снова показывается")
+        }
         menuAction(commands, Glyph.STAR, if (favorite) "Убрать из избранного" else "В избранное") {
             store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id
             showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное")
@@ -687,21 +692,12 @@ class MainActivity : AppCompatActivity() {
         menuAction(commands, Glyph.DELETE, "Удалить приложение") {
             if (app.user == Process.myUserHandle()) safeStart(Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))) else message("Удалите приложение через настройки рабочего профиля")
         }
-        val extra = vertical().apply { visibility = View.GONE }
-        lateinit var expand: LinearLayout
-        expand = menuAction(commands, Glyph.DOWN, "Дополнительно", dismiss = false) {
-            val expanded = extra.isGone
-            extra.isGone = !expanded
-            expand.stateDescription = if (expanded) "Развёрнуто" else "Свёрнуто"
-            expand.getChildAt(0).rotation = if (expanded) 180f else 0f
-        }
-        expand.stateDescription = "Свёрнуто"
-        menuAction(extra, Glyph.FOLDER, "Приложения во всплывающем меню") { selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } }
-        menuAction(extra, Glyph.HIDE, "Скрыть приложение") {
+        menuAction(commands, Glyph.FOLDER, "Приложения во всплывающем меню") { selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } }
+        if (!hidden) menuAction(commands, Glyph.HIDE, "Скрыть приложение") {
             store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome()
             message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - app.id; if (favorite) store.favorites = store.favorites + app.id; showHome() }
         }
-        commands.addView(extra); commands.addView(gap(16))
+        commands.addView(gap(16))
         commands.addView(View(this).apply { setBackgroundColor(foreground); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(-1, dp(1)).apply { marginStart = dp(8); marginEnd = dp(8) })
         commands.addView(gap(8))
         menuAction(commands, Glyph.SETTINGS, "Настройки Better Launcher") { showSettings() }

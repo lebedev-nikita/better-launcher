@@ -91,7 +91,8 @@ class AppMenuTest {
             oldAlias = activity.store.alias(entry.id)
             val initialLabel = activity.catalog.label(entry)
             openMenu(initialLabel)
-            node { it.contentDescription == "Дополнительно" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
+            node { it.contentDescription == "Приложения во всплывающем меню" }
             node { it.contentDescription == "Скрыть приложение" }
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Переименовать" })
             val menu = currentDialog(activity)
@@ -152,6 +153,58 @@ class AppMenuTest {
         }
     }
 
+    @Test fun hiddenAppCanBeFoundAndShownAgainFromSearchMenu() {
+        val store = LauncherStore(instrumentation.targetContext)
+        val oldHidden = store.hidden
+        var oldFavorites: List<String>? = null
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
+        var app: AppEntry? = null
+        try {
+            await(30000) {
+                instrumentation.runOnMainSync {
+                    if (activity.hasWindowFocus()) app = activity.store.favorites.firstNotNullOfOrNull(activity.catalog::find)
+                }
+                app != null
+            }
+            oldFavorites = store.favorites
+            val entry = app!!
+            val label = activity.catalog.label(entry)
+            openMenu(label)
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
+            node { it.contentDescription == "Скрыть приложение" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Все приложения и поиск" }
+            assertTrue(entry.id in store.hidden)
+            assertFalse(entry.id in store.favorites)
+            assertFalse(activity.catalog.visible().any { it.id == entry.id })
+
+            node { it.contentDescription == "Все приложения и поиск" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            setName(label)
+            openMenu(label)
+            // Restore is immediately available, without expanding additional actions.
+            node { it.contentDescription == "Показывать снова" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.className == "android.widget.EditText" && it.text?.toString() == label }
+            node { it.text?.toString() == label && it.className != "android.widget.EditText" }
+            assertFalse(entry.id in LauncherStore(instrumentation.targetContext).hidden)
+            assertFalse("Showing again must not add the app to favorites", entry.id in store.favorites)
+            assertTrue(activity.catalog.visible().any { it.id == entry.id })
+            assertTrue(AppCatalog(instrumentation.targetContext, LauncherStore(instrumentation.targetContext))
+                .apply { load() }.visible().any { it.id == entry.id })
+
+            openMenu(label)
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Показывать снова" })
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
+            node { it.contentDescription == "Скрыть приложение" }
+        } finally {
+            instrumentation.runOnMainSync {
+                store.hidden = oldHidden
+                oldFavorites?.let { store.favorites = it }
+                (MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(activity) as? Dialog)?.dismiss()
+                activity.finish()
+            }
+        }
+    }
+
     private fun currentDialog(activity: MainActivity): Any? {
         var dialog: Any? = null
         instrumentation.runOnMainSync {
@@ -166,7 +219,7 @@ class AppMenuTest {
         // Resolve a fresh home row and retry only rejected long-click actions.
         await {
             var row: AccessibilityNodeInfo? = findNode(instrumentation.uiAutomation.rootInActiveWindow) {
-                it.text?.toString() == label && it.isVisibleToUser
+                it.text?.toString() == label && it.className != "android.widget.EditText" && it.isVisibleToUser
             }
             while (row != null && !row.isLongClickable) row = row.parent
             row?.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK) == true
