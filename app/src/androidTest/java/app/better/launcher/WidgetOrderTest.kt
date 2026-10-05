@@ -47,7 +47,8 @@ class WidgetOrderTest {
             store.homeWidgetId = ids[1]
             val sizes = ids.associateWith { WidgetSize(180, 144, 12, 12) }
             sizes.forEach { (id, size) -> store.setWidgetSize(id, size) }
-            val intent = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                .setClass(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             ActivityScenario.launch<MainActivity>(intent).use { scenario ->
                 scenario.onActivity { it.showWidgets() }
                 click("Изменить порядок виджетов")

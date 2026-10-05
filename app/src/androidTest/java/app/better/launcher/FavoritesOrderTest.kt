@@ -36,7 +36,7 @@ class FavoritesOrderTest {
                 home(scenario)
                 val firstLabel = store.alias(apps[0].id) ?: apps[0].originalLabel
                 val secondLabel = store.alias(apps[1].id) ?: apps[1].originalLabel
-                assertTrue(node("Изменить порядок избранного").performAction(AccessibilityNodeInfo.ACTION_CLICK))
+                await { node("Изменить порядок избранного").performAction(AccessibilityNodeInfo.ACTION_CLICK) }
                 node("Перетащить $firstLabel")
                 assertFalse(node("Переместить $firstLabel вверх").isEnabled)
                 val from = Rect().also { node("Перетащить $firstLabel").getBoundsInScreen(it) }
