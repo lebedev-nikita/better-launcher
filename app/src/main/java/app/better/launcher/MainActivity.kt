@@ -515,16 +515,43 @@ class MainActivity : AppCompatActivity() {
         val position = appAdapter?.sectionPosition(letter) ?: return
         allApps?.setSelectionFromTop(position, 0)
     }
-    fun sheet(title: String, scrollContent: Boolean = true, build: (LinearLayout, Dialog) -> Unit): Dialog {
+    val menuForeground: Int get() = getColor(R.color.app_menu_foreground)
+    fun menuText(value: String, size: Float = 16f): TextView = text(value, size, menuForeground)
+    fun menuIconButton(glyph: Glyph, label: String, action: () -> Unit): View = iconButton(glyph, label, action).apply {
+        (this as GlyphView).color = menuForeground
+    }
+    private fun menuBody() = vertical().apply {
+        isClickable = true
+        background = rounded(getColor(R.color.app_menu_surface), dp(24).toFloat()).apply {
+            cornerRadii = floatArrayOf(dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), 0f, 0f, 0f, 0f)
+        }
+    }
+    private fun menuHeader(title: String, icon: android.graphics.drawable.Drawable? = null): LinearLayout = horizontal().apply {
+        minimumHeight = dp(64); setPadding(0, dp(8), 0, dp(8))
+        if (icon != null) addView(ImageView(this@MainActivity).apply {
+            setImageDrawable(icon); setPadding(dp(8), dp(8), dp(8), dp(8))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
+        addView(menuText(title, 23f).apply { isAccessibilityHeading = true }, LinearLayout.LayoutParams(0, -2, 1f))
+    }
+    fun menuAction(label: String, glyph: Glyph = Glyph.CHEVRON, action: () -> Unit): LinearLayout = horizontal().apply {
+        minimumHeight = dp(52); background = touchBackground(); isFocusable = true; contentDescription = label
+        setPadding(0, dp(4), dp(8), dp(4)); setOnClickListener { action() }
+        addView(GlyphView(this@MainActivity, glyph, menuForeground).apply {
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
+        addView(menuText(label, 17f).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
+            LinearLayout.LayoutParams(0, -2, 1f))
+    }
+    fun sheet(title: String, scrollContent: Boolean = true, icon: android.graphics.drawable.Drawable? = null, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()
-        val dialog = Dialog(this)
-        val body = vertical().apply { setPadding(dp(20), dp(8), dp(20), dp(24)); background = rounded(surface, dp(24).toFloat()) }
-        val header = horizontal()
-        header.addView(text(title, 23f), LinearLayout.LayoutParams(0, -2, 1f))
-        header.addView(iconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
-        body.addView(header); body.addView(gap(12))
+        val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
+        val body = menuBody()
+        val header = menuHeader(title, icon)
+        header.addView(menuIconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
+        body.addView(header); body.addView(gap(4))
         build(body, dialog)
-        return presentSheet(dialog, body, scrollContent = scrollContent)
+        return presentSheet(dialog, body, scrollContent)
     }
     fun attachWidgetEditor(editor: View) {
         screenFocusBeforeWidgetEditor = screen.descendantFocusability
@@ -545,116 +572,90 @@ class MainActivity : AppCompatActivity() {
     fun managementSheet(title: String, icon: android.graphics.drawable.Drawable?, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
-        val foreground = getColor(R.color.app_menu_foreground)
-        val body = vertical().apply {
-            background = rounded(getColor(R.color.app_menu_surface), dp(24).toFloat()).apply {
-                cornerRadii = floatArrayOf(dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), 0f, 0f, 0f, 0f)
-            }
-        }
-        val header = horizontal().apply { minimumHeight = dp(64); setPadding(0, dp(8), 0, dp(8)) }
-        header.addView(ImageView(this).apply {
-            setImageDrawable(icon); setPadding(dp(8), dp(8), dp(8), dp(8)); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
-        header.addView(text(title, 23f, foreground).apply { isAccessibilityHeading = true }, LinearLayout.LayoutParams(0, -2, 1f))
-        body.addView(header); body.addView(gap(4)); build(body, dialog)
-        return presentSheet(dialog, body, appMenu = true)
+        val body = menuBody()
+        body.addView(menuHeader(title, icon)); body.addView(gap(4)); build(body, dialog)
+        return presentSheet(dialog, body)
     }
     fun managementAction(body: LinearLayout, dialog: Dialog, glyph: Glyph, label: String, action: () -> Unit) {
-        body.addView(horizontal().apply {
-            minimumHeight = dp(52); background = touchBackground(); isFocusable = true; contentDescription = label
-            setPadding(0, dp(4), dp(8), dp(4)); setOnClickListener { dialog.dismiss(); action() }
-            addView(GlyphView(this@MainActivity, glyph, getColor(R.color.app_menu_foreground)).apply {
-                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
-            addView(text(label, 17f, getColor(R.color.app_menu_foreground)).apply {
-                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            }, LinearLayout.LayoutParams(0, -2, 1f))
-        })
+        body.addView(menuAction(label, glyph) { dialog.dismiss(); action() })
     }
-    private fun presentSheet(dialog: Dialog, body: LinearLayout, appMenu: Boolean = false, scrollContent: Boolean = true): Dialog {
+    private fun presentSheet(dialog: Dialog, body: LinearLayout, scrollContent: Boolean = true): Dialog {
         val scroll = if (scrollContent) object : ScrollView(this) {
             override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-                val height = if (appMenu) MeasureSpec.makeMeasureSpec(
+                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(
                     minOf(MeasureSpec.getSize(heightMeasureSpec), (resources.displayMetrics.heightPixels * .85f).toInt()),
                     MeasureSpec.AT_MOST
-                ) else heightMeasureSpec
-                super.onMeasure(widthMeasureSpec, height)
+                ))
             }
-        }.apply { isFillViewport = false; isVerticalScrollBarEnabled = false; isClickable = appMenu; addView(body) } else null
-        // Keep the window fixed while the sheet is measured and animated inside it.
-        // Resizing a bottom-gravity window can reach the compositor a frame after its content.
-        val container = if (appMenu && scroll != null) FrameLayout(this).apply {
+        }.apply { isFillViewport = false; isVerticalScrollBarEnabled = false; isClickable = true; addView(body) } else null
+        val panel = scroll ?: body
+        // A fixed window keeps the bottom anchor stable during layout, IME changes and arrival.
+        val container = FrameLayout(this).apply {
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            addView(scroll, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+            addView(panel, FrameLayout.LayoutParams(-1, if (scrollContent) -2 else (resources.displayMetrics.heightPixels * .85f).toInt(), Gravity.BOTTOM))
             setOnClickListener { dialog.dismiss() }
-        } else scroll ?: body
-        val windowScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.WINDOW_ANIMATION_SCALE, 1f) else 0f
-        val animatorScale = if (appMenu) Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) else 0f
-        val animateMenu = appMenu && scroll != null && windowScale > 0f && animatorScale > 0f && android.animation.ValueAnimator.areAnimatorsEnabled()
-        fun sheetHeight() = minOf(body.height + (scroll?.paddingTop ?: 0) + (scroll?.paddingBottom ?: 0), (resources.displayMetrics.heightPixels * .85f).toInt())
-        if (animateMenu) scroll?.translationY = resources.displayMetrics.heightPixels.toFloat()
+        }
+        val windowScale = Settings.Global.getFloat(contentResolver, Settings.Global.WINDOW_ANIMATION_SCALE, 1f)
+        val animatorScale = Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+        val animateMenu = windowScale > 0f && animatorScale > 0f && android.animation.ValueAnimator.areAnimatorsEnabled()
+        if (animateMenu) panel.translationY = resources.displayMetrics.heightPixels.toFloat()
         dialog.setContentView(container)
         dialog.window?.apply {
             setBackgroundDrawableResource(android.R.color.transparent); addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             setDimAmount(.3f); setGravity(Gravity.BOTTOM); setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            if (appMenu) {
-                setLayout(-1, -1)
-                if (!animateMenu) setWindowAnimations(0)
-                WindowCompat.setDecorFitsSystemWindows(this, false)
-                isNavigationBarContrastEnforced = false
-                container.setOnApplyWindowInsetsListener { _, insets ->
-                    val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
-                    body.setPadding(dp(24) + bars.left, dp(12), dp(24) + bars.right, dp(16) + bars.bottom)
-                    val ime = insets.getInsets(WindowInsets.Type.ime())
-                    container.setPadding(0, bars.top, 0, (ime.bottom - bars.bottom).coerceAtLeast(0))
-                    insets
+            setLayout(-1, -1)
+            if (!animateMenu) setWindowAnimations(0)
+            WindowCompat.setDecorFitsSystemWindows(this, false)
+            isNavigationBarContrastEnforced = false
+            container.setOnApplyWindowInsetsListener { _, insets ->
+                val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+                val ime = insets.getInsets(WindowInsets.Type.ime())
+                body.setPadding(dp(24) + bars.left, dp(12), dp(24) + bars.right, dp(16) + bars.bottom)
+                val keyboard = (ime.bottom - bars.bottom).coerceAtLeast(0)
+                container.setPadding(0, bars.top, 0, keyboard)
+                if (!scrollContent) panel.layoutParams = (panel.layoutParams as FrameLayout.LayoutParams).apply {
+                    height = minOf((resources.displayMetrics.heightPixels * .85f).toInt(),
+                        (resources.displayMetrics.heightPixels - bars.top - keyboard).coerceAtLeast(0))
                 }
+                insets
             }
         }
         dialog.setOnDismissListener {
-            if (appMenu) scroll?.animate()?.cancel()
+            panel.animate().cancel()
             if (currentDialog == dialog) {
                 currentDialog = null
                 if (notificationRefreshPending && page == "home" && resumed) refreshHomePreservingScroll()
             }
         }
-        if (appMenu && scroll != null) {
-            scroll.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
-                override fun onPreDraw(): Boolean {
-                    scroll.viewTreeObserver.removeOnPreDrawListener(this)
-                    if (dialog.isShowing && animateMenu) {
-                        // Insets and bottom anchoring are resolved in this layout, before the first visible frame.
-                        scroll.translationY = scroll.height.toFloat()
-                        scroll.animate().translationY(0f).setDuration((300f * windowScale / animatorScale).toLong())
-                            .setInterpolator(AnimationUtils.loadInterpolator(this@MainActivity, R.interpolator.app_menu_arrive)).start()
-                    }
-                    return true
+        panel.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                panel.viewTreeObserver.removeOnPreDrawListener(this)
+                if (dialog.isShowing && animateMenu) {
+                    panel.translationY = panel.height.toFloat()
+                    panel.animate().translationY(0f).setDuration((300f * windowScale / animatorScale).toLong())
+                        .setInterpolator(AnimationUtils.loadInterpolator(this@MainActivity, R.interpolator.app_menu_arrive)).start()
                 }
-            })
-        }
+                return true
+            }
+        })
         currentDialog = dialog; dialog.show()
-        if (!appMenu) dialog.window?.setLayout(-1, if (scrollContent) -2 else (resources.displayMetrics.heightPixels * .85f).toInt())
-        if (!appMenu && scrollContent) body.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            val height = sheetHeight()
-            if (height > 0 && dialog.window?.attributes?.height != height) dialog.window?.setLayout(-1, height)
-        }
         return dialog
     }
     fun choose(title: String, options: List<String>, selected: Int = -1, action: (Int) -> Unit) {
         sheet(title) { body, dialog ->
-            if (options.isEmpty()) body.addView(text("Нет доступных вариантов", 16f, secondary))
+            if (options.isEmpty()) body.addView(menuText("Нет доступных вариантов", 16f))
             options.forEachIndexed { index, option ->
-                val row = horizontal(); row.addView(this.action(option) { dialog.dismiss(); action(index) }, LinearLayout.LayoutParams(0, -2, 1f))
-                if (index == selected) row.addView(GlyphView(this, Glyph.CHECK), LinearLayout.LayoutParams(dp(48), dp(48)))
-                body.addView(row)
+                body.addView(menuAction(option, if (index == selected) Glyph.CHECK else Glyph.CHEVRON) { dialog.dismiss(); action(index) }.apply {
+                    if (index == selected) stateDescription = "Выбрано"
+                })
             }
         }
     }
     private fun editText(title: String, current: String, hint: String = "Название", onSave: (String) -> Unit) {
         sheet(title) { body, dialog ->
-            val input = EditText(this).apply { setText(current); setTextColor(Color.WHITE); setHintTextColor(secondary); this.hint = hint; isSingleLine = true; selectAll() }
+            val input = EditText(this).apply { setText(current); setTextColor(menuForeground); setHintTextColor(menuForeground); this.hint = hint; isSingleLine = true; selectAll() }
             body.addView(input, LinearLayout.LayoutParams(-1, dp(56)))
-            body.addView(action("Сохранить") { onSave(input.text.toString().trim()); dialog.dismiss() },
+            body.addView(menuAction("Сохранить", Glyph.CHECK) { onSave(input.text.toString().trim()); dialog.dismiss() },
                 LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.END })
             input.requestFocus(); input.postDelayed({ (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT) }, 200)
         }
@@ -664,32 +665,16 @@ class MainActivity : AppCompatActivity() {
         val favorite = app.id in store.favorites
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
         val foreground = getColor(R.color.app_menu_foreground)
-        val body = vertical().apply {
-            setPadding(dp(24), dp(12), dp(24), dp(16))
-            background = rounded(getColor(R.color.app_menu_surface), dp(24).toFloat()).apply {
-                cornerRadii = floatArrayOf(dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), dp(24).toFloat(), 0f, 0f, 0f, 0f)
-            }
-        }
-        val header = horizontal().apply { minimumHeight = dp(64); setPadding(0, dp(8), 0, dp(8)) }
-        header.addView(ImageView(this).apply {
-            setImageDrawable(app.icon); setPadding(dp(8), dp(8), dp(8), dp(8))
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-        }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
-        val name = text(catalog.label(app), 23f, foreground).apply {
-            isAccessibilityHeading = true; isFocusable = true; minHeight = dp(48)
+        val body = menuBody()
+        val header = menuHeader(catalog.label(app), app.icon)
+        val name = (header.getChildAt(header.childCount - 1) as TextView).apply {
+            isFocusable = true; minHeight = dp(48)
             gravity = Gravity.CENTER_VERTICAL; background = touchBackground()
             contentDescription = "Переименовать ${catalog.label(app)}"; tooltipText = "Переименовать"
         }
-        header.addView(name, LinearLayout.LayoutParams(0, -2, 1f))
         body.addView(header); body.addView(gap(4))
         fun menuAction(container: LinearLayout, glyph: Glyph, label: String, dismiss: Boolean = true, action: () -> Unit): LinearLayout {
-            val row = horizontal().apply {
-                minimumHeight = dp(52); background = touchBackground(); isFocusable = true
-                setPadding(0, dp(4), dp(8), dp(4)); contentDescription = label
-                setOnClickListener { if (dismiss) dialog.dismiss(); action() }
-            }
-            row.addView(GlyphView(this, glyph, foreground).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(16) })
-            row.addView(text(label, 17f, foreground).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(0, -2, 1f))
+            val row = this.menuAction(label, glyph) { if (dismiss) dialog.dismiss(); action() }
             container.addView(row)
             return row
         }
@@ -762,34 +747,41 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        presentSheet(dialog, body, appMenu = true)
+        presentSheet(dialog, body)
+    }
+    private fun setMenuAppColors(view: View) {
+        when (view) {
+            is TextView -> view.setTextColor(menuForeground)
+            is GlyphView -> view.color = menuForeground
+            is ViewGroup -> for (index in 0 until view.childCount) setMenuAppColors(view.getChildAt(index))
+        }
     }
     private fun showAppPopup(app: AppEntry) {
-        sheet(catalog.label(app)) { body, dialog ->
+        sheet(catalog.label(app), icon = app.icon) { body, dialog ->
             val notifications = NotificationHub.notifications(app.packageName, app.user)
             notifications.forEach { body.addView(notificationView(it)) }
             val shortcuts = catalog.shortcuts(app)
             shortcuts.filter { it.isEnabled }.forEach { shortcut ->
-                body.addView(action(shortcut.shortLabel?.toString() ?: "Быстрое действие") {
+                body.addView(menuAction(shortcut.shortLabel?.toString() ?: "Быстрое действие") {
                     runCatching { catalog.launcherApps.startShortcut(app.packageName, shortcut.id, null, null, app.user); dialog.dismiss() }.onFailure { message("Не удалось открыть быстрое действие") }
                 })
             }
-            store.popUp(app.id).mapNotNull(catalog::find).forEach { body.addView(appRow(it, false)) }
-            if (notifications.isEmpty() && shortcuts.isEmpty() && store.popUp(app.id).isEmpty()) body.addView(text("Здесь появятся уведомления и быстрые действия приложения.", 16f, secondary))
-            body.addView(gap(8)); body.addView(action("Добавить приложения") { dialog.dismiss(); selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } })
-            body.addView(action("Открыть ${catalog.label(app)}") { launch(app) })
+            store.popUp(app.id).mapNotNull(catalog::find).forEach { body.addView(appRow(it, false).apply { setMenuAppColors(this) }) }
+            if (notifications.isEmpty() && shortcuts.isEmpty() && store.popUp(app.id).isEmpty()) body.addView(menuText("Здесь появятся уведомления и быстрые действия приложения.", 16f))
+            body.addView(gap(8)); body.addView(menuAction("Добавить приложения", Glyph.PLUS) { dialog.dismiss(); selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } })
+            body.addView(menuAction("Открыть ${catalog.label(app)}") { launch(app) })
         }
     }
     private fun notificationView(sbn: StatusBarNotification): View {
         val n = sbn.notification
-        val box = vertical().apply { setPadding(dp(14), dp(12), dp(14), dp(12)); background = rounded(0xFF373430.toInt(), dp(16).toFloat()) }
-        box.addView(text(n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty(), 16f))
-        box.addView(gap(6)); box.addView(text((n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: n.extras.getCharSequence(Notification.EXTRA_TEXT))?.toString().orEmpty(), 14f, secondary))
+        val box = vertical().apply { setPadding(dp(14), dp(12), dp(14), dp(12)); background = rounded(getColor(R.color.app_menu_container), dp(16).toFloat()) }
+        box.addView(menuText(n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty(), 16f))
+        box.addView(gap(6)); box.addView(menuText((n.extras.getCharSequence(Notification.EXTRA_BIG_TEXT) ?: n.extras.getCharSequence(Notification.EXTRA_TEXT))?.toString().orEmpty(), 14f))
         box.isFocusable = true; box.setOnClickListener { runCatching { n.contentIntent?.send(); currentDialog?.dismiss() }.onFailure { message("Уведомление больше недоступно") } }
         val actions = horizontal()
-        actions.addView(action("Скрыть") { NotificationHub.service?.cancelNotification(sbn.key); box.visibility = View.GONE })
+        actions.addView(menuAction("Скрыть", Glyph.HIDE) { NotificationHub.service?.cancelNotification(sbn.key); box.visibility = View.GONE })
         n.actions?.take(3)?.forEach { notificationAction ->
-            actions.addView(action(notificationAction.title.toString()) {
+            actions.addView(menuAction(notificationAction.title.toString()) {
                 val inputs = notificationAction.remoteInputs?.filter { it.allowFreeFormInput }
                 if (!inputs.isNullOrEmpty()) {
                     editText("Ответить", "", "Сообщение") { reply -> if (reply.isNotBlank()) {
@@ -807,24 +799,28 @@ class MainActivity : AppCompatActivity() {
     private fun showFolder(folder: AppFolder) {
         sheet(folder.name) { body, dialog ->
             val apps = folder.apps.mapNotNull(catalog::find)
-            apps.forEach { body.addView(appRow(it, false)) }
-            if (apps.isEmpty()) body.addView(text("В папке пока нет приложений", 16f, secondary))
-            body.addView(action("Изменить папку") { dialog.dismiss(); editFolder(folder) })
+            apps.forEach { body.addView(appRow(it, false).apply { setMenuAppColors(this) }) }
+            if (apps.isEmpty()) body.addView(menuText("В папке пока нет приложений", 16f))
+            body.addView(menuAction("Изменить папку", Glyph.EDIT) { dialog.dismiss(); editFolder(folder) })
         }
     }
     private fun editFolder(folder: AppFolder) {
-        choose(folder.name, listOf("Выбрать приложения", "Переименовать", "Удалить папку", "Изменить порядок избранного")) { choice -> when (choice) {
-            0 -> selectApps(folder.name, folder.apps) { store.saveFolder(folder.copy(apps = it)); showHome() }
-            1 -> editText("Название папки", folder.name) { if (it.isNotBlank()) store.saveFolder(folder.copy(name = it)); showHome() }
-            2 -> { store.removeFolder(folder.id); showHome() }
-            3 -> editFavorites()
-        } }
+        managementSheet(folder.name, null) { body, dialog ->
+            managementAction(body, dialog, Glyph.PLUS, "Выбрать приложения") {
+                selectApps(folder.name, folder.apps) { store.saveFolder(folder.copy(apps = it)); showHome() }
+            }
+            managementAction(body, dialog, Glyph.EDIT, "Переименовать") {
+                editText("Название папки", folder.name) { if (it.isNotBlank()) store.saveFolder(folder.copy(name = it)); showHome() }
+            }
+            managementAction(body, dialog, Glyph.DELETE, "Удалить папку") { store.removeFolder(folder.id); showHome() }
+            managementAction(body, dialog, Glyph.REORDER, "Изменить порядок избранного") { editFavorites() }
+        }
     }
     private fun selectApps(title: String, initial: List<String>, onSave: (List<String>) -> Unit) {
         val selected = initial.toMutableList()
         sheet(title) { body, dialog ->
-            body.addView(text("Выберите приложения; порядок выбора сохраняется.", 14f, secondary))
-            val input = EditText(this).apply { hint = "Поиск"; isSingleLine = true; setTextColor(Color.WHITE); setHintTextColor(secondary) }
+            body.addView(menuText("Выберите приложения; порядок выбора сохраняется.", 14f))
+            val input = EditText(this).apply { hint = "Поиск"; isSingleLine = true; setTextColor(menuForeground); setHintTextColor(menuForeground) }
             body.addView(input, LinearLayout.LayoutParams(-1, dp(52)))
             val list = vertical()
             val scroll = ScrollView(this).apply { addView(list) }
@@ -833,8 +829,8 @@ class MainActivity : AppCompatActivity() {
                 list.removeAllViews()
                 catalog.apps.filter { AppListRules.matches(query, catalog.label(it), it.originalLabel) }.forEach { app ->
                     val check = CheckBox(this).apply {
-                        text = catalog.label(app); textSize = 17f; setTextColor(Color.WHITE); minHeight = dp(52); isChecked = app.id in selected
-                        buttonTintList = android.content.res.ColorStateList.valueOf(0xFFE9CBB6.toInt())
+                        text = catalog.label(app); textSize = 17f; setTextColor(menuForeground); minHeight = dp(52); isChecked = app.id in selected
+                        buttonTintList = android.content.res.ColorStateList.valueOf(menuForeground)
                         setOnCheckedChangeListener { _, checked -> if (checked && app.id !in selected) selected.add(app.id) else if (!checked) selected.remove(app.id) }
                     }; list.addView(check)
                 }
@@ -845,7 +841,7 @@ class MainActivity : AppCompatActivity() {
                 override fun afterTextChanged(s: Editable?) {}
             })
             populate("")
-            body.addView(action("Готово") { onSave(selected); dialog.dismiss() })
+            body.addView(menuAction("Готово", Glyph.CHECK) { onSave(selected); dialog.dismiss() })
         }
     }
     private fun startFavoritesOrder() {
@@ -856,9 +852,9 @@ class MainActivity : AppCompatActivity() {
     }
     private fun editFavorites() {
         sheet("Избранное") { body, dialog ->
-            body.addView(action("Изменить порядок на главном экране") { dialog.dismiss(); startFavoritesOrder() })
-            body.addView(action("Выбрать приложения") { dialog.dismiss(); selectApps("Избранные приложения", store.favorites.filterNot { it.startsWith("folder:") }) { store.favorites = it + store.favorites.filter { id -> id.startsWith("folder:") }; showHome() } })
-            body.addView(action("Создать папку") { dialog.dismiss(); editText("Новая папка", "", "Название папки") { name -> if (name.isNotBlank()) selectApps(name, emptyList()) { store.createFolder(name, it); showHome() } } })
+            body.addView(menuAction("Изменить порядок на главном экране", Glyph.REORDER) { dialog.dismiss(); startFavoritesOrder() })
+            body.addView(menuAction("Выбрать приложения", Glyph.PLUS) { dialog.dismiss(); selectApps("Избранные приложения", store.favorites.filterNot { it.startsWith("folder:") }) { store.favorites = it + store.favorites.filter { id -> id.startsWith("folder:") }; showHome() } })
+            body.addView(menuAction("Создать папку", Glyph.FOLDER) { dialog.dismiss(); editText("Новая папка", "", "Название папки") { name -> if (name.isNotBlank()) selectApps(name, emptyList()) { store.createFolder(name, it); showHome() } } })
         }
     }
 
@@ -867,8 +863,8 @@ class MainActivity : AppCompatActivity() {
         clearScreen("settings"); hideKeyboard()
         val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; background = rounded(surface, 0f) }
         val body = vertical().apply { setPadding(dp(16), dp(10), dp(16), dp(30)) }
-        val header = horizontal(); header.addView(iconButton(Glyph.BACK, "На главный экран") { showHome() })
-        header.addView(text("Настройки", 26f), LinearLayout.LayoutParams(0, dp(64), 1f)); body.addView(header)
+        val header = horizontal(); header.addView(menuIconButton(Glyph.BACK, "На главный экран") { showHome() })
+        header.addView(menuText("Настройки", 26f), LinearLayout.LayoutParams(0, dp(64), 1f)); body.addView(header)
         body.addView(setting("Домашний экран", if (isDefaultHome()) "Better Launcher установлен по умолчанию" else "Выбрать Better Launcher по умолчанию") { requestHomeRole() })
         body.addView(setting("Избранные приложения", "Порядок, приложения и папки") { editFavorites() })
         body.addView(setting("Виджеты", "Экран слева · ${store.pageWidgets.size} виджетов") { showWidgets() })
@@ -898,16 +894,16 @@ class MainActivity : AppCompatActivity() {
         section(body, "Резервная копия")
         body.addView(setting("Экспорт настроек", "Сохранить избранное, папки и оформление") { safeStartForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE, "better-launcher.json"), 51) })
         body.addView(setting("Импорт настроек", "Восстановить из файла; текущие настройки заменятся") { safeStartForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE), 52) })
-        body.addView(gap(22)); body.addView(text("Better Launcher ${packageManager.getPackageInfo(packageName, 0).versionName}", 14f, secondary).apply { setPadding(dp(16), 0, 0, 0) })
+        body.addView(gap(22)); body.addView(menuText("Better Launcher ${packageManager.getPackageInfo(packageName, 0).versionName}", 14f).apply { setPadding(dp(16), 0, 0, 0) })
         scroll.addView(body); screen.addView(scroll, FrameLayout.LayoutParams(-1, -1))
     }
     private fun wallpaperDimmingSetting(): View = vertical().apply {
         setPadding(dp(16), dp(10), dp(16), dp(10))
-        val percentage = text(getString(R.string.wallpaper_dimming_percentage, store.wallpaperDimming), 17f, secondary).apply {
+        val percentage = menuText(getString(R.string.wallpaper_dimming_percentage, store.wallpaperDimming), 17f).apply {
             minWidth = dp(60); gravity = Gravity.END or Gravity.CENTER_VERTICAL
         }
         val heading = horizontal().apply {
-            addView(text("Затемнение обоев", 17f), LinearLayout.LayoutParams(0, -2, 1f))
+            addView(menuText("Затемнение обоев", 17f), LinearLayout.LayoutParams(0, -2, 1f))
             addView(percentage)
         }
         addView(heading)
@@ -927,17 +923,17 @@ class MainActivity : AppCompatActivity() {
         }, LinearLayout.LayoutParams(-1, dp(48)))
     }
     private fun section(body: LinearLayout, label: String) {
-        body.addView(gap(20)); body.addView(text(label, 14f, 0xFFE9CBB6.toInt()).apply { setPadding(dp(16), dp(8), 0, dp(8)) })
+        body.addView(gap(20)); body.addView(menuText(label, 14f).apply { setPadding(dp(16), dp(8), 0, dp(8)) })
     }
     private fun setting(label: String, description: String, onClick: () -> Unit): View = horizontal().apply {
         minimumHeight = dp(76); setPadding(dp(16), dp(10), 0, dp(10)); background = touchBackground(); isFocusable = true
-        val words = vertical(); words.addView(text(label, 17f)); words.addView(gap(5)); words.addView(text(description, 13f, secondary))
-        addView(words, LinearLayout.LayoutParams(0, -2, 1f)); addView(GlyphView(this@MainActivity, Glyph.CHEVRON), LinearLayout.LayoutParams(dp(48), dp(48)))
+        val words = vertical(); words.addView(menuText(label, 17f)); words.addView(gap(5)); words.addView(menuText(description, 13f))
+        addView(words, LinearLayout.LayoutParams(0, -2, 1f)); addView(GlyphView(this@MainActivity, Glyph.CHEVRON, menuForeground), LinearLayout.LayoutParams(dp(48), dp(48)))
         setOnClickListener { onClick() }
     }
     private fun toggle(label: String, description: String, key: String, default: Boolean = false, changed: () -> Unit = {}): View = horizontal().apply {
         minimumHeight = dp(76); setPadding(dp(16), dp(10), dp(8), dp(10))
-        val words = vertical(); words.addView(text(label, 17f)); words.addView(gap(5)); words.addView(text(description, 13f, secondary))
+        val words = vertical(); words.addView(menuText(label, 17f)); words.addView(gap(5)); words.addView(menuText(description, 13f))
         addView(words, LinearLayout.LayoutParams(0, -2, 1f))
         val switch = MaterialSwitch(this@MainActivity).apply {
             isChecked = store.bool(key, default); minHeight = dp(48); minWidth = dp(56); contentDescription = label
@@ -955,9 +951,9 @@ class MainActivity : AppCompatActivity() {
     private fun showAgenda() {
         if (checkSelfPermission(Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
             sheet("События календаря") { body, dialog ->
-                body.addView(text("Разрешите чтение календаря, чтобы видеть ближайшие события. Данные остаются на устройстве.", 16f, secondary))
-                body.addView(action("Разрешить") { dialog.dismiss(); requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 61) })
-                body.addView(action("Открыть календарь") { dialog.dismiss(); openCalendar() })
+                body.addView(menuText("Разрешите чтение календаря, чтобы видеть ближайшие события. Данные остаются на устройстве.", 16f))
+                body.addView(menuAction("Разрешить") { dialog.dismiss(); requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR), 61) })
+                body.addView(menuAction("Открыть календарь", Glyph.CHEVRON) { dialog.dismiss(); openCalendar() })
             }; return
         }
         executor.execute {
@@ -971,12 +967,12 @@ class MainActivity : AppCompatActivity() {
             }
             handler.post { if (!isDestroyed) sheet("Ближайшие события") { body, dialog ->
                 val events = result.getOrDefault(emptyList())
-                if (result.isFailure) body.addView(text("Не удалось прочитать календарь", 16f, secondary))
-                else if (events.isEmpty()) body.addView(text("На ближайшие 7 дней событий нет", 16f, secondary))
+                if (result.isFailure) body.addView(menuText("Не удалось прочитать календарь", 16f))
+                else if (events.isEmpty()) body.addView(menuText("На ближайшие 7 дней событий нет", 16f))
                 events.forEach { event ->
                     body.addView(setting(event.title.ifBlank { "Без названия" }, SimpleDateFormat(if (event.allDay) "EEE, d MMM · весь день" else "EEE, d MMM · HH:mm", Locale("ru")).format(Date(event.time))) { dialog.dismiss(); safeStart(Intent(Intent.ACTION_VIEW, ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id))) })
                 }
-                body.addView(action("Открыть календарь") { dialog.dismiss(); openCalendar() })
+                body.addView(menuAction("Открыть календарь", Glyph.CHEVRON) { dialog.dismiss(); openCalendar() })
             } }
         }
     }
@@ -1021,38 +1017,38 @@ class MainActivity : AppCompatActivity() {
     }
     private fun chooseWeatherCity() {
         sheet("Погода") { body, dialog ->
-            body.addView(text("Введите город. Поиск и прогноз загружаются из Open-Meteo; доступ к геолокации не нужен.", 15f, secondary))
-            val input = EditText(this).apply { hint = "Например, Тбилиси"; isSingleLine = true; setTextColor(Color.WHITE); setHintTextColor(secondary) }
+            body.addView(menuText("Введите город. Поиск и прогноз загружаются из Open-Meteo; доступ к геолокации не нужен.", 15f))
+            val input = EditText(this).apply { hint = "Например, Тбилиси"; isSingleLine = true; setTextColor(menuForeground); setHintTextColor(menuForeground) }
             body.addView(input, LinearLayout.LayoutParams(-1, dp(56)))
             val resultBox = vertical(); body.addView(resultBox)
-            val button = action("Найти город") {
+            val button = menuAction("Найти город", Glyph.SEARCH) {
                 val query = input.text.toString().trim()
-                if (query.length < 2) { input.error = "Введите не меньше двух букв"; return@action }
-                resultBox.removeAllViews(); resultBox.addView(text("Ищем…", 15f, secondary))
+                if (query.length < 2) { input.error = "Введите не меньше двух букв"; return@menuAction }
+                resultBox.removeAllViews(); resultBox.addView(menuText("Ищем…", 15f))
                 executor.execute {
                     val result = runCatching { WeatherRepository.cities(query) }
                     handler.post { if (dialog.isShowing) {
                         resultBox.removeAllViews()
-                        if (result.isFailure) resultBox.addView(text("Не удалось загрузить города. Проверьте интернет и повторите.", 14f, secondary))
-                        else if (result.getOrDefault(emptyList()).isEmpty()) resultBox.addView(text("Город не найден. Попробуйте другое название.", 14f, secondary))
-                        result.getOrDefault(emptyList()).forEach { city -> resultBox.addView(action(city.name) {
+                        if (result.isFailure) resultBox.addView(menuText("Не удалось загрузить города. Проверьте интернет и повторите.", 14f))
+                        else if (result.getOrDefault(emptyList()).isEmpty()) resultBox.addView(menuText("Город не найден. Попробуйте другое название.", 14f))
+                        result.getOrDefault(emptyList()).forEach { city -> resultBox.addView(menuAction(city.name) {
                             store.set("weatherCity", city.name); store.set("weatherLat", city.latitude.toString()); store.set("weatherLon", city.longitude.toString())
                             weather = null; weatherError = false; weatherUpdated = 0; refreshWeather(true); dialog.dismiss(); showHome()
                         }) }
                     } }
                 }
             }; body.addView(button)
-            if (store.string("weatherCity").isNotBlank()) body.addView(action("Убрать погоду") { store.set("weatherCity", ""); weather = null; dialog.dismiss(); showHome() })
-            body.addView(action("О сервисе Open-Meteo") { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://open-meteo.com/"))) })
+            if (store.string("weatherCity").isNotBlank()) body.addView(menuAction("Убрать погоду", Glyph.DELETE) { store.set("weatherCity", ""); weather = null; dialog.dismiss(); showHome() })
+            body.addView(menuAction("О сервисе Open-Meteo", Glyph.INFO) { safeStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://open-meteo.com/"))) })
         }
     }
     private fun showWeather() {
         refreshWeather(weatherError)
         sheet(store.string("weatherCity", "Погода")) { body, dialog ->
-            body.addView(text(weatherLabel(), 28f)); body.addView(gap(10))
-            body.addView(text("Прогнозная текущая температура · Open-Meteo", 13f, secondary))
-            body.addView(action("Обновить") { refreshWeather(true); dialog.dismiss() })
-            body.addView(action("Выбрать другой город") { dialog.dismiss(); chooseWeatherCity() })
+            body.addView(menuText(weatherLabel(), 28f)); body.addView(gap(10))
+            body.addView(menuText("Прогнозная текущая температура · Open-Meteo", 13f))
+            body.addView(menuAction("Обновить", Glyph.SUN) { refreshWeather(true); dialog.dismiss() })
+            body.addView(menuAction("Выбрать другой город", Glyph.SEARCH) { dialog.dismiss(); chooseWeatherCity() })
         }
     }
 

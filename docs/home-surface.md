@@ -97,6 +97,10 @@ Review verdict: ready for this change. On dedicated Android 12/API 31 and Androi
 
 Signed release APK also passed inline favorites drag/arrows/Done and the complete smoke script on both versions; no launcher runtime crashes were found.
 
+## Shared menu review — 0.2.0-rc.32
+
+All app-owned sheets share the navy long-press style through common body, header, action and presentation helpers. Settings and Material selection/input controls use the same pale blue foreground roles. Native verification and release artifact checks are recorded in [rc.32](releases/0.2.0-rc.32.md). System UI and provider-rendered widget contents retain their own appearance.
+
 
 ## Single ordering handle review — 2026-10-05
 
