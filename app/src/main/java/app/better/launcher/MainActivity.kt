@@ -761,7 +761,6 @@ class MainActivity : AppCompatActivity() {
             store.popUp(app.id).mapNotNull(catalog::find).forEach { body.addView(appRow(it, false).apply { setMenuAppColors(this) }) }
             if (notifications.isEmpty() && shortcuts.isEmpty() && store.popUp(app.id).isEmpty()) body.addView(menuText("Здесь появятся уведомления и быстрые действия приложения.", 16f))
             body.addView(gap(8)); body.addView(menuAction("Добавить приложения", Glyph.PLUS) { dialog.dismiss(); selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } })
-            body.addView(menuAction("Открыть ${catalog.label(app)}") { launch(app) })
         }
     }
     private fun notificationView(sbn: StatusBarNotification): View {

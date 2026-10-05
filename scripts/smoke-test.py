@@ -127,7 +127,8 @@ print("PASS: launching an app and returning Home")
 
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x + 220), str(y), "350")
-wait_for("Открыть Phone")
+wait_for("Добавить приложения")
+assert not any("Открыть Phone" in (n.get("text"), n.get("content-desc")) for n in hierarchy().iter("node"))
 adb("shell", "input", "keyevent", "4")
 print("PASS: horizontal app swipe opens its pop-up")
 
