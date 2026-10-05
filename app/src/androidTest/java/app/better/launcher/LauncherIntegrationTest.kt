@@ -256,5 +256,14 @@ class LauncherIntegrationTest {
         assertEquals(listOf("★", "A", "B", "Y", "Z", "#"), AppListRules.railLetters(catalog.sections()))
         store.hidden = otherIds
         assertEquals(listOf("★", "A", "B", "V", "Y", "Z", "#"), AppListRules.railLetters(catalog.sections()))
+        store.hidden = otherIds + apps.last().id
+        assertEquals(listOf("★", "A", "B", "V", "Y", "Z"), AppListRules.railLetters(catalog.sections()))
+        store.hidden = otherIds
+        store.rename(apps.last().id, "Camera")
+        assertEquals(listOf("★", "A", "B", "C", "V", "Y", "Z"), AppListRules.railLetters(catalog.sections()))
+        store.rename(apps.last().id, "123")
+        assertEquals(listOf("★", "A", "B", "V", "Y", "Z", "#"), AppListRules.railLetters(catalog.sections()))
+        store.hidden = otherIds + ids
+        assertEquals(listOf("★"), AppListRules.railLetters(catalog.sections()))
     }
 }
