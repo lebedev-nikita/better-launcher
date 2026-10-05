@@ -122,13 +122,10 @@ class InlineOrderEditor(
         if (source < 0 || target < 0) return
         saveOrder(AppListRules.move(stored, item.id, target - source))
         val focus = item.row.findFocus()
-        val accessibilityFocus = listOf(item.up, item.down).firstOrNull { it.isAccessibilityFocused }
         items.removeAt(from); items.add(to, item)
         container.removeView(item.row); container.addView(item.row, to)
         updateControls()
         focus?.requestFocus()
-        accessibilityFocus?.post { accessibilityFocus.performAccessibilityAction(
-            android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null) }
     }
 
     private fun updateControls() {

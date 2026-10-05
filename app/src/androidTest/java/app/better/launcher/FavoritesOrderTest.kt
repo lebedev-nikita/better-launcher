@@ -61,7 +61,8 @@ class FavoritesOrderTest {
                 val reordered = listOf(missing, apps[0].id, folder, apps[1].id, apps[2].id)
                 await { store.favorites == reordered }
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-                await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.text?.toString() == firstLabel } != null }
+                await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Перетащить $firstLabel" } == null }
+                node("Изменить порядок избранного")
                 val folderBounds = Rect().also { node("Test folder").getBoundsInScreen(it) }
                 val appBounds = Rect().also { node(secondLabel).getBoundsInScreen(it) }
                 assertTrue("Home must display the saved favorite order", folderBounds.top < appBounds.top)

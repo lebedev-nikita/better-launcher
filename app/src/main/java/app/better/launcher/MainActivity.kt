@@ -326,7 +326,7 @@ class MainActivity : AppCompatActivity() {
         val header = horizontal()
         header.addView(iconButton(Glyph.BACK, "На главный экран") { returnFromWidgets() })
         header.addView(text("Виджеты", 26f), LinearLayout.LayoutParams(0, -2, 1f))
-        if (store.pageWidgets.size > 1) header.addView(iconButton(if (orderingWidgets) Glyph.CLOSE else Glyph.REORDER,
+        if (store.pageWidgets.size > 1) header.addView(iconButton(if (orderingWidgets) Glyph.CHECK else Glyph.REORDER,
             if (orderingWidgets) "Готово" else "Изменить порядок виджетов") { orderingWidgets = !orderingWidgets; showWidgets() })
         header.addView(iconButton(Glyph.PLUS, "Добавить виджет") { widgets.add() })
         column.addView(header)
