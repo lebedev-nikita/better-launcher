@@ -52,7 +52,7 @@ Signed release smoke passed on both Android versions. Native captures and scenar
 
 ## Widget resize feedback
 
-Every applied width/height change emits one native CLOCK_TICK, including keyboard and accessibility input. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
+Every applied width/height change requests one soft SEGMENT_FREQUENT_TICK through AndroidX, including keyboard and accessibility input. Android 14+ uses the native soft effect; Android 12–13 falls back to CLOCK_TICK. Devices unable to produce a suitably soft tick may stay silent on Android 14+. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
 
 
 ## Home widget width review — 2026-10-05
