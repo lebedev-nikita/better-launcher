@@ -7,12 +7,18 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.AbsListView
 import android.widget.BaseAdapter
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -24,7 +30,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 /** A recycled provider list. Browsing previews never allocates or binds widget IDs. */
-class WidgetPickerView(context: Context) : FrameLayout(context) {
+class WidgetPickerView(context: Context) : LinearLayout(context) {
     private val activity = context as MainActivity
     private val hostContext = widgetHostContext(context)
     var onChoose: (AppWidgetProviderInfo) -> Unit = {}
@@ -32,6 +38,8 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
     private val worker = Executors.newFixedThreadPool(2)
     private val handler = Handler(Looper.getMainLooper())
     private var closed = false
+    private var searchIndex: AppSearchIndex<Entry>? = null
+    private var loadFailed = false
     private var entries = emptyList<Entry>()
     private val rows = mutableSetOf<Row>()
     private val adapter = ProviderAdapter()
@@ -43,7 +51,28 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
         adapter = this@WidgetPickerView.adapter
         setOnItemClickListener { _, _, position, _ -> onChoose(entries[position].provider) }
     }
-    private val status = activity.menuText("Загружаем виджеты…", 16f)
+    private val status = activity.menuText("Загружаем виджеты…", 16f).apply {
+        accessibilityLiveRegion = ACCESSIBILITY_LIVE_REGION_POLITE
+    }
+    private val search = EditText(activity).apply {
+        hint = "Поиск виджетов"
+        setTextColor(activity.menuForeground); setHintTextColor(activity.menuForeground)
+        textSize = 19f; background = null; isSingleLine = true; minHeight = activity.dp(56)
+        inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        imeOptions = EditorInfo.IME_ACTION_DONE
+        addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { filterProviders() }
+            override fun afterTextChanged(s: Editable?) = Unit
+        })
+        setOnEditorActionListener { _, action, _ ->
+            if (action == EditorInfo.IME_ACTION_DONE) {
+                (activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                    .hideSoftInputFromWindow(windowToken, 0)
+                true
+            } else false
+        }
+    }
     private val rail = AlphabetRail(activity, activity.menuForeground, activity.getColor(R.color.app_menu_container)).apply {
         alphabetLabel = "Алфавит виджетов"
         visibility = GONE
@@ -56,9 +85,19 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
     init {
         // This physical right-side rail follows the requested picker layout in all locales.
         layoutDirection = LAYOUT_DIRECTION_LTR
-        addView(list, LayoutParams(-1, -1))
-        addView(status, LayoutParams(-1, -2, Gravity.TOP).apply { rightMargin = activity.dp(72) })
-        addView(rail, LayoutParams(activity.dp(92), -1, Gravity.END))
+        orientation = VERTICAL
+        isFocusableInTouchMode = true
+        val toolbar = activity.horizontal().apply { layoutDirection = LAYOUT_DIRECTION_LOCALE }
+        toolbar.addView(search, LayoutParams(0, -2, 1f))
+        toolbar.addView(activity.iconButton(Glyph.CLOSE, "Очистить поиск виджетов") { search.setText("") }
+            .apply { (this as GlyphView).color = activity.menuForeground })
+        addView(toolbar, LayoutParams(-1, -2))
+        val results = FrameLayout(activity)
+        results.addView(list, FrameLayout.LayoutParams(-1, -1))
+        results.addView(status, FrameLayout.LayoutParams(-1, -2, Gravity.TOP).apply { rightMargin = activity.dp(72) })
+        results.addView(rail, FrameLayout.LayoutParams(activity.dp(92), -1, Gravity.END))
+        addView(results, LayoutParams(-1, 0, 1f))
+        requestFocus()
         list.setOnScrollListener(object : AbsListView.OnScrollListener {
             override fun onScrollStateChanged(view: AbsListView, state: Int) = Unit
             override fun onScroll(view: AbsListView, first: Int, visible: Int, total: Int) {
@@ -81,19 +120,34 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
                             .takeIf { it != 0 } ?: collator.compare(a.label, b.label).takeIf { it != 0 }
                             ?: collator.compare(a.app, b.app).takeIf { it != 0 }
                             ?: a.provider.provider.flattenToString().compareTo(b.provider.provider.flattenToString())
-                    }
+                    }.let { AppSearchIndex(it, Entry::label, Entry::app) }
             }
             handler.post {
                 if (!closed) {
-                    entries = result.getOrDefault(emptyList())
-                    status.text = if (result.isFailure) "Не удалось загрузить виджеты. Закройте список и попробуйте снова." else "Нет доступных виджетов"
-                    status.visibility = if (entries.isEmpty()) VISIBLE else GONE
-                    rail.visibility = if (entries.isEmpty()) GONE else VISIBLE
-                    updateLetters()
-                    adapter.notifyDataSetChanged()
+                    searchIndex = result.getOrNull()
+                    loadFailed = result.isFailure
+                    filterProviders()
                 }
             }
         }
+    }
+
+    private fun filterProviders() {
+        if (closed) return
+        entries = searchIndex?.matching(search.text.toString()).orEmpty()
+        rows.forEach(Row::cancel)
+        status.text = when {
+            loadFailed -> "Не удалось загрузить виджеты. Закройте список и попробуйте снова."
+            searchIndex == null -> "Загружаем виджеты…"
+            searchIndex?.apps?.isEmpty() == true -> "Нет доступных виджетов"
+            else -> "Виджеты не найдены. Измените или очистите поиск."
+        }
+        status.visibility = if (entries.isEmpty()) VISIBLE else GONE
+        rail.visibility = if (entries.isEmpty()) GONE else VISIBLE
+        rail.selected = "★"
+        updateLetters()
+        adapter.notifyDataSetChanged()
+        list.setSelection(0)
     }
 
     private fun updateLetters() {
