@@ -11,8 +11,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.ImageView
+import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
+import android.view.inputmethod.EditorInfo
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
 import org.junit.Test
@@ -26,6 +28,66 @@ class ResizeReviewProvider : AppWidgetProvider()
 
 class WidgetPickerTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
+
+    @Test fun searchFiltersWidgetAndApplicationNamesAndChoosesTheFilteredProvider() {
+        val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
+        val host = AppWidgetHost(activity, 1201)
+        val before = host.appWidgetIds.toSet()
+        var dialog: Dialog? = null
+        lateinit var picker: WidgetPickerView
+        lateinit var input: EditText
+        var chosen: ComponentName? = null
+        try {
+            instrumentation.runOnMainSync {
+                dialog = activity.sheet("Добавить виджет", scrollContent = false) { body, sheet ->
+                    picker = WidgetPickerView(activity).apply { onChoose = { chosen = it.provider; sheet.dismiss() } }
+                    body.addView(picker, android.widget.LinearLayout.LayoutParams(-1, 0, 1f))
+                    input = descendants(picker).filterIsInstance<EditText>().single()
+                    // Enter before the background catalog arrives; results must honor this query.
+                    input.setText("  IMAGE   WIDGET  ")
+                }
+            }
+            val list = onMain { descendants(picker).filterIsInstance<ListView>().single() }
+            val rail = onMain { descendants(picker).filterIsInstance<AlphabetRail>().single() }
+            await { list.count == 1 && descendants(list).filterIsInstance<TextView>().any { it.text.toString() == "B00 Image preview" } }
+            assertEquals(setOf("B"), onMain { rail.activeLetters })
+            await { descendants(list).filterIsInstance<ImageView>().any { it.drawable != null } }
+            instrumentation.runOnMainSync { input.setText("ПЛАНЫ") }
+            await { list.count == 1 && descendants(list).filterIsInstance<TextView>().any { it.text.toString() == "Планы на сегодня" } }
+            assertEquals(setOf("P"), onMain { rail.activeLetters })
+            instrumentation.runOnMainSync { input.setText("Widget preview tests") }
+            await { list.count == 6 }
+            instrumentation.runOnMainSync { input.setText("no-such-widget-987654") }
+            await { list.count == 0 && rail.visibility == View.GONE && descendants(picker).filterIsInstance<TextView>().any {
+                it.visibility == View.VISIBLE && it.text.toString().startsWith("Виджеты не найдены.")
+            } }
+            instrumentation.runOnMainSync {
+                descendants(picker).single { it.contentDescription == "Очистить поиск виджетов" }.performClick()
+            }
+            await { list.count >= 6 && rail.visibility == View.VISIBLE }
+            assertEquals("", onMain { input.text.toString() })
+            assertTrue(onMain { rail.activeLetters.containsAll(listOf("A", "B", "C", "D", "P", "#")) })
+            val total = onMain { list.count }
+            instrumentation.runOnMainSync { input.setText("  ") }
+            assertEquals("Whitespace must restore the entire catalog", total, onMain { list.count })
+            instrumentation.runOnMainSync { input.setText("numeric") }
+            await { list.count == 1 && descendants(list).filterIsInstance<TextView>().any { it.text.toString() == "000 Numeric preview" } }
+            assertEquals(setOf("#"), onMain { rail.activeLetters })
+            assertEquals(before, host.appWidgetIds.toSet())
+            instrumentation.runOnMainSync { input.onEditorAction(EditorInfo.IME_ACTION_DONE) }
+            assertNull("Keyboard Done must not bind or choose a widget", chosen)
+            instrumentation.runOnMainSync {
+                val row = list.getChildAt(0)
+                list.performItemClick(row, 0, list.adapter.getItemId(0))
+            }
+            assertEquals(ComponentName(instrumentation.context.packageName, NumericPreviewProvider::class.java.name), chosen)
+            assertFalse(onMain { dialog?.isShowing == true })
+            assertEquals("Searching must not allocate widget IDs", before, host.appWidgetIds.toSet())
+        } finally {
+            instrumentation.runOnMainSync { dialog?.dismiss(); activity.finish() }
+        }
+    }
 
     @Test fun previewsFallbacksAndAlphabetChooseTheDisplayedProviderWithoutBindingDuringBrowse() {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
