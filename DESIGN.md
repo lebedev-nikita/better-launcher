@@ -157,6 +157,8 @@ Home has no built-in clock or date. When no weather, widget, or media content is
 
 Normal app rows have a minimum height (62dp); compact mode uses (54dp). Installed app icons are (38dp) with a trailing gap (16dp). Settings rows have a minimum height (76dp), grow with their text, and separate label from description with (5dp). The shared spacing steps in the frontmatter recur across actions, content, and containers; they do not imply an enforced grid.
 
+The settings destination paints its navy surface across the entire screen container, including the areas behind the transparent status and navigation bars and any side/cutout insets. Its scroll content stays inset-safe. Changing destination restores a transparent screen container for home, app search and the widget page so the system wallpaper remains visible. Light system-bar icons retain contrast on navy, and navigation contrast enforcement stays disabled.
+
 Root content respects system bars, display cutouts, and the larger of navigation or keyboard bottom insets. Home and settings use independent scrolling containers; app results use a native `ListView` that recycles visible rows while keeping content-driven heights. Alphabet navigation selects the section position directly. Bottom sheets resize for the keyboard and cap their height at 85% of the screen, with scrolling content.
 
 **The Separate Footer Rule.** Keep bottom navigation outside the scrolling favorite list so long lists and larger text cannot cover its actions.

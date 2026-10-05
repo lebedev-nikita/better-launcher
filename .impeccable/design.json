@@ -173,7 +173,7 @@
       "name": "Settings destination row",
       "kind": "button",
       "refersTo": "setting-row",
-      "description": "Illustrative native translation. A growing label-description row with a native chevron and a minimum 76dp height.",
+      "description": "Illustrative native translation. A growing label-description row with a native chevron and a minimum 76dp height. The settings screen container paints #031629 behind transparent status/navigation bars and side/cutout insets; scrolling content stays inset-safe. The native window theme disables navigation contrast scrims during DecorView creation. Home, app search and widgets restore a transparent container over wallpaper.",
       "html": "<div class=\"ds-setting-stage\"><button class=\"ds-setting\"><span class=\"ds-setting-words\"><span class=\"ds-setting-title\">Обои</span><span class=\"ds-setting-detail\">Выбрать системные обои</span></span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 6L15 12L9 18\"/></svg></button></div>",
       "css": ".ds-setting-stage { background:#031629; padding:16px; } .ds-setting { display:flex; align-items:center; gap:16px; width:100%; min-height:76px; padding:10px 0 10px 16px; border:0; border-radius:12px; background:transparent; color:#BCD7F3; text-align:left; cursor:pointer; } .ds-setting-words { display:flex; flex:1; flex-direction:column; gap:5px; } .ds-setting-title { font:400 17px sans-serif; } .ds-setting-detail { color:#BCD7F3; font:400 13px sans-serif; } .ds-setting svg { width:22.08px; height:22.08px; margin:12.96px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; } .ds-setting:hover, .ds-setting:focus-visible, .ds-setting:active { background:#FFFFFF28; outline:none; }"
     },

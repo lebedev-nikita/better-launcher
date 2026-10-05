@@ -205,6 +205,8 @@ class MainActivity : AppCompatActivity() {
         widgetScroll?.let { widgetScrollPosition = it.scrollY }
         keyboardRequest?.let(handler::removeCallbacks); keyboardRequest = null
         page = newPage; screen.removeAllViews(); allApps = null; appAdapter = null; emptyApps = null; appQuery = ""; homeScroll = null; homeFooter = null; widgetScroll = null; search = null; weatherText = null
+        // Paint behind transparent system bars as well as the inset-safe content.
+        screen.setBackgroundColor(if (newPage == "settings") surface else Color.TRANSPARENT)
         screen.direction = when (newPage) { "home", "apps" -> 1; "widgets" -> -1; else -> 0 }
         screen.accessibilityPaneTitle = when (newPage) { "home" -> "Главный экран"; "widgets" -> "Виджеты"; "apps" -> "Все приложения"; else -> "Настройки" }
         rail.visibility = if (newPage == "home" || newPage == "apps") View.VISIBLE else View.GONE
@@ -880,7 +882,7 @@ class MainActivity : AppCompatActivity() {
     // The settings and optional integrations below use the same native surfaces as the launcher.
     fun showSettings() {
         clearScreen("settings"); hideKeyboard()
-        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; background = rounded(surface, 0f) }
+        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false }
         val body = vertical().apply { setPadding(dp(16), dp(10), dp(16), dp(30)) }
         val header = horizontal(); header.addView(menuIconButton(Glyph.BACK, "На главный экран") { showHome() })
         header.addView(menuText("Настройки", 26f), LinearLayout.LayoutParams(0, dp(64), 1f)); body.addView(header)
