@@ -10,8 +10,8 @@
 
 | Документ | Когда читать |
 | --- | --- |
-| [docs/releases/0.2.0-rc.26.md](docs/releases/0.2.0-rc.26.md) | Главный виджет по центру и на всю ширину |
 | [docs/releases/0.2.0-rc.27.md](docs/releases/0.2.0-rc.27.md) | Перестановка виджетов и прямой вход в порядок избранного |
+| [docs/releases/0.2.0-rc.26.md](docs/releases/0.2.0-rc.26.md) | Главный виджет по центру и на всю ширину |
 | [docs/releases/0.2.0-rc.25.md](docs/releases/0.2.0-rc.25.md) | Виброотклик при изменении размера виджета |
 | [docs/releases/0.2.0-rc.24.md](docs/releases/0.2.0-rc.24.md) | Перетаскивание виджета и мелкая сетка 12 dp |
 | [docs/releases/0.2.0-rc.23.md](docs/releases/0.2.0-rc.23.md) | Вибрация при отпускании буквенного индекса |
@@ -151,6 +151,7 @@ adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 | [WidgetResizeGeometry.kt](app/src/main/java/app/better/launcher/WidgetResizeGeometry.kt) | Чистые правила изменения ширины/высоты и верхнего отступа в пределах провайдера/окна |
 | [WidgetTouchFrame.kt](app/src/main/java/app/better/launcher/WidgetTouchFrame.kt) | Удержание поверх содержимого виджета с отменой по движению, без перехвата обычных нажатий |
 | [WidgetHostContext.kt](app/src/main/java/app/better/launcher/WidgetHostContext.kt) | Android-контекст для сторонних RemoteViews без подмены Views через AppCompat/Material |
+| [OrderEditor.kt](app/src/main/java/app/better/launcher/OrderEditor.kt) | Общий RecyclerView-редактор порядка избранного и виджетов с drag/стрелками и сохранением полного списка IDs |
 | [WidgetController.kt](app/src/main/java/app/better/launcher/WidgetController.kt) | AppWidgetHost, привязка, настройка, размещение, размеры, меню удержания и удаление виджетов |
 | [WeatherRepository.kt](app/src/main/java/app/better/launcher/WeatherRepository.kt) | Поиск города и текущая погода через Open-Meteo |
 
