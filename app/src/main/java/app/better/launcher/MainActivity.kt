@@ -515,11 +515,11 @@ class MainActivity : AppCompatActivity() {
         addView(menuText(label, 17f).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
             LinearLayout.LayoutParams(0, -2, 1f))
     }
-    fun sheet(title: String, scrollContent: Boolean = true, build: (LinearLayout, Dialog) -> Unit): Dialog {
+    fun sheet(title: String, scrollContent: Boolean = true, icon: android.graphics.drawable.Drawable? = null, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
         val body = menuBody()
-        val header = menuHeader(title)
+        val header = menuHeader(title, icon)
         header.addView(menuIconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
         body.addView(header); body.addView(gap(4))
         build(body, dialog)
@@ -617,7 +617,9 @@ class MainActivity : AppCompatActivity() {
         sheet(title) { body, dialog ->
             if (options.isEmpty()) body.addView(menuText("Нет доступных вариантов", 16f))
             options.forEachIndexed { index, option ->
-                body.addView(menuAction(option, if (index == selected) Glyph.CHECK else Glyph.CHEVRON) { dialog.dismiss(); action(index) })
+                body.addView(menuAction(option, if (index == selected) Glyph.CHECK else Glyph.CHEVRON) { dialog.dismiss(); action(index) }.apply {
+                    if (index == selected) stateDescription = "Выбрано"
+                })
             }
         }
     }
@@ -727,7 +729,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun showAppPopup(app: AppEntry) {
-        sheet(catalog.label(app)) { body, dialog ->
+        sheet(catalog.label(app), icon = app.icon) { body, dialog ->
             val notifications = NotificationHub.notifications(app.packageName, app.user)
             notifications.forEach { body.addView(notificationView(it)) }
             val shortcuts = catalog.shortcuts(app)

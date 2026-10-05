@@ -6,101 +6,31 @@
     "colorMeta": {
       "primary": {
         "role": "primary",
-        "displayName": "Peach accent",
-        "tonalRamp": [
-          "oklch(15.00% 0.0443 57.08)",
-          "oklch(26.43% 0.0443 57.08)",
-          "oklch(37.86% 0.0443 57.08)",
-          "oklch(49.29% 0.0443 57.08)",
-          "oklch(60.71% 0.0443 57.08)",
-          "oklch(72.14% 0.0443 57.08)",
-          "oklch(83.57% 0.0443 57.08)",
-          "oklch(95.00% 0.0443 57.08)"
-        ]
+        "displayName": "Pale blue control accent"
       },
       "on-primary": {
         "role": "neutral",
-        "displayName": "Dark brown on accent",
-        "tonalRamp": [
-          "oklch(15.00% 0.0124 51.71)",
-          "oklch(26.43% 0.0124 51.71)",
-          "oklch(37.86% 0.0124 51.71)",
-          "oklch(49.29% 0.0124 51.71)",
-          "oklch(60.71% 0.0124 51.71)",
-          "oklch(72.14% 0.0124 51.71)",
-          "oklch(83.57% 0.0124 51.71)",
-          "oklch(95.00% 0.0124 51.71)"
-        ]
+        "displayName": "Deep navy on accent"
       },
       "secondary": {
         "role": "secondary",
-        "displayName": "Muted peach",
-        "tonalRamp": [
-          "oklch(15.00% 0.0469 59.51)",
-          "oklch(26.43% 0.0469 59.51)",
-          "oklch(37.86% 0.0469 59.51)",
-          "oklch(49.29% 0.0469 59.51)",
-          "oklch(60.71% 0.0469 59.51)",
-          "oklch(72.14% 0.0469 59.51)",
-          "oklch(83.57% 0.0469 59.51)",
-          "oklch(95.00% 0.0469 59.51)"
-        ]
+        "displayName": "Pale blue secondary accent"
       },
       "surface": {
         "role": "neutral",
-        "displayName": "Warm charcoal",
-        "tonalRamp": [
-          "oklch(15.00% 0.0062 78.22)",
-          "oklch(26.43% 0.0062 78.22)",
-          "oklch(37.86% 0.0062 78.22)",
-          "oklch(49.29% 0.0062 78.22)",
-          "oklch(60.71% 0.0062 78.22)",
-          "oklch(72.14% 0.0062 78.22)",
-          "oklch(83.57% 0.0062 78.22)",
-          "oklch(95.00% 0.0062 78.22)"
-        ]
+        "displayName": "Deep navy surface"
       },
       "on-surface": {
         "role": "neutral",
-        "displayName": "White foreground",
-        "tonalRamp": [
-          "oklch(15.00% 0.0000 0.00)",
-          "oklch(26.43% 0.0000 0.00)",
-          "oklch(37.86% 0.0000 0.00)",
-          "oklch(49.29% 0.0000 0.00)",
-          "oklch(60.71% 0.0000 0.00)",
-          "oklch(72.14% 0.0000 0.00)",
-          "oklch(83.57% 0.0000 0.00)",
-          "oklch(95.00% 0.0000 0.00)"
-        ]
+        "displayName": "Pale blue menu foreground"
       },
       "on-surface-variant": {
         "role": "neutral",
-        "displayName": "Warm pale text",
-        "tonalRamp": [
-          "oklch(15.00% 0.0136 60.56)",
-          "oklch(26.43% 0.0136 60.56)",
-          "oklch(37.86% 0.0136 60.56)",
-          "oklch(49.29% 0.0136 60.56)",
-          "oklch(60.71% 0.0136 60.56)",
-          "oklch(72.14% 0.0136 60.56)",
-          "oklch(83.57% 0.0136 60.56)",
-          "oklch(95.00% 0.0136 60.56)"
-        ]
+        "displayName": "Pale blue supporting text"
       },
       "outline": {
         "role": "neutral",
-        "displayName": "Warm gray outline",
-        "tonalRamp": [
-          "oklch(15.00% 0.0207 62.27)",
-          "oklch(26.43% 0.0207 62.27)",
-          "oklch(37.86% 0.0207 62.27)",
-          "oklch(49.29% 0.0207 62.27)",
-          "oklch(60.71% 0.0207 62.27)",
-          "oklch(72.14% 0.0207 62.27)",
-          "oklch(83.57% 0.0207 62.27)",
-          "oklch(95.00% 0.0207 62.27)"
-        ]
+        "displayName": "Pale blue outline"
       },
       "touch-ripple": {
         "role": "neutral",
@@ -219,7 +149,7 @@
       "name": "App search field",
       "kind": "input",
       "refersTo": "search-field",
-      "description": "Illustrative native translation. Transparent single-line EditText with a warm hint. Filtering and IME launch remain native runtime behavior.",
+      "description": "Illustrative native translation. Transparent single-line EditText with a pale blue hint. Filtering and IME launch remain native runtime behavior.",
       "html": "<div class=\"ds-search-stage\"><input class=\"ds-search\" type=\"search\" placeholder=\"Поиск приложений\" aria-label=\"Поиск приложений\"/></div>",
       "css": ".ds-search-stage { background:#031629; padding:12px; } .ds-search { width:100%; height:56px; padding:0; border:0; background:transparent; color:#FFFFFF; caret-color:#BCD7F3; font:400 19px sans-serif; } .ds-search::placeholder { color:#BCD7F3; opacity:1; } .ds-search:hover, .ds-search:focus-visible, .ds-search:active { outline:none; }"
     },
@@ -244,7 +174,7 @@
       "kind": "card",
       "refersTo": "bottom-sheet",
       "description": "Illustrative translation of the shared native navy sheet: #031629 surface, #BCD7F3 text and contour icons, 24dp top corners, 12dp/24dp/16dp padding plus system/IME insets, 23sp header, growing 17sp action rows with 48dp icon slots and 16dp gap. 85% display height cap, 30% dim, common 300ms arrival and fixed transparent window. List picker/editor headers remain outside inner scrolling content. Android source and screenshots are authoritative.",
-      "html": "<div class=\"ds-sheet-stage\"><section class=\"ds-sheet\" aria-label=\"Избранное\"><header class=\"ds-sheet-header\"><span class=\"ds-sheet-title\">Избранное</span><button class=\"ds-sheet-close\" aria-label=\"Закрыть\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6L18 18M6 18L18 6\"/></svg></button></header><button class=\"ds-sheet-action\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5V19M5 12H19\"/></svg><span>Выбрать приложения</span></button><button class=\"ds-sheet-action\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5V19M5 12H19\"/></svg><span>Создать папку</span></button></section></div>",
+      "html": "<div class=\"ds-sheet-stage\"><section class=\"ds-sheet\" aria-label=\"Избранное\"><header class=\"ds-sheet-header\"><span class=\"ds-sheet-title\">Избранное</span><button class=\"ds-sheet-close\" aria-label=\"Закрыть\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 6L18 18M6 18L18 6\"/></svg></button></header><button class=\"ds-sheet-action\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5V19M5 12H19\"/></svg><span>Выбрать приложения</span></button><button class=\"ds-sheet-action\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 7V20H21V7H11L9 4H3Z\"/></svg><span>Создать папку</span></button></section></div>",
       "css": ".ds-sheet-stage { background:#352E2A; padding:24px 0 0; } .ds-sheet { background:#031629; color:#BCD7F3; border-radius:24px 24px 0 0; padding:12px 24px 16px; } .ds-sheet-header { display:flex; align-items:center; margin-bottom:12px; } .ds-sheet-title { flex:1; font:400 23px sans-serif; } .ds-sheet-close { display:flex; align-items:center; justify-content:center; width:48px; height:48px; padding:0; border:0; border-radius:12px; background:transparent; color:#BCD7F3; cursor:pointer; } .ds-sheet-close svg { width:22.08px; height:22.08px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; } .ds-sheet-action { display:block; width:100%; min-height:52px; padding:8px 16px; border:0; border-radius:12px; background:transparent; color:#BCD7F3; font:400 17px sans-serif; text-align:left; cursor:pointer; } .ds-sheet-action:hover, .ds-sheet-action:focus-visible, .ds-sheet-action:active, .ds-sheet-close:hover, .ds-sheet-close:focus-visible, .ds-sheet-close:active { background:#FFFFFF28; outline:none; } .ds-sheet-action { display:flex; align-items:center; gap:16px; padding:4px 8px 4px 0; } .ds-sheet-action svg { width:48px; height:48px; padding:13px; box-sizing:border-box; fill:none; stroke:currentColor; stroke-width:1.8; }"
     },
     {
@@ -281,7 +211,7 @@
       "name": "Widget provider picker",
       "kind": "container",
       "refersTo": "bottom-sheet",
-      "description": "Native provider picker: fixed title and Close, recycled list with wrapping 18sp widget label, 13sp app name and 144dp inert preview. Static previewLayout takes precedence over previewImage; missing previews are explicitly labeled. Shared 92dp AlphabetRail on the right, 72dp list reservation, star jumps to start, final #, populated sections at every height, with spacing adapting to font scale and available height. Background resource loading is cancelled on row reuse and dismissal. No IDs are allocated while browsing. Android source is authoritative; no HTML sample substitutes for device verification. Shared navy menu: #031629 surface, #BCD7F3 text/icons, 24dp top corners, 12dp/24dp/16dp padding plus system/IME insets; common 300ms arrival and fixed transparent window. List picker/editor headers stay outside their inner scrolling list."
+      "description": "Native provider picker: fixed title and Close, recycled list with wrapping 18sp widget label, 13sp app name and 144dp inert preview. Static previewLayout takes precedence over previewImage; missing previews are explicitly labeled. Shared 92dp AlphabetRail on the right, 72dp list reservation, star jumps to start, final #, populated sections at every height, with spacing adapting to font scale and available height. Background resource loading is cancelled on row reuse and dismissal. No IDs are allocated while browsing. Android source is authoritative; no HTML sample substitutes for device verification. Shared navy menu: #031629 surface, #BCD7F3 text/icons, 24dp top corners, 12dp/24dp/16dp padding plus system/IME insets; common 300ms arrival and fixed transparent window. List picker/editor headers stay outside their inner scrolling list. List labels and alphabet use the shared pale blue foreground; provider previews keep their own rendering."
     },
     {
       "name": "Widget edge editor",
@@ -333,7 +263,7 @@
     "dos": [
       "**Do** preserve the user's Niagara-style vertical lists and alphabetical navigation.",
       "**Do** keep app rows transparent and use installed app icons and actual system data.",
-      "**Do** respect the selected wallpaper dimming percentage and retain warm secondary text.",
+      "**Do** respect the selected wallpaper dimming percentage and use pale blue secondary text.",
       "**Do** keep scrolling home content separate from persistent footer actions.",
       "**Do** let text rows grow with font scale and preserve keyboard and accessibility alternatives.",
       "**Do** use native Material 3 controls within the existing dark theme."

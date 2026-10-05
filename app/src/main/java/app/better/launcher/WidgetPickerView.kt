@@ -44,7 +44,7 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
         setOnItemClickListener { _, _, position, _ -> onChoose(entries[position].provider) }
     }
     private val status = activity.menuText("Загружаем виджеты…", 16f)
-    private val rail = AlphabetRail(activity).apply {
+    private val rail = AlphabetRail(activity, activity.menuForeground, activity.getColor(R.color.app_menu_container)).apply {
         alphabetLabel = "Алфавит виджетов"
         visibility = GONE
         onSelect = { letter ->

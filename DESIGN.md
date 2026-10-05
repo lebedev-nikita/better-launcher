@@ -55,16 +55,16 @@ spacing:
 components:
   action:
     backgroundColor: "transparent"
-    textColor: "{colors.on-surface}"
+    textColor: "#FFFFFF"
     typography: "{typography.body}"
     padding: "8dp 16dp"
   icon-button:
     backgroundColor: "transparent"
-    textColor: "{colors.on-surface}"
+    textColor: "#FFFFFF"
     size: "48dp"
   app-row:
     backgroundColor: "transparent"
-    textColor: "{colors.on-surface}"
+    textColor: "#FFFFFF"
     typography: "{typography.app-label}"
   setting-row:
     backgroundColor: "transparent"
@@ -73,7 +73,7 @@ components:
     padding: "10dp 0 10dp 16dp"
   search-field:
     backgroundColor: "transparent"
-    textColor: "{colors.on-surface}"
+    textColor: "#FFFFFF"
     height: "56dp"
   bottom-sheet:
     backgroundColor: "{colors.app-menu-surface}"
@@ -195,7 +195,7 @@ Home exposes “Изменить порядок избранного” below th
 
 ### Inputs / Fields
 
-App search uses a transparent, borderless, single-line native `EditText`, pale blue secondary hint, and white entered text. The toolbar combines back, search, and clear controls. Results filter as text changes, and the IME action launches the first result. Sheet forms retain native `EditText` styling and error behavior; they are not a custom shared outlined-field design. Name-editing sheets place a content-width Save action at the trailing edge (right in Russian), using the shared icon action with a (52dp) minimum row height, including when the alphabet is on the left.
+App search uses a transparent, borderless, single-line native `EditText`, pale blue secondary hint, and white entered text. The toolbar combines back, search, and clear controls. Results filter as text changes, and the IME action launches the first result. Sheet forms retain native `EditText` styling and error behavior; they are not a custom shared outlined-field design. Name-editing sheets place a Save action with a check icon at the trailing edge (right in Russian), using the shared icon action with a (52dp) minimum row height, including when the alphabet is on the left.
 
 ### Settings and Switches
 
@@ -241,7 +241,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.31
+## Current candidate 0.2.0-rc.32
 
 Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites use a recycled drag editor with keyboard/accessibility arrows. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
@@ -267,7 +267,7 @@ Every applied width/height change requests one native CLOCK_TICK on all supporte
 
 The widget editor reserves top system-bar/cutout insets for the complete 48dp touch target. When the widget starts at the inset-safe top, the upper handle is placed inside its bounds; the widget itself gains no layout padding. Saved local movement offsets still apply.
 
-## Shared menus — 0.2.0-rc.31
+## Shared menus — 0.2.0-rc.32
 
 Every Better Launcher menu follows the app long-press reference: deep navy surface, pale blue regular text and contour icons, rounded top corners and bottom anchoring. App/widget management, attached apps and notifications, folders, option selection, favorites/widget ordering, widget picker, weather/calendar panels and text editors use the same body/header/action factories in MainActivity. Action rows grow with wrapping 17sp text, a 48dp icon slot and a 16dp gap; the shared header uses 23sp text. Settings use the same palette with their existing full-screen navigation.
 

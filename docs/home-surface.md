@@ -86,6 +86,6 @@ Review verdict: ready for this spacing change. The home content starts at the sy
 
 Debug assembly, all 14 unit tests and lint passed with 0 errors and the same 27 existing warnings. All 6 affected instrumentation tests passed on each Android version; after integrating rc.27/rc.28, all 30 instrumentation tests passed on each platform. The previous rc.26 build failed the new exact-top regression assertion by 56dp. Local captures and logs are in `.impeccable/review/no-top-gap/`. The fixture is absent from release APKs; physical Todoist/OEM rendering remains unverified. Signed release smoke and artifact checks are recorded with the GitHub release.
 
-## Shared menu review — 0.2.0-rc.31
+## Shared menu review — 0.2.0-rc.32
 
-All app-owned sheets share the navy long-press style through common body, header, action and presentation helpers. Settings and Material selection/input controls use the same pale blue foreground roles. Native verification and release artifact checks are recorded in [rc.30](releases/0.2.0-rc.31.md). System UI and provider-rendered widget contents retain their own appearance.
+All app-owned sheets share the navy long-press style through common body, header, action and presentation helpers. Settings and Material selection/input controls use the same pale blue foreground roles. Native verification and release artifact checks are recorded in [rc.30](releases/0.2.0-rc.32.md). System UI and provider-rendered widget contents retain their own appearance.
