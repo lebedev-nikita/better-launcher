@@ -73,10 +73,15 @@ class AppGesturesTest {
                 activity.showHome()
             }
             var label = ""
-            instrumentation.runOnMainSync {
-                label = activity.store.favorites.firstNotNullOf(activity.catalog::find).let(activity.catalog::label)
+            // The home footer appears before the asynchronously loaded catalog and favorites.
+            awaitView(activity) {
+                val favorite = activity.store.favorites.firstNotNullOfOrNull(activity.catalog::find)
+                val loadedLabel = favorite?.let(activity.catalog::label)
+                if (it is TextView && loadedLabel != null && it.text.toString() == loadedLabel) {
+                    label = loadedLabel
+                    true
+                } else false
             }
-            awaitView(activity) { it is TextView && it.text.toString() == label }
             test(activity, label)
         } finally {
             instrumentation.runOnMainSync {
