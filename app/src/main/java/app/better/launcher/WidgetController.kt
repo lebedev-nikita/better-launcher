@@ -166,10 +166,6 @@ class WidgetController(private val activity: MainActivity, private val store: La
         val icon = runCatching { info.loadIcon(activity, activity.resources.displayMetrics.densityDpi) }.getOrNull()
         activity.managementSheet(info.loadLabel(activity.packageManager), icon) { body, dialog ->
             fun command(glyph: Glyph, label: String, action: () -> Unit) = activity.managementAction(body, dialog, glyph, label, action)
-            command(Glyph.INFO, "О приложении") {
-                runCatching { activity.catalog.launcherApps.startAppDetailsActivity(info.provider, info.profile, null, null) }
-                    .onFailure { activity.message("Не удалось открыть настройки приложения") }
-            }
             if (!home && store.pageWidgets.size > 1) command(Glyph.REORDER, "Изменить порядок") { editOrder() }
             command(Glyph.MOVE, "Переместить и изменить размер") { resize(id, info, frame, view) }
             if (info.configure != null) command(Glyph.EDIT, "Настройки виджета") {
@@ -179,7 +175,6 @@ class WidgetController(private val activity: MainActivity, private val store: La
             if (!home) command(Glyph.STAR, "На главный экран") {
                 store.homeWidgetId = id; showDestination(home)
             }
-            command(Glyph.PLUS, "Добавить виджет") { add() }
             command(Glyph.DELETE, "Удалить виджет") {
                 host.deleteAppWidgetId(id); store.widgets = store.widgets - id; showDestination(home)
             }
