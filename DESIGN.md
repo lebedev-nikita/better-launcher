@@ -254,7 +254,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.24
+## Current candidate 0.2.0-rc.25
 
 Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites use a recycled drag editor with keyboard/accessibility arrows. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
@@ -269,3 +269,7 @@ The live widget stays on its current screen. Navy 2dp lines mark its four edges;
 ## Widget order
 
 “Изменить порядок виджетов” in the page header and “Изменить порядок” in a page widget’s menu open the shared recycled order editor. Drag a 48dp handle or use named up/down buttons; boundary arrows are disabled. Provider labels wrap, and repeated provider instances have ordinal labels corresponding to their positions when the editor opens. Changes save immediately and update the page while the sheet and its scroll stay in place. Home widget identity, binding, size and local offsets stay attached to the widget ID. Back, Close and HOME dismiss the editor with changes saved. A single-widget or empty page omits reordering.
+
+## Widget resize feedback
+
+Every applied width/height change emits one native CLOCK_TICK, including keyboard and accessibility input. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
