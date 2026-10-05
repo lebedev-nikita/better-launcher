@@ -195,7 +195,7 @@ Home exposes “Изменить порядок избранного” below th
 
 ### Inputs / Fields
 
-App search uses a transparent, borderless, single-line native `EditText`, warm secondary hint, and white entered text. The toolbar combines back, search, and clear controls. Results filter as text changes, and the IME action launches the first result. Sheet forms retain native `EditText` styling and error behavior; they are not a custom shared outlined-field design. Name-editing sheets place a content-width Save action at the trailing edge (right in Russian), keeping its (52dp) minimum touch height and (16dp) horizontal padding, including when the alphabet is on the left.
+App search uses a transparent, borderless, single-line native `EditText`, pale blue secondary hint, and white entered text. The toolbar combines back, search, and clear controls. Results filter as text changes, and the IME action launches the first result. Sheet forms retain native `EditText` styling and error behavior; they are not a custom shared outlined-field design. Name-editing sheets place a content-width Save action at the trailing edge (right in Russian), using the shared icon action with a (52dp) minimum row height, including when the alphabet is on the left.
 
 ### Settings and Switches
 
@@ -260,7 +260,7 @@ The live widget stays on its current screen. Navy 2dp lines mark its four edges;
 
 ## Widget resize feedback
 
-Every applied width/height change requests one soft SEGMENT_FREQUENT_TICK through AndroidX, including keyboard and accessibility input. Android 14+ uses the native soft effect; Android 12–13 falls back to CLOCK_TICK. Devices unable to produce a suitably soft tick may stay silent on Android 14+. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
+Every applied width/height change requests one native CLOCK_TICK on all supported Android versions, including keyboard and accessibility input. The platform API exposes no amplitude parameter for CLOCK_TICK; strength follows the device implementation and system haptic settings. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
 
 
 ## Top edge controls

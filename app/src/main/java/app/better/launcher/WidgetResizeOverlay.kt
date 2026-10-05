@@ -8,6 +8,7 @@ import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.InsetDrawable
 import android.os.Bundle
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -18,8 +19,6 @@ import android.view.accessibility.AccessibilityEvent
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.core.graphics.withTranslation
-import androidx.core.view.HapticFeedbackConstantsCompat
-import androidx.core.view.ViewCompat
 import kotlin.math.roundToInt
 
 fun widgetResizeOverlay(
@@ -108,7 +107,7 @@ fun widgetResizeOverlay(
         val previous = readSize()
         onChange(size); updateLabel(size)
         if (size.width != previous.width || size.height != previous.height) {
-            ViewCompat.performHapticFeedback(target, HapticFeedbackConstantsCompat.SEGMENT_FREQUENT_TICK)
+            target.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
         }
     }
 
