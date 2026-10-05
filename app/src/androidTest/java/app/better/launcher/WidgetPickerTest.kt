@@ -109,10 +109,15 @@ class WidgetPickerTest {
             val rail = onMain { descendants(picker).filterIsInstance<AlphabetRail>().single() }
             fun jump(letter: String, label: String): View {
                 instrumentation.runOnMainSync { rail.onSelect(letter) }
-                // The destination may already be visible below the old section. Wait for the
-                // scroll before retaining a recycled row for its asynchronous preview.
-                await { list.getChildAt(0)?.let { row -> descendants(row).filterIsInstance<TextView>()
-                    .any { it.text.toString() == label } } == true }
+                // Wait for earlier sections to reach the top before retaining a recycled
+                // preview row. The final section can be clamped at the end of the list;
+                // its destination must be visible, but need not be the first row.
+                await {
+                    val visible = (0 until list.childCount).map(list::getChildAt)
+                    val candidates = if (letter == "#") visible else visible.take(1)
+                    candidates.any { row -> descendants(row).filterIsInstance<TextView>()
+                        .any { it.text.toString() == label } }
+                }
                 return onMain { (0 until list.childCount).map(list::getChildAt).first { row ->
                     descendants(row).filterIsInstance<TextView>().any { it.text.toString() == label }
                 } }
