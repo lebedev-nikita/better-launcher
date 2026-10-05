@@ -10,6 +10,7 @@
 
 | Документ | Когда читать |
 | --- | --- |
+| [docs/widget-search-verification.md](docs/widget-search-verification.md) | Поиск виджетов: проверенный APK, сценарии и ограничения |
 | [docs/releases/0.2.0-rc.42.md](docs/releases/0.2.0-rc.42.md) | Меню приложения без дублирующего запуска |
 | [docs/releases/0.2.0-rc.41.md](docs/releases/0.2.0-rc.41.md) | Плоский список действий в меню удержания |
 | [docs/releases/0.2.0-rc.40.md](docs/releases/0.2.0-rc.40.md) | Меню виджета без «О приложении» и «Добавить виджет» |
