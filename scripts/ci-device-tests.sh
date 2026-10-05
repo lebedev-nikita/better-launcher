@@ -64,6 +64,7 @@ if [[ ! "$ci_guest_memory_kb" =~ ^[0-9]+$ ]] || ((ci_guest_memory_kb < 2800000))
   exit 1
 fi
 device_adb shell cat /proc/meminfo > "$ci_output/guest-meminfo.txt"
+device_adb shell cat /proc/cpuinfo > "$ci_output/guest-cpuinfo.txt"
 cp "$ANDROID_AVD_HOME/test.avd/config.ini" "$ci_output/avd-config.ini"
 
 # Let first-boot services finish before installing and instrumenting the launcher.

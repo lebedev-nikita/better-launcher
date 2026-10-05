@@ -59,7 +59,7 @@ jobs:
   device-tests:
     name: Device tests (API ${{ matrix.api }})
     needs: checks
-    runs-on: ${{ matrix.api == 36 && 'macos-15-intel' || 'ubuntu-24.04' }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -99,6 +99,8 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Create emulator diagnostic directory
+        run: mkdir -p app/build/ci-device
       - name: Run device tests
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:
@@ -107,15 +109,15 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_7
-          cores: ${{ matrix.api == 36 && 4 || 2 }}
+          cores: 2
           ram-size: 3072 # AVD config expects an integer number of MB.
           disk-size: 2048M
           emulator-port: 5554
           emulator-boot-timeout: 300
           # Android 16 needs fewer software-rendered pixels on a 2-vCPU runner.
           # Both profiles retain the Pixel 7's logical dimensions in dp.
-          pre-emulator-launch-script: printf 'hw.lcd.width=720\nhw.lcd.height=1600\nhw.lcd.density=280\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
-          emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -noaudio -no-boot-anim -camera-back emulated
+          pre-emulator-launch-script: printf 'hw.lcd.width=${{ matrix.api == 36 && 360 || 720 }}\nhw.lcd.height=${{ matrix.api == 36 && 800 || 1600 }}\nhw.lcd.density=${{ matrix.api == 36 && 140 || 280 }}\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
+          emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -noaudio -no-boot-anim -camera-back emulated -logcat '*:W' -logcat-output app/build/ci-device/early-logcat.txt
           disable-animations: false
           disable-spellchecker: true
           script: bash scripts/ci-device-tests.sh emulator-5554 "$CI_DEVICE_SUITE"
