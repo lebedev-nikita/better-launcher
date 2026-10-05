@@ -113,6 +113,7 @@ class WidgetPickerTest {
                 // preview row. The final section can be clamped at the end of the list;
                 // its destination must be visible, but need not be the first row.
                 await {
+                    if (list.isLayoutRequested) return@await false
                     val visible = (0 until list.childCount).map(list::getChildAt)
                     val candidates = if (letter == "#") visible else visible.take(1)
                     candidates.any { row -> descendants(row).filterIsInstance<TextView>()

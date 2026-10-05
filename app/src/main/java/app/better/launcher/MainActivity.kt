@@ -367,7 +367,10 @@ class MainActivity : AppCompatActivity() {
     private inner class AppRow(private val favorite: Boolean) : LinearLayout(this@MainActivity) {
         private lateinit var app: AppEntry
         private val icon = ImageView(this@MainActivity)
-        private val labels = vertical().apply { setPadding(0, dp(8), 0, dp(8)) }
+        private val labels = vertical().apply {
+            val padding = dp(if (store.bool("compact")) 3 else 7)
+            setPadding(0, padding, 0, padding)
+        }
         private val name = text("", if (store.bool("largeText")) 25f else 21f).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
         private val preview = text("", 13f, secondary).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
         val orderHandleRow: LinearLayout? = if (favorite && orderingFavorites) horizontal() else null
@@ -375,12 +378,16 @@ class MainActivity : AppCompatActivity() {
 
         init {
             orientation = HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-            tag = PageSwipeLayout.BLOCK_SWIPE
+            if (orderingFavorites) tag = PageSwipeLayout.BLOCK_SWIPE
             minimumHeight = dp(if (store.bool("compact")) 54 else 62)
             background = touchBackground(); isFocusable = true
             if (!store.bool("hideIcons")) {
-                icon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-                addView(icon, LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
+                icon.setPadding(dp(5), dp(5), dp(5), dp(5))
+                icon.background = touchBackground()
+                icon.isFocusable = true
+                icon.setOnClickListener { launch(app) }
+                icon.setOnLongClickListener { showAppPopup(app); true }
+                addView(icon, LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(6) })
             }
             if (orderHandleRow != null) {
                 labels.setPadding(0, 0, 0, 0)
@@ -395,21 +402,31 @@ class MainActivity : AppCompatActivity() {
             menu?.let { addView(it) }
             setOnClickListener { launch(app) }
             setOnLongClickListener { showAppMenu(app); true }
-            var downX = 0f; var downY = 0f; var swiped = false
-            // Unconsumed taps use LinearLayout's standard performClick.
-            @Suppress("ClickableViewAccessibility")
-            setOnTouchListener { view, event ->
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> { downX = event.x; downY = event.y; swiped = false }
-                    MotionEvent.ACTION_MOVE -> if (kotlin.math.abs(event.x - downX) > dp(32) && kotlin.math.abs(event.y - downY) < dp(28)) { swiped = true; view.parent.requestDisallowInterceptTouchEvent(true); view.isPressed = false }
-                    MotionEvent.ACTION_UP -> if (swiped) { showAppPopup(app); return@setOnTouchListener true }
-                }; swiped
+            name.minimumHeight = dp(48)
+            name.gravity = Gravity.CENTER_VERTICAL
+            name.isFocusable = true
+            name.setOnClickListener { launch(app) }
+            name.setOnLongClickListener { showAppMenu(app); true }
+            // The popup remains reachable when icons are hidden, including with TalkBack.
+            name.accessibilityDelegate = object : View.AccessibilityDelegate() {
+                override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                    super.onInitializeAccessibilityNodeInfo(host, info)
+                    info.addAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(
+                        R.id.app_quick_actions, "Уведомления и быстрые действия"))
+                    info.addAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(
+                        android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK, "Управление ярлыком"))
+                }
+                override fun performAccessibilityAction(host: View, action: Int, args: Bundle?): Boolean {
+                    if (action == R.id.app_quick_actions) { showAppPopup(app); return true }
+                    return super.performAccessibilityAction(host, action, args)
+                }
             }
         }
 
         fun bind(entry: AppEntry) {
             app = entry
             name.text = catalog.label(app)
+            icon.contentDescription = "${catalog.label(app)}: удерживайте для уведомлений и быстрых действий"
             if (!store.bool("hideIcons")) icon.setImageDrawable(app.icon.constantState?.newDrawable(resources)?.mutate() ?: app.icon)
             if (!favorite) return
             val notifications = if (store.bool("notifications", true)) NotificationHub.notifications(app.packageName, app.user) else emptyList()
@@ -428,7 +445,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun folderRow(folder: AppFolder): View = horizontal().apply {
-        tag = PageSwipeLayout.BLOCK_SWIPE
+        if (orderingFavorites) tag = PageSwipeLayout.BLOCK_SWIPE
         minimumHeight = dp(62); background = touchBackground(); isFocusable = true
         addView(GlyphView(this@MainActivity, Glyph.FOLDER), LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
         addView(text(folder.name, 21f), LinearLayout.LayoutParams(0, -2, 1f))
