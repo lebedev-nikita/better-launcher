@@ -163,9 +163,9 @@ Root content respects system bars, display cutouts, and the larger of navigation
 
 ## Elevation & Depth
 
-Depth comes primarily from the system wallpaper, opaque navy settings, and bottom sheets over a native dimmed backdrop (0.30). App rows are transparent at rest. There is no shared CSS shadow vocabulary. Transient messages alone set explicit native elevation (6dp); sheet and Material widget effects are resolved by the Android theme. Native ripples communicate touch state without introducing permanent row cards.
+Depth comes primarily from the system wallpaper, opaque navy settings, and bottom sheets over a native dimmed backdrop (0.30). App rows are transparent at rest and while favorites are dragged. There is no shared CSS shadow vocabulary. Transient messages alone set explicit native elevation (6dp); sheet and Material widget effects are resolved by the Android theme. Native ripples communicate touch state without introducing permanent row cards.
 
-**The Open List Rule.** Keep launcher app rows unboxed at rest; reserve opaque containers for sheets, settings, notification detail, and transient feedback, as the current build does.
+**The Open List Rule.** Keep launcher app rows unboxed at rest and throughout favorites dragging; reserve opaque containers for sheets, settings, notification detail, and transient feedback, as the current build does.
 
 ## Shapes
 
