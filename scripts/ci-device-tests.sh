@@ -61,11 +61,12 @@ install_home() {
   device_adb shell input keyevent KEYCODE_WAKEUP
   device_adb shell wm dismiss-keyguard
   device_adb shell input keyevent KEYCODE_HOME
+  device_adb shell am start -W -n app.better.launcher/.MainActivity
 }
 
 install_home
 for ci_attempt in {1..30}; do
-  ci_focus=$(device_adb shell dumpsys window windows | sed -n '/mCurrentFocus=/p')
+  ci_focus=$(device_adb shell dumpsys activity activities | sed -n '/mCurrentFocus=/p')
   if [[ "$ci_focus" == *'Application Not Responding'* ]]; then
     echo "Emulator system is unresponsive before tests: $ci_focus" >&2
     exit 1
