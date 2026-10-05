@@ -31,6 +31,15 @@ def hierarchy():
         time.sleep(.25)
 
 
+def keyboard_visible():
+    # InputMethodManager can retain mInputShown=true after its surface is hidden.
+    # Back must only dismiss a visible IME, otherwise it dismisses the app menu.
+    windows = adb("shell", "dumpsys", "window", "windows")
+    return any("InputMethod}" in block.split("\n", 1)[0] and
+               "isVisible=true" in block
+               for block in re.split(r"(?m)^  Window #", windows)[1:])
+
+
 def find(tree, label):
     for node in tree.iter("node"):
         if label in (node.get("text"), node.get("content-desc"), node.get("hint")):
@@ -112,7 +121,7 @@ find(tree, "Camera")
 assert not any(n.get("text") == "Phone" for n in tree.iter("node"))
 print("PASS: app search filters real installed apps")
 # A fullscreen IME can cover app rows while accessibility still exposes them.
-if "mInputShown=true" in adb("shell", "dumpsys", "input_method"):
+if keyboard_visible():
     adb("shell", "input", "keyevent", "4")
     wait_for("Camera")
 tap("Camera")
@@ -169,7 +178,7 @@ tap("Переименовать Phone")
 wait_for("Переименовать Phone")
 # A short landscape window can scroll Save below the IME, or use an extract UI.
 # Back hides the keyboard; the same rename sheet must remain open.
-if "mInputShown=true" in adb("shell", "dumpsys", "input_method"):
+if keyboard_visible():
     adb("shell", "input", "keyevent", "4")
     wait_for("Переименовать Phone")
 wait_for("Сохранить")
