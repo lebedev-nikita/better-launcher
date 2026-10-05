@@ -266,7 +266,23 @@ python3 scripts/smoke-test.py --serial emulator-5580
 
 Проверки плавного меню и переименования в 0.2.0-rc.8 записаны в [отчёте](docs/app-menu-motion-verification.md) и [release notes](docs/releases/0.2.0-rc.8.md). Результаты проверок 0.1.9 записаны в [release notes](docs/releases/0.1.9.md). Результаты проверок 0.1.8 записаны в [release notes](docs/releases/0.1.8.md). Результаты проверок 0.1.7 записаны в [release notes](docs/releases/0.1.7.md). Результаты проверок 0.1.5 записаны в [проверке меню](docs/app-menu-verification.md) и [release notes](docs/releases/0.1.5.md). Результаты проверок 0.1.4 записаны в [release notes](docs/releases/0.1.4.md). Результаты проверок 0.1.3 записаны в [отчёте](docs/verification-0.1.3.md). Результаты текущей проверки экрана виджетов записаны в [отчёте](docs/widgets-verification.md). Результаты проверок 0.1.2 записаны в [проверке плавности](docs/app-navigation-verification.md) и [release notes](docs/releases/0.1.2.md). Результаты проверок 0.1.1 записаны в [release notes](docs/releases/0.1.1.md).
 
-Для 0.1.0 подтверждены 3 unit-теста, 3 интеграционных теста, UI-сценарии на Android 12 и Android 16 и отдельные сценарии уведомлений/виджета Clock на Android 16. Lint того выпуска: 0 ошибок, 35 предупреждений. Проверки физических устройств, Android 13–15, рабочих профилей, TalkBack и остальных провайдеров ещё не завершены. Полный список границ — в [отчёте](docs/verification.md). CI workflow в репозитории пока отсутствует.
+Для 0.1.0 подтверждены 3 unit-теста, 3 интеграционных теста, UI-сценарии на Android 12 и Android 16 и отдельные сценарии уведомлений/виджета Clock на Android 16. Lint того выпуска: 0 ошибок, 35 предупреждений. Проверки физических устройств, Android 13–15, рабочих профилей, TalkBack и остальных провайдеров ещё не завершены. Полный список границ — в [отчёте](docs/verification.md).
+
+### GitHub CI
+
+[Android CI](.github/workflows/android-ci.yml) выполняется на GitHub-hosted Ubuntu runners; компьютер разработчика для этих запусков не нужен. Используются JDK 17, Gradle Wrapper проекта и явно устанавливаемые SDK Platform 36 / Build Tools 35.0.0. Actions закреплены по commit SHA; Gradle cache ускоряет повторные сборки. Новое обновление PR отменяет предыдущий запуск того же PR.
+
+| Запуск | Проверки |
+| --- | --- |
+| PR в `main` и push в `main` | Debug APK, все unit-тесты, lint; после успешных базовых проверок — все `connectedDebugAndroidTest` на Android 16 / API 36 |
+| Ежедневно в 00:23 UTC (04:23 Asia/Tbilisi) | Базовые проверки и connected-тесты на API 31 и API 36; затем smoke в портрете, на узком экране с font scale 1.3 и в landscape на каждом эмуляторе |
+| Actions → Android CI → Run workflow | Тот же полный набор; запускайте на `main` перед выпуском |
+
+[ci-device-tests.sh](scripts/ci-device-tests.sh) работает только на выделенном одноразовом эмуляторе с явным serial. Google APIs / Pixel 7 / x86_64 запускается с английской локалью и включёнными анимациями. Скрипт устанавливает APK и назначает HOME перед connected-тестами, затем переустанавливает APK после их удаления. Перед каждым smoke очищаются настройки Better Launcher для исходного избранного и правого алфавита; после сценариев восстанавливаются размер, font scale и ориентация. Не запускайте этот скрипт на пользовательском эмуляторе с нужными данными.
+
+В артефактах запуска на 7 дней сохраняются debug APK, HTML/XML-отчёты unit/connected-тестов и lint, вывод smoke, logcat, UI hierarchy и скриншоты. Диагностика устройства снимается до завершения emulator action, включая падение тестов. Debug APK — только для проверки; CI не публикует релизы и не использует ключи release-подписи.
+
+Рекомендуемые обязательные проверки перед слиянием: `Build, unit tests and lint` и `Device tests (API 36)`. На текущем тарифе приватного репозитория GitHub не позволяет включить branch protection; до смены тарифа результаты нужно учитывать при слиянии самостоятельно. CI не заменяет визуальную оценку, физические устройства, TalkBack, рабочие профили и реальный тактильный отклик.
 
 ### Если что-то не работает
 
