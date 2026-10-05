@@ -21,6 +21,8 @@ probe_capture() {
 }
 trap probe_capture EXIT
 cat "${ANDROID_HOME}/system-images/android-36/$probe_target/x86_64/source.properties" > "$probe_output/image.txt"
+probe_adb shell cat /proc/meminfo > "$probe_output/meminfo.txt"
+cp "$ANDROID_AVD_HOME/test.avd/config.ini" "$probe_output/avd-config.ini"
 sleep 60
 if [[ "$probe_boot" == warm ]]; then
   probe_adb logcat -d > "$probe_output/cold-logcat.txt"

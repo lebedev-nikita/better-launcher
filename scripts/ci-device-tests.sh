@@ -55,6 +55,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Verify the guest allocation, rather than trusting the action input.
+ci_guest_memory_kb=$(device_adb shell cat /proc/meminfo | awk '/^MemTotal:/ {print $2}')
+printf 'Android guest memory: %s KiB\n' "$ci_guest_memory_kb"
+if [[ ! "$ci_guest_memory_kb" =~ ^[0-9]+$ ]] || ((ci_guest_memory_kb < 2800000)); then
+  echo 'The emulator did not receive the configured 3 GB RAM.' >&2
+  exit 1
+fi
+device_adb shell cat /proc/meminfo > "$ci_output/guest-meminfo.txt"
+cp "$ANDROID_AVD_HOME/test.avd/config.ini" "$ci_output/avd-config.ini"
+
 # Let first-boot services finish before installing and instrumenting the launcher.
 echo 'Waiting for first-boot services to settle (60 seconds).'
 sleep 60
