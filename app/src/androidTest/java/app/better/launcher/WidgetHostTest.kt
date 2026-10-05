@@ -170,26 +170,24 @@ class WidgetHostTest {
                 await(instrumentation) { activeNode("Переместить и изменить размер") != null }
             }
             openControls()
+            assertNull(activeNode("Сбросить размер и положение"))
+            assertNull(activeNode("На экран виджетов"))
             assertTrue(activeNode("На главный экран")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { activity.store.homeWidgetId == id }
             instrumentation.runOnMainSync { activity.showHome() }
             await(instrumentation) { hasWidgetText(activity, id, "Live widget update") }
             assertEquals(moved, activity.store.widgetSize(id))
             openControls()
+            assertNull(activeNode("Сбросить размер и положение"))
+            assertNull(activeNode("На экран виджетов"))
             assertTrue(activeNode("Переместить и изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { activeNode("Готово") != null }
             assertTrue(activeNode("Готово")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             openControls()
-            await(instrumentation) { activeNode("Сбросить размер и положение") != null }
-            assertTrue(activeNode("Сбросить размер и положение")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
-            await(instrumentation) { activity.store.widgetSize(id) == null }
-            instrumentation.waitForIdleSync()
-            openControls()
-            assertTrue(activeNode("На экран виджетов")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
-            await(instrumentation) { activity.store.homeWidgetId == null }
-            instrumentation.runOnMainSync { activity.showWidgets() }
-            await(instrumentation) { hasWidgetText(activity, id, "Live widget update") }
-            openControls()
+            assertNull(activeNode("Сбросить размер и положение"))
+            assertNull(activeNode("На экран виджетов"))
+            assertEquals(moved, activity.store.widgetSize(id))
+            assertEquals(id, activity.store.homeWidgetId)
             assertTrue(activeNode("Удалить виджет")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
             await(instrumentation) { id !in activity.store.widgets }
         } finally {
