@@ -11,7 +11,7 @@
 | Документ | Когда читать |
 | --- | --- |
 | [docs/releases/0.2.0-rc.45.md](docs/releases/0.2.0-rc.45.md) | Выбор виджета с одним понятным полем поиска |
-| [docs/releases/0.2.0-rc.44.md](docs/releases/0.2.0-rc.44.md) | Смахиваемые всплывающие сообщения до трёх секунд |
+| [docs/releases/0.2.0-rc.46.md](docs/releases/0.2.0-rc.46.md) | Смахиваемые всплывающие сообщения до трёх секунд |
 | [docs/widget-search-verification.md](docs/widget-search-verification.md) | Поиск виджетов: проверенный APK, сценарии и ограничения |
 | [docs/releases/0.2.0-rc.43.md](docs/releases/0.2.0-rc.43.md) | Раздельное удержание иконки/названия и свайп к виджетам |
 | [docs/releases/0.2.0-rc.42.md](docs/releases/0.2.0-rc.42.md) | Меню приложения без дублирующего запуска |
