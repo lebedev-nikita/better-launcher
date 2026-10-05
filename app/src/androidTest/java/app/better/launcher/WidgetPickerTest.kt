@@ -109,10 +109,16 @@ class WidgetPickerTest {
             val rail = onMain { descendants(picker).filterIsInstance<AlphabetRail>().single() }
             fun jump(letter: String, label: String): View {
                 instrumentation.runOnMainSync { rail.onSelect(letter) }
-                // Wait for the scroll before retaining a recycled row. Android clamps the
-                // final section to the bottom, so its row need not be the first visible one.
-                await { !list.isLayoutRequested && descendants(list).filterIsInstance<TextView>()
-                    .any { it.text.toString() == label } }
+                // Wait for earlier sections to reach the top before retaining a recycled
+                // preview row. The final section can be clamped at the end of the list;
+                // its destination must be visible, but need not be the first row.
+                await {
+                    if (list.isLayoutRequested) return@await false
+                    val visible = (0 until list.childCount).map(list::getChildAt)
+                    val candidates = if (letter == "#") visible else visible.take(1)
+                    candidates.any { row -> descendants(row).filterIsInstance<TextView>()
+                        .any { it.text.toString() == label } }
+                }
                 return onMain { (0 until list.childCount).map(list::getChildAt).first { row ->
                     descendants(row).filterIsInstance<TextView>().any { it.text.toString() == label }
                 } }
