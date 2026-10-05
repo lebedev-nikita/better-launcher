@@ -1,5 +1,6 @@
 package app.better.launcher
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Intent
 import android.app.Dialog
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.view.ViewTreeObserver
 import android.view.WindowInsets
 import android.view.WindowInsetsAnimation
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.test.platform.app.InstrumentationRegistry
@@ -82,6 +84,10 @@ class AppMenuTest {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         var app: AppEntry? = null
         var oldAlias: String? = null
+        val originalServiceFlags = instrumentation.uiAutomation.serviceInfo.flags
+        instrumentation.uiAutomation.serviceInfo = instrumentation.uiAutomation.serviceInfo.apply {
+            flags = flags or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
+        }
         try {
             await {
                 instrumentation.runOnMainSync {
@@ -107,6 +113,7 @@ class AppMenuTest {
             node { it.text == "Renamed app" }
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
 
+            await(30000) { !imeWindowVisible() }
             // The next menu must use the saved alias, and HOME must discard unsaved edits.
             openMenu("Renamed app")
             node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
@@ -118,6 +125,7 @@ class AppMenuTest {
             node { it.text == "Renamed app" }
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
 
+            await(30000) { !imeWindowVisible() }
             openMenu("Renamed app")
             val backDialog = currentDialog(activity) as Dialog
             val ime = observeIme(backDialog)
@@ -148,6 +156,7 @@ class AppMenuTest {
             node { it.text == entry.originalLabel }
             assertNull(LauncherStore(instrumentation.targetContext).alias(entry.id))
         } finally {
+            instrumentation.uiAutomation.serviceInfo = instrumentation.uiAutomation.serviceInfo.apply { flags = originalServiceFlags }
             instrumentation.runOnMainSync {
                 app?.let { activity.store.rename(it.id, oldAlias.orEmpty()) }
                 val resumed = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
@@ -240,7 +249,10 @@ class AppMenuTest {
             val insets = dialog.window?.decorView?.rootWindowInsets
             settled = insets != null && insets.isVisible(WindowInsets.Type.ime()) == visible && observer.running.isEmpty()
         }
-        return settled
+        return settled && imeWindowVisible() == visible
+    }
+    private fun imeWindowVisible(): Boolean = instrumentation.uiAutomation.windows.any {
+        it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD && it.root != null
     }
     private fun openMenu(label: String) {
         // HOME replaces the Activity, and an exiting sheet can briefly expose its old title.
