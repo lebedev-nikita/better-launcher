@@ -49,6 +49,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var screen: PageSwipeLayout
     private lateinit var rail: AlphabetRail
     private var page = "home"
+    private var orderingFavorites = false
+    private var orderingWidgets = false
+    private var inlineOrder: InlineOrderEditor? = null
     private var allApps: ListView? = null
     private var appAdapter: AppListAdapter? = null
     private var appQuery = ""
@@ -129,7 +132,7 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); currentDialog?.dismiss(); hideKeyboard(); showHome() }
+    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); currentDialog?.dismiss(); hideKeyboard(); orderingFavorites = false; orderingWidgets = false; showHome() }
     override fun onStart() { super.onStart(); widgets.start() }
     override fun onStop() { widgets.stop(); super.onStop() }
     override fun onResume() {
@@ -141,15 +144,17 @@ class MainActivity : AppCompatActivity() {
         }
         handler.post(weatherTicker); applyAppearance(); refreshApps(); refreshWeather()
     }
-    override fun onPause() { resumed = false; handler.removeCallbacks(weatherTicker); NotificationHub.onChanged = null; super.onPause() }
+    override fun onPause() { inlineOrder?.cancelDrag(); resumed = false; handler.removeCallbacks(weatherTicker); NotificationHub.onChanged = null; super.onPause() }
     override fun onDestroy() {
         catalog.launcherApps.unregisterCallback(packageCallback)
         handler.removeCallbacksAndMessages(null); executor.shutdownNow(); currentDialog?.dismiss(); super.onDestroy()
     }
     private fun handleBack() {
         if (widgets.finishResize()) return
-        if (currentDialog != null) currentDialog?.dismiss()
-        else if (page == "widgets") returnFromWidgets()
+        currentDialog?.let { it.dismiss(); return }
+        if (orderingFavorites) { orderingFavorites = false; showHome(); return }
+        if (orderingWidgets) { orderingWidgets = false; showWidgets(); return }
+        if (page == "widgets") returnFromWidgets()
         else if (page != "home") { hideKeyboard(); showHome() }
     }
 
@@ -187,7 +192,10 @@ class MainActivity : AppCompatActivity() {
     }
     fun gap(height: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
     private fun clearScreen(newPage: String) {
+        inlineOrder?.cancelDrag(); inlineOrder = null
         widgets.finishResize(false)
+        if (newPage != "home") orderingFavorites = false
+        if (newPage != "widgets") orderingWidgets = false
         if (page == "home" && newPage == "widgets") homeScrollPosition = homeScroll?.scrollY ?: 0
         widgetScroll?.let { widgetScrollPosition = it.scrollY }
         keyboardRequest?.let(handler::removeCallbacks); keyboardRequest = null
@@ -221,7 +229,7 @@ class MainActivity : AppCompatActivity() {
         rail.letters = AppListRules.railLetters(sections)
     }
     private fun refreshHomePreservingScroll() {
-        if (widgets.isResizing) { notificationRefreshPending = true; return }
+        if (widgets.isResizing || orderingFavorites) { notificationRefreshPending = true; return }
         val y = homeScroll?.scrollY ?: 0
         showHome(); homeScroll?.post { homeScroll?.scrollTo(0, y) }
     }
@@ -263,11 +271,22 @@ class MainActivity : AppCompatActivity() {
             favoriteColumn.addView(text(if (loadingApps) "Загружаем приложения…" else "Ваши приложения, всегда под рукой", 20f))
             favoriteColumn.addView(gap(12)); favoriteColumn.addView(action("Выбрать избранные") { editFavorites() })
         }
+        val favoriteItems = vertical()
+        val order = if (orderingFavorites) InlineOrderEditor(this, favoriteItems, scroll,
+            readOrder = { store.favorites }, saveOrder = { store.favorites = it }).also { inlineOrder = it } else null
         favorites.forEach { id ->
             val folder = store.folder(id)
-            if (folder != null) favoriteColumn.addView(folderRow(folder)) else catalog.find(id)?.let { favoriteColumn.addView(appRow(it, true)) }
+            val app = catalog.find(id)
+            val row = if (folder != null) folderRow(folder) else app?.let { appRow(it, true) }
+            if (row != null) {
+                if (order != null) order.add(id, folder?.name ?: catalog.label(app!!), row)
+                else favoriteItems.addView(row)
+            }
         }
-        if (favorites.size > 1) favoriteColumn.addView(action("Изменить порядок избранного") { editFavorites() }.apply {
+        favoriteColumn.addView(favoriteItems)
+        if (favorites.size > 1 && !orderingFavorites) favoriteColumn.addView(action(
+            "Изменить порядок избранного"
+        ) { orderingFavorites = true; showHome() }.apply {
             setPadding(0, dp(8), dp(8), dp(8))
         })
         favoriteColumn.addView(gap(14))
@@ -291,7 +310,8 @@ class MainActivity : AppCompatActivity() {
         footer.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) updateRailBounds()
         }
-        footer.addView(iconButton(Glyph.SEARCH, "Все приложения и поиск") { showApps(true) })
+        if (orderingFavorites) footer.addView(action("Готово") { orderingFavorites = false; showHome() })
+        else footer.addView(iconButton(Glyph.SEARCH, "Все приложения и поиск") { showApps(true) })
         footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
         footer.addView(iconButton(Glyph.WIDGETS, "Экран виджетов") { showWidgets(true) })
         footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
@@ -306,11 +326,13 @@ class MainActivity : AppCompatActivity() {
         val header = horizontal()
         header.addView(iconButton(Glyph.BACK, "На главный экран") { returnFromWidgets() })
         header.addView(text("Виджеты", 26f), LinearLayout.LayoutParams(0, -2, 1f))
-        if (store.pageWidgets.size > 1) header.addView(iconButton(Glyph.REORDER, "Изменить порядок виджетов") { widgets.editOrder() })
+        if (store.pageWidgets.size > 1) header.addView(iconButton(if (orderingWidgets) Glyph.CLOSE else Glyph.REORDER,
+            if (orderingWidgets) "Готово" else "Изменить порядок виджетов") { orderingWidgets = !orderingWidgets; showWidgets() })
         header.addView(iconButton(Glyph.PLUS, "Добавить виджет") { widgets.add() })
         column.addView(header)
         val content = vertical().apply { setPadding(dp(8), dp(12), dp(8), dp(24)) }
-        widgets.renderPage(content)
+        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false }
+        inlineOrder = widgets.renderPage(content, if (orderingWidgets) scroll else null)
         if (content.isEmpty()) {
             content.addView(gap(24))
             content.addView(text("Все нужные виджеты — здесь", 23f))
@@ -319,7 +341,7 @@ class MainActivity : AppCompatActivity() {
             content.addView(gap(16))
             content.addView(action("Добавить виджет") { widgets.add() })
         }
-        widgetScroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; addView(content) }
+        scroll.addView(content); widgetScroll = scroll
         column.addView(widgetScroll, LinearLayout.LayoutParams(-1, 0, 1f))
         column.addView(action("На главный экран") { returnFromWidgets() }, LinearLayout.LayoutParams(-1, -2))
         screen.addView(column, FrameLayout.LayoutParams(-1, -1))
@@ -670,7 +692,7 @@ class MainActivity : AppCompatActivity() {
             store.favorites = if (favorite) store.favorites - app.id else store.favorites + app.id
             showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное")
         }
-        if (favorite) menuAction(commands, Glyph.REORDER, "Изменить порядок") { editFavorites() }
+        if (favorite) menuAction(commands, Glyph.REORDER, "Изменить порядок") { startFavoritesOrder() }
         menuAction(commands, Glyph.INFO, "О приложении") {
             runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
         }
@@ -820,10 +842,15 @@ class MainActivity : AppCompatActivity() {
             body.addView(action("Готово") { onSave(selected); dialog.dismiss() })
         }
     }
+    private fun startFavoritesOrder() {
+        currentDialog?.dismiss(); orderingFavorites = true; showHome()
+    }
+    fun startWidgetOrder() {
+        currentDialog?.dismiss(); orderingWidgets = true; showWidgets()
+    }
     private fun editFavorites() {
-        sheet("Избранное", scrollContent = false) { body, dialog ->
-            body.addView(text("Перетаскивайте строки за ≡ или используйте стрелки. Порядок сохраняется сразу.", 14f, secondary))
-            body.addView(FavoritesOrderEditor(this) { showHome() }.view, LinearLayout.LayoutParams(-1, 0, 1f))
+        sheet("Избранное") { body, dialog ->
+            body.addView(action("Изменить порядок на главном экране") { dialog.dismiss(); startFavoritesOrder() })
             body.addView(action("Выбрать приложения") { dialog.dismiss(); selectApps("Избранные приложения", store.favorites.filterNot { it.startsWith("folder:") }) { store.favorites = it + store.favorites.filter { id -> id.startsWith("folder:") }; showHome() } })
             body.addView(action("Создать папку") { dialog.dismiss(); editText("Новая папка", "", "Название папки") { name -> if (name.isNotBlank()) selectApps(name, emptyList()) { store.createFolder(name, it); showHome() } } })
         }

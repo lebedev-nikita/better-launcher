@@ -327,5 +327,6 @@
       "**Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.",
       "**Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build."
     ]
-  }
+  },
+  "inlineOrdering": "Favorites and actual hosted widgets reorder on their existing home/widget page. Trailing 48dp drag/up/down controls, edge scrolling, save on drop or arrows, cancel retains order; Done and Back finish, HOME returns home."
 }

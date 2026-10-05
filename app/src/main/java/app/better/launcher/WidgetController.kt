@@ -78,35 +78,28 @@ class WidgetController(private val activity: MainActivity, private val store: La
         prune()
         store.homeWidgetId?.let { render(container, it, true) }
     }
-    fun renderPage(container: LinearLayout) {
+    fun renderPage(container: LinearLayout, scroll: android.widget.ScrollView? = null): InlineOrderEditor? {
         prune()
-        store.pageWidgets.forEachIndexed { index, id ->
-            if (index > 0) container.addView(activity.gap(24))
-            render(container, id, false)
-        }
-    }
-    fun editOrder() {
-        prune()
-        val labels = store.pageWidgets.mapNotNull { id ->
-            manager.getAppWidgetInfo(id)?.let { id to it.loadLabel(activity.packageManager) }
-        }
-        if (labels.size < 2) return
+        val labels = store.pageWidgets.mapNotNull { id -> manager.getAppWidgetInfo(id)?.let { id to it.loadLabel(activity.packageManager) } }
         val occurrences = mutableMapOf<String, Int>()
-        val entries = labels.map { (id, label) ->
-            // Distinguish multiple instances of the same provider without exposing host IDs.
-            val number = occurrences.getOrDefault(label, 0) + 1
-            occurrences[label] = number
-            OrderEntry(id.toString(), if (labels.count { it.second == label } > 1) "$label · $number" else label)
+        val order = scroll?.let { InlineOrderEditor(activity, container, it,
+            readOrder = { store.widgets.map(Int::toString) }, saveOrder = { store.widgets = it.map(String::toInt) }) }
+        labels.forEachIndexed { index, (id, label) ->
+            if (order == null) {
+                if (index > 0) container.addView(activity.gap(24))
+                render(container, id, false)
+            } else {
+                val number = occurrences.getOrDefault(label, 0) + 1
+                occurrences[label] = number
+                val name = if (labels.count { it.second == label } > 1) "$label · $number" else label
+                val content = activity.vertical()
+                render(content, id, false)
+                order.add(id.toString(), name, content, 24)
+            }
         }
-        activity.sheet("Порядок виджетов", scrollContent = false) { body, _ ->
-            body.addView(activity.text("Перетаскивайте строки за ≡ или используйте стрелки. Порядок сохраняется сразу.", 14f, activity.secondary))
-            body.addView(OrderEditor(activity, entries, "Порядок виджетов",
-                readOrder = { store.widgets.map(Int::toString) },
-                saveOrder = { store.widgets = it.map(String::toInt) },
-                onChanged = { activity.showWidgets() },
-            ).view, LinearLayout.LayoutParams(-1, 0, 1f))
-        }
+        return order
     }
+    fun editOrder() { activity.startWidgetOrder() }
     private fun render(container: LinearLayout, id: Int, home: Boolean) {
         val info = manager.getAppWidgetInfo(id) ?: return
         val view = host.createView(hostContext, id, info)

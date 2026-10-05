@@ -37,10 +37,14 @@ class FavoritesOrderTest {
                 val firstLabel = store.alias(apps[0].id) ?: apps[0].originalLabel
                 val secondLabel = store.alias(apps[1].id) ?: apps[1].originalLabel
                 await { node("Изменить порядок избранного").performAction(AccessibilityNodeInfo.ACTION_CLICK) }
-                node("Перетащить $firstLabel")
+                node("Готово")
+                node(firstLabel)
                 assertFalse(node("Переместить $firstLabel вверх").isEnabled)
                 val from = Rect().also { node("Перетащить $firstLabel").getBoundsInScreen(it) }
                 val to = Rect().also { node("Перетащить $secondLabel").getBoundsInScreen(it) }
+                val beforeCancel = store.favorites
+                drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat(), cancel = true)
+                assertEquals("Cancelled drag must preserve saved order", beforeCancel, store.favorites)
                 // Cross the target row's boundary; matching its handle center exactly is not a move.
                 drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat())
                 val dragged = listOf(missing, apps[1].id, apps[0].id, folder, apps[2].id)
@@ -97,7 +101,7 @@ class FavoritesOrderTest {
         node("Перетащить $label")
     }
 
-    private fun drag(x: Float, fromY: Float, toY: Float) {
+    private fun drag(x: Float, fromY: Float, toY: Float, cancel: Boolean = false) {
         val down = SystemClock.uptimeMillis()
         fun send(action: Int, y: Float) {
             val event = MotionEvent.obtain(down, SystemClock.uptimeMillis(), action, x, y, 0)
@@ -111,7 +115,7 @@ class FavoritesOrderTest {
             send(MotionEvent.ACTION_MOVE, fromY + (toY - fromY) * (index + 1) / 20)
         }
         SystemClock.sleep(100)
-        send(MotionEvent.ACTION_UP, toY)
+        send(if (cancel) MotionEvent.ACTION_CANCEL else MotionEvent.ACTION_UP, toY)
     }
 
     private fun node(label: String): AccessibilityNodeInfo {
