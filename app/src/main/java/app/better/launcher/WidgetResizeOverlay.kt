@@ -8,6 +8,7 @@ import android.graphics.drawable.RippleDrawable
 import android.graphics.drawable.InsetDrawable
 import android.os.Bundle
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -101,7 +102,13 @@ fun widgetResizeOverlay(
             if (edge == WidgetEdge.LEFT || edge == WidgetEdge.RIGHT) size.width else size.height) }
     }
 
-    private fun change(size: WidgetSize) { onChange(size); updateLabel(size) }
+    private fun change(size: WidgetSize) {
+        val previous = readSize()
+        onChange(size); updateLabel(size)
+        if (size.width != previous.width || size.height != previous.height) {
+            target.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+        }
+    }
 
     private fun positionHandles() {
         target.getLocationInWindow(targetLocation); getLocationInWindow(overlayLocation)
