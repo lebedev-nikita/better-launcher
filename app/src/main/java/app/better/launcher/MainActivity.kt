@@ -365,7 +365,10 @@ class MainActivity : AppCompatActivity() {
     private inner class AppRow(private val favorite: Boolean) : LinearLayout(this@MainActivity) {
         private lateinit var app: AppEntry
         private val icon = ImageView(this@MainActivity)
-        private val labels = vertical().apply { setPadding(0, dp(8), 0, dp(8)) }
+        private val labels = vertical().apply {
+            val padding = dp(if (store.bool("compact")) 3 else 7)
+            setPadding(0, padding, 0, padding)
+        }
         private val name = text("", if (store.bool("largeText")) 25f else 21f).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
         private val preview = text("", 13f, secondary).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
         val orderHandleRow: LinearLayout? = if (favorite && orderingFavorites) horizontal() else null
