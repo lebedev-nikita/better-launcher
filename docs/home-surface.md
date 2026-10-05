@@ -12,7 +12,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Hidden apps and search
 
-Hidden apps are excluded from the empty app list and alphabet. A nonblank search includes them using the same original-name/alias matching as visible apps. Long press on a hidden result exposes “Показывать снова” directly in the shared navy menu. The action removes hiding immediately while retaining the query/results; favorites stay as selected. Visible apps retain “Скрыть приложение” under “Дополнительно”.
+Hidden apps are excluded from the empty app list and alphabet. A nonblank search includes them using the same original-name/alias matching as visible apps. Long press on a hidden result exposes “Показывать снова” directly in the shared navy menu. The action removes hiding immediately while retaining the query/results; favorites stay as selected. Visible apps expose “Скрыть приложение” directly in the same flat action list.
 
 ## Favorites order
 
