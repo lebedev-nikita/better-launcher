@@ -57,7 +57,8 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
     private val search = EditText(activity).apply {
         hint = "Поиск виджетов"
         setTextColor(activity.menuForeground); setHintTextColor(activity.menuForeground)
-        textSize = 19f; background = null; isSingleLine = true; minHeight = activity.dp(56)
+        textSize = 17f; background = null; isSingleLine = true; minHeight = activity.dp(56)
+        setPadding(activity.dp(4), activity.dp(12), activity.dp(4), activity.dp(12))
         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         imeOptions = EditorInfo.IME_ACTION_DONE
         addTextChangedListener(object : TextWatcher {
@@ -73,6 +74,8 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
             } else false
         }
     }
+    private val clearSearch = activity.menuIconButton(Glyph.CLOSE, "Очистить поиск виджетов") { search.setText("") }
+        .apply { visibility = INVISIBLE }
     private val rail = AlphabetRail(activity, activity.menuForeground, activity.getColor(R.color.app_menu_container)).apply {
         alphabetLabel = "Алфавит виджетов"
         visibility = GONE
@@ -87,11 +90,17 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
         layoutDirection = LAYOUT_DIRECTION_LTR
         orientation = VERTICAL
         isFocusableInTouchMode = true
-        val toolbar = activity.horizontal().apply { layoutDirection = LAYOUT_DIRECTION_LOCALE }
+        val toolbar = activity.horizontal().apply {
+            layoutDirection = LAYOUT_DIRECTION_LOCALE
+            background = rounded(activity.getColor(R.color.app_menu_container), activity.dp(16).toFloat())
+            setPadding(activity.dp(8), 0, activity.dp(4), 0)
+        }
+        toolbar.addView(GlyphView(activity, Glyph.SEARCH, activity.menuForeground).apply {
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LayoutParams(activity.dp(40), activity.dp(48)))
         toolbar.addView(search, LayoutParams(0, -2, 1f))
-        toolbar.addView(activity.iconButton(Glyph.CLOSE, "Очистить поиск виджетов") { search.setText("") }
-            .apply { (this as GlyphView).color = activity.menuForeground })
-        addView(toolbar, LayoutParams(-1, -2))
+        toolbar.addView(clearSearch)
+        addView(toolbar, LayoutParams(-1, -2).apply { topMargin = activity.dp(4); bottomMargin = activity.dp(16) })
         val results = FrameLayout(activity)
         results.addView(list, FrameLayout.LayoutParams(-1, -1))
         results.addView(status, FrameLayout.LayoutParams(-1, -2, Gravity.TOP).apply { rightMargin = activity.dp(72) })
@@ -134,6 +143,8 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
 
     private fun filterProviders() {
         if (closed) return
+        // Keep the field width stable while the contextual clear action appears/disappears.
+        clearSearch.visibility = if (search.text.isEmpty()) INVISIBLE else VISIBLE
         entries = searchIndex?.matching(search.text.toString()).orEmpty()
         rows.forEach(Row::cancel)
         status.text = when {

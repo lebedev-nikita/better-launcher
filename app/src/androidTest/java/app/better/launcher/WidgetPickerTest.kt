@@ -40,7 +40,7 @@ class WidgetPickerTest {
         var chosen: ComponentName? = null
         try {
             instrumentation.runOnMainSync {
-                dialog = activity.sheet("Добавить виджет", scrollContent = false) { body, sheet ->
+                dialog = activity.sheet("Добавить виджет", scrollContent = false, showHeader = false) { body, sheet ->
                     picker = WidgetPickerView(activity).apply { onChoose = { chosen = it.provider; sheet.dismiss() } }
                     body.addView(picker, android.widget.LinearLayout.LayoutParams(-1, 0, 1f))
                     input = descendants(picker).filterIsInstance<EditText>().single()
@@ -67,6 +67,9 @@ class WidgetPickerTest {
             }
             await { list.count >= 6 && rail.visibility == View.VISIBLE }
             assertEquals("", onMain { input.text.toString() })
+            assertFalse("Clear is only offered for a nonempty query", onMain {
+                descendants(picker).single { it.contentDescription == "Очистить поиск виджетов" }.isShown
+            })
             assertTrue(onMain { rail.activeLetters.containsAll(listOf("A", "B", "C", "D", "P", "#")) })
             val total = onMain { list.count }
             instrumentation.runOnMainSync { input.setText("  ") }
@@ -99,7 +102,7 @@ class WidgetPickerTest {
         var chosen: ComponentName? = null
         try {
             instrumentation.runOnMainSync {
-                dialog = activity.sheet("Добавить виджет", scrollContent = false) { body, sheet ->
+                dialog = activity.sheet("Добавить виджет", scrollContent = false, showHeader = false) { body, sheet ->
                     picker = WidgetPickerView(activity).apply { onChoose = { chosen = it.provider; sheet.dismiss() } }
                     body.addView(picker, android.widget.LinearLayout.LayoutParams(-1, 0, 1f))
                 }
@@ -113,6 +116,7 @@ class WidgetPickerTest {
                 // preview row. The final section can be clamped at the end of the list;
                 // its destination must be visible, but need not be the first row.
                 await {
+                    if (list.isLayoutRequested) return@await false
                     val visible = (0 until list.childCount).map(list::getChildAt)
                     val candidates = if (letter == "#") visible else visible.take(1)
                     candidates.any { row -> descendants(row).filterIsInstance<TextView>()

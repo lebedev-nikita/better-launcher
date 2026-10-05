@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private val executor = Executors.newFixedThreadPool(2)
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
+    private var currentMessage: TransientMessageView? = null
     private lateinit var wallpaperScrim: WallpaperScrimView
     private lateinit var screen: PageSwipeLayout
     private lateinit var rail: AlphabetRail
@@ -111,6 +112,7 @@ class MainActivity : AppCompatActivity() {
             val ime = insets.getInsets(WindowInsets.Type.ime())
             screen.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
             updateRailBounds()
+            currentMessage?.takeIf { it.parent === root }?.let { updateMessageInsets(it, insets) }
             insets
         }
         setContentView(root)
@@ -134,7 +136,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); currentDialog?.dismiss(); hideKeyboard(); orderingFavorites = false; orderingWidgets = false; showHome() }
     override fun onStart() { super.onStart(); widgets.start() }
-    override fun onStop() { widgets.stop(); super.onStop() }
+    override fun onStop() { currentMessage?.dismiss(); widgets.stop(); super.onStop() }
     override fun onResume() {
         super.onResume(); resumed = true
         NotificationHub.onChanged = {
@@ -365,7 +367,10 @@ class MainActivity : AppCompatActivity() {
     private inner class AppRow(private val favorite: Boolean) : LinearLayout(this@MainActivity) {
         private lateinit var app: AppEntry
         private val icon = ImageView(this@MainActivity)
-        private val labels = vertical().apply { setPadding(0, dp(8), 0, dp(8)) }
+        private val labels = vertical().apply {
+            val padding = dp(if (store.bool("compact")) 3 else 7)
+            setPadding(0, padding, 0, padding)
+        }
         private val name = text("", if (store.bool("largeText")) 25f else 21f).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
         private val preview = text("", 13f, secondary).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
         val orderHandleRow: LinearLayout? = if (favorite && orderingFavorites) horizontal() else null
@@ -373,12 +378,16 @@ class MainActivity : AppCompatActivity() {
 
         init {
             orientation = HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-            tag = PageSwipeLayout.BLOCK_SWIPE
+            if (orderingFavorites) tag = PageSwipeLayout.BLOCK_SWIPE
             minimumHeight = dp(if (store.bool("compact")) 54 else 62)
             background = touchBackground(); isFocusable = true
             if (!store.bool("hideIcons")) {
-                icon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-                addView(icon, LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
+                icon.setPadding(dp(5), dp(5), dp(5), dp(5))
+                icon.background = touchBackground()
+                icon.isFocusable = true
+                icon.setOnClickListener { launch(app) }
+                icon.setOnLongClickListener { showAppPopup(app); true }
+                addView(icon, LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(6) })
             }
             if (orderHandleRow != null) {
                 labels.setPadding(0, 0, 0, 0)
@@ -393,21 +402,31 @@ class MainActivity : AppCompatActivity() {
             menu?.let { addView(it) }
             setOnClickListener { launch(app) }
             setOnLongClickListener { showAppMenu(app); true }
-            var downX = 0f; var downY = 0f; var swiped = false
-            // Unconsumed taps use LinearLayout's standard performClick.
-            @Suppress("ClickableViewAccessibility")
-            setOnTouchListener { view, event ->
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> { downX = event.x; downY = event.y; swiped = false }
-                    MotionEvent.ACTION_MOVE -> if (kotlin.math.abs(event.x - downX) > dp(32) && kotlin.math.abs(event.y - downY) < dp(28)) { swiped = true; view.parent.requestDisallowInterceptTouchEvent(true); view.isPressed = false }
-                    MotionEvent.ACTION_UP -> if (swiped) { showAppPopup(app); return@setOnTouchListener true }
-                }; swiped
+            name.minimumHeight = dp(48)
+            name.gravity = Gravity.CENTER_VERTICAL
+            name.isFocusable = true
+            name.setOnClickListener { launch(app) }
+            name.setOnLongClickListener { showAppMenu(app); true }
+            // The popup remains reachable when icons are hidden, including with TalkBack.
+            name.accessibilityDelegate = object : View.AccessibilityDelegate() {
+                override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                    super.onInitializeAccessibilityNodeInfo(host, info)
+                    info.addAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(
+                        R.id.app_quick_actions, "Уведомления и быстрые действия"))
+                    info.addAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(
+                        android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK, "Управление ярлыком"))
+                }
+                override fun performAccessibilityAction(host: View, action: Int, args: Bundle?): Boolean {
+                    if (action == R.id.app_quick_actions) { showAppPopup(app); return true }
+                    return super.performAccessibilityAction(host, action, args)
+                }
             }
         }
 
         fun bind(entry: AppEntry) {
             app = entry
             name.text = catalog.label(app)
+            icon.contentDescription = "${catalog.label(app)}: удерживайте для уведомлений и быстрых действий"
             if (!store.bool("hideIcons")) icon.setImageDrawable(app.icon.constantState?.newDrawable(resources)?.mutate() ?: app.icon)
             if (!favorite) return
             val notifications = if (store.bool("notifications", true)) NotificationHub.notifications(app.packageName, app.user) else emptyList()
@@ -426,7 +445,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun folderRow(folder: AppFolder): View = horizontal().apply {
-        tag = PageSwipeLayout.BLOCK_SWIPE
+        if (orderingFavorites) tag = PageSwipeLayout.BLOCK_SWIPE
         minimumHeight = dp(62); background = touchBackground(); isFocusable = true
         addView(GlyphView(this@MainActivity, Glyph.FOLDER), LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
         addView(text(folder.name, 21f), LinearLayout.LayoutParams(0, -2, 1f))
@@ -539,13 +558,15 @@ class MainActivity : AppCompatActivity() {
         addView(menuText(label, 17f).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
             LinearLayout.LayoutParams(0, -2, 1f))
     }
-    fun sheet(title: String, scrollContent: Boolean = true, icon: android.graphics.drawable.Drawable? = null, build: (LinearLayout, Dialog) -> Unit): Dialog {
+    fun sheet(title: String, scrollContent: Boolean = true, icon: android.graphics.drawable.Drawable? = null, showHeader: Boolean = true, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
-        val body = menuBody()
-        val header = menuHeader(title, icon)
-        header.addView(menuIconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
-        body.addView(header); body.addView(gap(4))
+        val body = menuBody().apply { accessibilityPaneTitle = title }
+        if (showHeader) {
+            val header = menuHeader(title, icon)
+            header.addView(menuIconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
+            body.addView(header); body.addView(gap(4))
+        }
         build(body, dialog)
         return presentSheet(dialog, body, scrollContent)
     }
@@ -761,7 +782,6 @@ class MainActivity : AppCompatActivity() {
             store.popUp(app.id).mapNotNull(catalog::find).forEach { body.addView(appRow(it, false).apply { setMenuAppColors(this) }) }
             if (notifications.isEmpty() && shortcuts.isEmpty() && store.popUp(app.id).isEmpty()) body.addView(menuText("Здесь появятся уведомления и быстрые действия приложения.", 16f))
             body.addView(gap(8)); body.addView(menuAction("Добавить приложения", Glyph.PLUS) { dialog.dismiss(); selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } })
-            body.addView(menuAction("Открыть ${catalog.label(app)}") { launch(app) })
         }
     }
     private fun notificationView(sbn: StatusBarNotification): View {
@@ -1079,10 +1099,41 @@ class MainActivity : AppCompatActivity() {
     }
     private fun hideKeyboard() { currentFocus?.let { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(it.windowToken, 0) } }
     fun message(value: String, undo: String? = null, onUndo: () -> Unit = {}) {
-        val bar = horizontal().apply { setPadding(dp(16), dp(8), dp(8), dp(8)); background = rounded(surface, dp(12).toFloat()); elevation = dp(6).toFloat() }
-        bar.addView(text(value, 14f), LinearLayout.LayoutParams(0, -2, 1f))
-        if (undo != null) bar.addView(action(undo) { onUndo(); root.removeView(bar) })
+        currentMessage?.dismiss()
+        val bar = TransientMessageView(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; minimumHeight = dp(48)
+            setPadding(dp(16), dp(8), dp(8), dp(8)); background = rounded(surface, dp(12).toFloat()); elevation = dp(6).toFloat()
+        }
+        bar.addView(text(value, 14f, secondary), LinearLayout.LayoutParams(0, -2, 1f))
+        if (undo != null) bar.addView(action(undo) { bar.dismiss(); onUndo() }.apply { setTextColor(secondary) })
+        bar.setOnApplyWindowInsetsListener { _, insets -> updateMessageInsets(bar, insets); insets }
+        bar.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(view: View) = Unit
+            override fun onViewDetachedFromWindow(view: View) { if (currentMessage === bar) currentMessage = null }
+        })
+        currentMessage = bar
         root.addView(bar, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { leftMargin = dp(16); rightMargin = dp(16); bottomMargin = dp(84) })
-        handler.postDelayed({ root.removeView(bar) }, if (undo != null) 6000 else 4000)
+        root.rootWindowInsets?.let { updateMessageInsets(bar, it) }
+        // Choose the active window after the action has finished closing any menus.
+        root.post {
+            if (currentMessage !== bar) return@post
+            val host = currentDialog?.takeIf { it.isShowing }?.window?.decorView as? FrameLayout ?: root
+            if (host !== root) {
+                val params = FrameLayout.LayoutParams(bar.layoutParams as FrameLayout.LayoutParams)
+                root.removeView(bar)
+                currentMessage = bar
+                host.addView(bar, params)
+                host.rootWindowInsets?.let { updateMessageInsets(bar, it) }
+                bar.requestApplyInsets()
+            }
+        }
+    }
+    private fun updateMessageInsets(bar: View, insets: WindowInsets) {
+        val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+        val ime = insets.getInsets(WindowInsets.Type.ime())
+        bar.layoutParams = (bar.layoutParams as FrameLayout.LayoutParams).apply {
+            leftMargin = dp(16) + bars.left; rightMargin = dp(16) + bars.right
+            bottomMargin = dp(84) + maxOf(bars.bottom, ime.bottom)
+        }
     }
 }

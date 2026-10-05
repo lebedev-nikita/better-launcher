@@ -102,6 +102,11 @@
         "name": "alphabet-finger-wave",
         "value": "Immediate Canvas redraw; Gaussian finger-distance displacement",
         "purpose": "The continuous rail follows touch events without a custom animator; haptic tick on section change."
+      },
+      {
+        "name": "transient-message-dismiss",
+        "value": "Horizontal drag in either direction; 140ms reset; hard 3000ms lifetime",
+        "purpose": "Dismiss feedback without undoing; short/cancelled drags reset. Touch does not extend lifetime; new messages replace old feedback."
       }
     ],
     "breakpoints": [
@@ -126,6 +131,15 @@
       "iconGapDp": 16,
       "source": "MainActivity.menuBody/menuHeader/menuAction/presentSheet",
       "scope": "All app-owned bottom sheets and navy settings; excludes system UI and hosted provider content"
+    },
+    "appGestures": {
+      "iconTarget": "48dp with 38dp drawable",
+      "nameTarget": "minimum 48dp height",
+      "iconHold": "notifications, shortcuts and attached apps",
+      "nameHold": "launcher app management",
+      "homeRightSwipe": "widget page, including app/folder rows",
+      "rowSwipePopup": false,
+      "hiddenIconAlternative": "named quick-actions accessibility action on the name and management menu entry"
     }
   },
   "components": [
@@ -211,7 +225,7 @@
       "name": "Widget provider picker",
       "kind": "container",
       "refersTo": "bottom-sheet",
-      "description": "Native provider picker: fixed title and Close, recycled list with wrapping 18sp widget label, 13sp app name and 144dp inert preview. Static previewLayout takes precedence over previewImage; missing previews are explicitly labeled. Shared 92dp AlphabetRail on the right, 72dp list reservation, star jumps to start, final # only when populated, populated sections at every height, with spacing adapting to font scale and available height. Background resource loading is cancelled on row reuse and dismissal. No IDs are allocated while browsing. Android source is authoritative; no HTML sample substitutes for device verification. Shared navy menu: #031629 surface, #BCD7F3 text/icons, 24dp top corners, 12dp/24dp/16dp padding plus system/IME insets; common 300ms arrival and fixed transparent window. List picker/editor headers stay outside their inner scrolling list. List labels and alphabet use the shared pale blue foreground; provider previews keep their own rendering."
+      "description": "Native provider picker: no redundant visible title or Close; one tonal search toolbar with magnifier and contextual Clear, recycled list with wrapping 18sp widget label, 13sp app name and 144dp inert preview. Static previewLayout takes precedence over previewImage; missing previews are explicitly labeled. Shared 92dp AlphabetRail on the right, 72dp list reservation, star jumps to start, final # only when populated, populated sections at every height, with spacing adapting to font scale and available height. Background resource loading is cancelled on row reuse and dismissal. No IDs are allocated while browsing. Android source is authoritative; no HTML sample substitutes for device verification. Shared navy menu: #031629 surface, #BCD7F3 text/icons, 24dp top corners, 12dp/24dp/16dp padding plus system/IME insets; common 300ms arrival and fixed transparent window. The search toolbar stays outside the scrolling results. List labels and alphabet use the shared pale blue foreground; provider previews keep their own rendering."
     },
     {
       "name": "Widget edge editor",
@@ -251,17 +265,22 @@
       },
       {
         "name": "Widget picker search",
-        "body": "The provider picker fixes its search toolbar above the recycled list. The unboxed 19sp pale blue field has a growing 56dp minimum height and a persistent 48dp contour Clear target. A background-prepared index matches all query words against widget and application names without case/diacritic sensitivity. Empty input restores all providers. Results reset to the top and determine the right alphabet; no matches hides the rail and gives polite accessible recovery guidance. Input before catalog loading is respected. Keyboard opens on tap and IME Done only hides it. Shared sheet insets reserve the search/header above keyboard and scrolling previews. Browsing/search never allocates widget IDs.",
+        "body": "The provider picker omits its visible heading and separate Close. A single tonal #112B42 search field has a leading contour magnifier, 17sp pale blue text/hint, growing 56dp minimum height and 16dp corners. Its trailing 48dp Clear appears only for nonempty input; space is reserved to prevent shifts. Pane title remains accessible; Back/outside taps dismiss and HOME returns home. A background-prepared index matches widget/application names without case/diacritic sensitivity. Results reset to the top and determine the right alphabet; no matches hides the rail and gives accessible recovery guidance. Keyboard opens on tap; IME Done hides it, with standard system input in landscape. Browsing/search never allocates IDs.",
         "section": "components"
       },
       {
         "name": "The Separate Widget Page Rule",
-        "body": "Home hosts at most one widget. The separate wallpaper-backed page to its left opens with a rightward swipe on free home space or the footer widget button and returns with a leftward swipe, Home, or Android Back. App rows and hosted widget content keep their gestures; the outer 24dp Back edge is reserved. The page hides the alphabet, uses a wrapping 26sp header, 28dp list margins, 24dp widget gaps, and a separate Home footer. Added widgets have no title or persistent menu button. A 48dp reorder action in the header appears for two or more page widgets; the page-widget menu also enables ordering on this page. The actual hosted views remain visible and receiving updates, with a single 48dp drag handle below each widget with keyboard/accessibility moves. Dropping or keyboard/accessibility moves save; cancel restores positions. Edge scrolling reaches long lists. Done in the header and Back finish; HOME returns normal home. Duplicate instances use ordinal accessibility labels. Home ID, host bindings, sizes and offsets remain attached to the widget. Long press opens order, resize, optional provider configuration, move and delete. Four native 48dp edge handles edit live width/height directly with navy 2dp boundary lines. No circular reset buttons or slider sheet appear. Sizes and top offset save locally; provider directions/min/max and window bounds apply. Keyboard/range actions resize the same edges; Done, outside tap, Back/HOME finish. The navy management menu uses a four-direction arrow icon for moving/resizing and omits reset and transfer from home to the widget page; page widgets retain placement on home. The widget menu omits “О приложении” and “Добавить виджет” on both home and the widget page. Adding remains available from the widget-page header/empty state and the home-widget settings row; provider app details remain in the app long-press menu. Narrower widgets start centered and can move inside their content column with saved horizontal/top offsets on a 12dp grid. Provider taps/scrolling remain available, with Menu/Shift+F10 and accessibility long-click alternatives. A 180ms directional slide/fade honors disabled system animations. The alphabet reserves system/IME insets and the measured home footer height, preserving footer touch targets at large font sizes.",
+        "body": "Home hosts at most one widget. The separate wallpaper-backed page to its left opens with a rightward swipe on home, including app and folder rows, or the footer widget button and returns with a leftward swipe, Home, or Android Back. Hosted widgets and ordering handles keep their gestures; the outer 24dp Back edge is reserved. The page hides the alphabet, uses a wrapping 26sp header, 28dp list margins, 24dp widget gaps, and a separate Home footer. Added widgets have no title or persistent menu button. A 48dp reorder action in the header appears for two or more page widgets; the page-widget menu also enables ordering on this page. The actual hosted views remain visible and receiving updates, with a single 48dp drag handle below each widget with keyboard/accessibility moves. Dropping or keyboard/accessibility moves save; cancel restores positions. Edge scrolling reaches long lists. Done in the header and Back finish; HOME returns normal home. Duplicate instances use ordinal accessibility labels. Home ID, host bindings, sizes and offsets remain attached to the widget. Long press opens order, resize, optional provider configuration, move and delete. Four native 48dp edge handles edit live width/height directly with navy 2dp boundary lines. No circular reset buttons or slider sheet appear. Sizes and top offset save locally; provider directions/min/max and window bounds apply. Keyboard/range actions resize the same edges; Done, outside tap, Back/HOME finish. The navy management menu uses a four-direction arrow icon for moving/resizing and omits reset and transfer from home to the widget page; page widgets retain placement on home. The widget menu omits “О приложении” and “Добавить виджет” on both home and the widget page. Adding remains available from the widget-page header/empty state and the home-widget settings row; provider app details remain in the app long-press menu. Narrower widgets start centered and can move inside their content column with saved horizontal/top offsets on a 12dp grid. Provider taps/scrolling remain available, with Menu/Shift+F10 and accessibility long-click alternatives. A 180ms directional slide/fade honors disabled system animations. The alphabet reserves system/IME insets and the measured home footer height, preserving footer touch targets at large font sizes.",
         "section": "layout"
       },
       {
         "name": "The Favorites Order Rule",
         "body": "Favorites enter ordering from the long-press app menu, with no duplicate button below favorites. They reorder on home with a single 48dp handle at the trailing edge of each title line, vertically centered with the app/folder name, including wrapped labels. No separate button line or visible up/down buttons. Keyboard arrows and valid named accessibility moves belong to the handle; boundary actions are omitted. Preserve alphabet margins, Back corridor, full IDs, edge scrolling, save on drop, cancellation, fixed Done and Back/HOME exit.",
+        "section": "components"
+      },
+      {
+        "name": "App pop-up actions",
+        "body": "The app pop-up contains notifications, shortcuts, attached apps and “Добавить приложения”. It has no “Открыть …” action for its owner; tapping the original app row launches it.",
         "section": "components"
       }
     ],

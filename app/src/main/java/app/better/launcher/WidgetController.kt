@@ -26,7 +26,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
     fun start() { runCatching { host.startListening() } }
     fun stop() { finishResize(false); host.stopListening() }
     fun add(toHome: Boolean = false) {
-        activity.sheet(if (toHome) "Виджет на главном экране" else "Добавить виджет", scrollContent = false) { body, dialog ->
+        activity.sheet(if (toHome) "Виджет на главном экране" else "Добавить виджет", scrollContent = false, showHeader = false) { body, dialog ->
             body.addView(WidgetPickerView(activity).apply { onChoose = { provider -> dialog.dismiss(); bind(provider, toHome) } },
                 LinearLayout.LayoutParams(-1, 0, 1f))
         }
