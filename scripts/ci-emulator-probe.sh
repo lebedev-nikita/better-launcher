@@ -3,6 +3,7 @@
 set -euo pipefail
 probe_serial=${1:?Disposable emulator serial required}
 probe_boot=${2:-cold}
+probe_target=${3:-google_apis}
 [[ "$probe_serial" == emulator-* ]] || exit 2
 probe_output=app/build/emulator-probe
 mkdir -p "$probe_output"
@@ -19,7 +20,7 @@ probe_capture() {
   exit "$result"
 }
 trap probe_capture EXIT
-cat "${ANDROID_HOME}/system-images/android-36/google_apis/x86_64/source.properties" > "$probe_output/image.txt"
+cat "${ANDROID_HOME}/system-images/android-36/$probe_target/x86_64/source.properties" > "$probe_output/image.txt"
 sleep 60
 if [[ "$probe_boot" == warm ]]; then
   probe_adb logcat -d > "$probe_output/cold-logcat.txt"
@@ -53,5 +54,5 @@ if grep -q 'ANR in com.android.systemui' "$probe_output/logcat.txt"; then
   echo '[BOOT-PROBE] System UI timed out during cold boot.' >&2
   exit 1
 fi
-[[ "$probe_focus" == *com.google.android.apps.nexuslauncher/* ]] || exit 1
+[[ "$probe_focus" == *com.google.android.apps.nexuslauncher/* || "$probe_focus" == *com.android.launcher3/* ]] || exit 1
 echo '[BOOT-PROBE] Cold boot stayed responsive.'
