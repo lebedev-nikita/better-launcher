@@ -37,7 +37,8 @@ class PageSwipeLayout(context: Context) : FrameLayout(context) {
         val dx = event.x - downX
         val dy = abs(event.y - downY)
         if (dy > slop && dy >= abs(dx)) eligible = false
-        else if (dx * direction > maxOf(slop, context.dp(24)) && abs(dx) > dy * 1.5f) swiping = true
+        // Cancel child clicks for either horizontal direction; only the page's direction navigates.
+        else if (abs(dx) > maxOf(slop, context.dp(24)) && abs(dx) > dy * 1.5f) swiping = true
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
