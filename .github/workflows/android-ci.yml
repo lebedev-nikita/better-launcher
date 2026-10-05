@@ -109,8 +109,9 @@ jobs:
           disk-size: 2048M
           emulator-port: 5554
           emulator-boot-timeout: 300
-          # Preserve the Pixel 7's logical dimensions with fewer rendered pixels.
-          pre-emulator-launch-script: printf 'hw.lcd.width=720\nhw.lcd.height=1600\nhw.lcd.density=280\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
+          # Android 16 needs fewer software-rendered pixels on a 2-vCPU runner.
+          # Both profiles retain the Pixel 7's logical dimensions in dp.
+          pre-emulator-launch-script: printf 'hw.lcd.width=${{ matrix.api == 36 && 360 || 720 }}\nhw.lcd.height=${{ matrix.api == 36 && 800 || 1600 }}\nhw.lcd.density=${{ matrix.api == 36 && 140 || 280 }}\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
           emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -noaudio -no-boot-anim -camera-back emulated
           disable-animations: false
           disable-spellchecker: true

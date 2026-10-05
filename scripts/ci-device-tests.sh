@@ -85,6 +85,7 @@ if [[ "$ci_focus" != *app.better.launcher/* ]]; then
   echo "Launcher did not receive focus before tests: $ci_focus" >&2
   exit 1
 fi
+capture
 ci_stage=instrumentation
 device_adb logcat -c
 ANDROID_SERIAL="$ci_device_serial" ./gradlew :app:connectedDebugAndroidTest --no-daemon '-Dorg.gradle.jvmargs=-Xmx1024m -Dfile.encoding=UTF-8' --stacktrace
