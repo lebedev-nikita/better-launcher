@@ -43,7 +43,7 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
         adapter = this@WidgetPickerView.adapter
         setOnItemClickListener { _, _, position, _ -> onChoose(entries[position].provider) }
     }
-    private val status = activity.text("Загружаем виджеты…", 16f, activity.secondary)
+    private val status = activity.menuText("Загружаем виджеты…", 16f)
     private val rail = AlphabetRail(activity).apply {
         alphabetLabel = "Алфавит виджетов"
         visibility = GONE
@@ -125,10 +125,10 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
     }
 
     private inner class Row : LinearLayout(activity) {
-        private val label = activity.text("", 18f)
-        private val app = activity.text("", 13f, activity.secondary)
+        private val label = activity.menuText("", 18f)
+        private val app = activity.menuText("", 13f)
         private val preview = PreviewFrame(activity)
-        private val fallback = activity.text("Загружаем превью…", 13f, activity.secondary).apply { gravity = Gravity.CENTER }
+        private val fallback = activity.menuText("Загружаем превью…", 13f).apply { gravity = Gravity.CENTER }
         private var imageJob: Future<*>? = null
         private var layoutPreview: AppWidgetHostView? = null
         private var token = 0
@@ -173,7 +173,7 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
                                 val empty = activity.vertical().apply { gravity = Gravity.CENTER }
                                 icon?.let { empty.addView(ImageView(activity).apply { setImageDrawable(it) }, LinearLayout.LayoutParams(activity.dp(40), activity.dp(40))) }
                                 empty.addView(activity.gap(8))
-                                empty.addView(activity.text("Превью недоступно", 13f, activity.secondary).apply { gravity = Gravity.CENTER })
+                                empty.addView(activity.menuText("Превью недоступно", 13f).apply { gravity = Gravity.CENTER })
                                 preview.addView(empty, LayoutParams(-1, -1))
                             }
                         }
@@ -191,7 +191,7 @@ class WidgetPickerView(context: Context) : FrameLayout(context) {
                                 fallbackRequested = true
                                 handler.post { if (current()) loadImage() }
                             }
-                            return activity.text("Загружаем превью…", 13f, activity.secondary)
+                            return activity.menuText("Загружаем превью…", 13f)
                         }
                     }
                     layoutPreview = hostView

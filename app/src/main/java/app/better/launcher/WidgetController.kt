@@ -99,7 +99,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
             OrderEntry(id.toString(), if (labels.count { it.second == label } > 1) "$label · $number" else label)
         }
         activity.sheet("Порядок виджетов", scrollContent = false) { body, _ ->
-            body.addView(activity.text("Перетаскивайте строки за ≡ или используйте стрелки. Порядок сохраняется сразу.", 14f, activity.secondary))
+            body.addView(activity.menuText("Перетаскивайте строки за ≡ или используйте стрелки. Порядок сохраняется сразу.", 14f))
             body.addView(OrderEditor(activity, entries, "Порядок виджетов",
                 readOrder = { store.widgets.map(Int::toString) },
                 saveOrder = { store.widgets = it.map(String::toInt) },

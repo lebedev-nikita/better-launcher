@@ -35,7 +35,7 @@ class OrderEditor(
         override fun onSelectedChanged(viewHolder: ViewHolder?, actionState: Int) {
             super.onSelectedChanged(viewHolder, actionState)
             if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
-                viewHolder?.itemView?.setBackgroundColor(activity.surface)
+                viewHolder?.itemView?.setBackgroundColor(activity.getColor(R.color.app_menu_surface))
                 viewHolder?.itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             }
         }
@@ -88,11 +88,11 @@ class OrderEditor(
     }
 
     private inner class OrderHolder : ViewHolder(activity.vertical()) {
-        private val label = activity.text("", 17f)
-        private val handle = activity.iconButton(Glyph.REORDER, "Перетащить") {}
-        private val up = activity.iconButton(Glyph.UP, "Вверх") { move(bindingAdapterPosition, bindingAdapterPosition - 1) }
-        private val down = activity.iconButton(Glyph.DOWN, "Вниз") { move(bindingAdapterPosition, bindingAdapterPosition + 1) }
-        private val remove = activity.iconButton(Glyph.CLOSE, "Убрать из избранного") { remove(bindingAdapterPosition) }
+        private val label = activity.menuText("", 17f)
+        private val handle = activity.menuIconButton(Glyph.REORDER, "Перетащить") {}
+        private val up = activity.menuIconButton(Glyph.UP, "Вверх") { move(bindingAdapterPosition, bindingAdapterPosition - 1) }
+        private val down = activity.menuIconButton(Glyph.DOWN, "Вниз") { move(bindingAdapterPosition, bindingAdapterPosition + 1) }
+        private val remove = activity.menuIconButton(Glyph.CLOSE, "Убрать из избранного") { remove(bindingAdapterPosition) }
 
         @SuppressLint("ClickableViewAccessibility") // Keyboard and TalkBack use the labeled arrow buttons.
         private fun enableDrag() {

@@ -2,13 +2,13 @@
 name: Better Launcher
 description: A Niagara-style native Android launcher with vertical app lists and quiet settings.
 colors:
-  primary: "#E9CBB6"
-  on-primary: "#352E2A"
-  secondary: "#D4B69F"
-  surface: "#292724"
-  on-surface: "#FFFFFF"
-  on-surface-variant: "#EEE5DE"
-  outline: "#93877D"
+  primary: "#BCD7F3"
+  on-primary: "#031629"
+  secondary: "#BCD7F3"
+  surface: "#031629"
+  on-surface: "#BCD7F3"
+  on-surface-variant: "#BCD7F3"
+  outline: "#BCD7F3"
   touch-ripple: "#FFFFFF28"
   app-menu-surface: "#031629"
   app-menu-foreground: "#BCD7F3"
@@ -76,10 +76,10 @@ components:
     textColor: "{colors.on-surface}"
     height: "56dp"
   bottom-sheet:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.on-surface}"
-    rounded: "{rounded.sheet}"
-    padding: "8dp 20dp 24dp"
+    backgroundColor: "{colors.app-menu-surface}"
+    textColor: "{colors.app-menu-foreground}"
+    rounded: "24dp 24dp 0 0"
+    padding: "12dp 24dp 16dp + system insets"
   app-management-sheet:
     backgroundColor: "{colors.app-menu-surface}"
     textColor: "{colors.app-menu-foreground}"
@@ -104,36 +104,23 @@ components:
 
 The user selected Niagara's vertical favorites and alphabetical navigation. The current implementation expresses that direction through native Android Views: an open wallpaper surface, white app names, installed app icons, a continuous alphabet control, and dark native sheets. Better Launcher uses original Kotlin source under its own product name and displays the system wallpaper.
 
-Settings use a warm dark Material 3 theme, while the launcher itself stays visually open. This document describes the implemented phone UI, not verified Niagara fidelity or full feature parity. The native source is authoritative: [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt), [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt), and [styles.xml](app/src/main/res/values/styles.xml). Review captures are stored locally in `.impeccable/review/`; the historical five material corrections for 0.1.0 have a scoped `ship` verdict in [verification.md](docs/verification.md).
+Settings and all app-owned menus use the navy and pale blue Material 3 theme, while the launcher itself stays visually open. This document describes the implemented phone UI, not verified Niagara fidelity or full feature parity. The native source is authoritative: [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt), [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt), and [styles.xml](app/src/main/res/values/styles.xml). Review captures are stored locally in `.impeccable/review/`; the historical five material corrections for 0.1.0 have a scoped `ship` verdict in [verification.md](docs/verification.md).
 
 **Key Characteristics:**
 
 - Unboxed app lists over the system wallpaper.
-- White foreground with warm secondary text and restrained peach settings accents.
+- White app names over wallpaper; pale blue text, contour icons and controls on navy menu/settings surfaces.
 - Native controls, content-driven row heights, and persistent bottom actions.
 - A continuous alphabet rail with touch, keyboard, and accessibility alternatives.
 
 ## Colors
 
-Warm dark neutrals support a small peach accent; wallpaper palettes supply the broad visual color.
+All app-owned menus share the long-press app menu palette. Settings and native controls use the same Material color roles.
 
-### Primary
-
-- **Peach accent** (`primary`): Material 3 control color, settings section labels, and selected app checkboxes.
-- **Dark brown on accent** (`on-primary`): Material foreground on peach controls; the same brown also appears in the splash background and alphabet selection bubble.
-
-### Secondary
-
-- **Muted peach** (`secondary`): the theme's secondary Material role. It is distinct from the code property named `secondary`, which resolves to `on-surface-variant` for supporting text.
-
-### Neutral
-
-- **Warm charcoal** (`surface`): opaque settings background, bottom sheets, and transient messages.
-- **White foreground** (`on-surface`): app names, headings, actions, and programmatically drawn vector icons.
-- **Warm pale text** (`on-surface-variant`): settings descriptions, notification previews, weather information, search hints, and secondary actions.
-- **Warm gray outline** (`outline`): outline role supplied to Material 3 controls.
-- **Deep navy app menu** (`app-menu-surface`) and **pale blue foreground** (`app-menu-foreground`): long-press management sheet, matching the supplied Niagara reference. Settings and other sheets keep the warm Material palette.
-- **White touch wash** (`touch-ripple`): repeated native `RippleDrawable` feedback on actions and clickable rows. The frontmatter uses CSS RGBA ordering; the Kotlin source uses Android ARGB ordering.
+- **Pale blue** (`primary`, `secondary`, `on-surface`, `on-surface-variant`, `outline`, `app-menu-foreground`, #BCD7F3): menu titles, body text, contour icons, input hints and selection controls.
+- **Deep navy** (`surface`, `on-primary`, `app-menu-surface`, #031629): settings and every bottom sheet. Installed app labels on the wallpaper remain white.
+- **Navy tonal container** (#112B42): notification detail inside a menu; provider previews preserve their original rendering.
+- **White touch wash** (`touch-ripple`): native ripple feedback. The frontmatter uses CSS RGBA ordering; Kotlin uses Android ARGB ordering.
 
 Android supplies the wallpaper behind the transparent launcher window, including live wallpapers. Better Launcher draws only a translucent black readability scrim; it has no built-in wallpaper artwork. The wallpaper settings row opens the system wallpaper picker directly. Legacy wallpaper selections in preferences or version 1 backups are accepted for compatibility and ignored when rendering.
 
@@ -143,7 +130,7 @@ Android supplies the wallpaper behind the transparent launcher window, including
 
 **Body Font:** the selected Android family, initially `sans-serif`. The appearance selector offers `sans-serif`, `sans-serif-light`, `sans-serif-condensed`, and `serif`. Frontmatter records the default family; the shared text helper applies the selected family using `Typeface.NORMAL`.
 
-**Character:** app names remain regular weight and prominent. Descriptions sit below their labels with a smaller size and warmer color. The app uses native `sp` for text, `dp` for layout, and removes extra font padding from shared `TextView`s. There is no fixed modular type ratio or explicit shared line-height token.
+**Character:** app names remain regular weight and prominent. Descriptions sit below their labels with a smaller size. The app uses native `sp` for text, `dp` for layout, and removes extra font padding from shared `TextView`s. There is no fixed modular type ratio or explicit shared line-height token.
 
 ### Hierarchy
 
@@ -176,7 +163,7 @@ Root content respects system bars, display cutouts, and the larger of navigation
 
 ## Elevation & Depth
 
-Depth comes primarily from the system wallpaper, opaque dark settings, and bottom sheets over a native dimmed backdrop (0.30). App rows are transparent at rest. There is no shared CSS shadow vocabulary. Transient messages alone set explicit native elevation (6dp); sheet and Material widget effects are resolved by the Android theme. Native ripples communicate touch state without introducing permanent row cards.
+Depth comes primarily from the system wallpaper, opaque navy settings, and bottom sheets over a native dimmed backdrop (0.30). App rows are transparent at rest. There is no shared CSS shadow vocabulary. Transient messages alone set explicit native elevation (6dp); sheet and Material widget effects are resolved by the Android theme. Native ripples communicate touch state without introducing permanent row cards.
 
 **The Open List Rule.** Keep launcher app rows unboxed at rest; reserve opaque containers for sheets, settings, notification detail, and transient feedback, as the current build does.
 
@@ -194,7 +181,7 @@ Quiet touch targets on the existing surface. Text actions use `body`, horizontal
 
 ### Cards / Containers
 
-Bottom sheets have the shared dark surface, sheet radius, and sheet padding. A header combines a title with a close target; content scrolls within the screen-height limit. Notification detail uses a darker tonal container with (16dp) corners, while the media strip uses a translucent brown container with the same radius. Transient messages use the message radius and native elevation; optional undo increases dismissal time from (4000ms) to (6000ms).
+Bottom sheets have the shared dark surface, sheet radius, and sheet padding. A shared header uses a 23sp wrapping title with an optional original app/provider icon and a Close target for general sheets. All sheets use 24dp top corners, square bottom corners and inset-aware 12dp/24dp/16dp padding. Content scrolls within 85% of display height; list editors/picker keep the header and actions outside their inner list. Notification detail uses a darker tonal container with (16dp) corners, while the media strip uses a translucent brown container with the same radius. Transient messages use the message radius and native elevation; optional undo increases dismissal time from (4000ms) to (6000ms).
 
 ### App Management Menu
 
@@ -242,7 +229,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 
 - **Do** preserve the user's Niagara-style vertical lists and alphabetical navigation.
 - **Do** keep app rows transparent and use installed app icons and actual system data.
-- **Do** respect the selected wallpaper dimming percentage and retain warm secondary text.
+- **Do** respect the selected wallpaper dimming percentage and use pale blue secondary text.
 - **Do** keep scrolling home content separate from persistent footer actions.
 - **Do** let text rows grow with font scale and preserve keyboard and accessibility alternatives.
 - **Do** use native Material 3 controls within the existing dark theme.
@@ -254,7 +241,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.29
+## Current candidate 0.2.0-rc.31
 
 Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites use a recycled drag editor with keyboard/accessibility arrows. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
@@ -279,3 +266,9 @@ Every applied width/height change requests one soft SEGMENT_FREQUENT_TICK throug
 ## Top edge controls
 
 The widget editor reserves top system-bar/cutout insets for the complete 48dp touch target. When the widget starts at the inset-safe top, the upper handle is placed inside its bounds; the widget itself gains no layout padding. Saved local movement offsets still apply.
+
+## Shared menus — 0.2.0-rc.31
+
+Every Better Launcher menu follows the app long-press reference: deep navy surface, pale blue regular text and contour icons, rounded top corners and bottom anchoring. App/widget management, attached apps and notifications, folders, option selection, favorites/widget ordering, widget picker, weather/calendar panels and text editors use the same body/header/action factories in MainActivity. Action rows grow with wrapping 17sp text, a 48dp icon slot and a 16dp gap; the shared header uses 23sp text. Settings use the same palette with their existing full-screen navigation.
+
+All bottom sheets arrive with the same 300ms eased rise, native dimming and 180ms exit, respecting Android animation settings. A fixed transparent dialog window preserves the bottom anchor. System bars, cutouts and IME insets remain reserved; long panels scroll, while editor and picker lists retain their surrounding controls. HOME/Back and outside taps close the current sheet. System-owned permissions, widget configuration, file pickers and provider-rendered widget content retain their owner's appearance.
