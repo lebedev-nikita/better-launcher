@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.Rect
 import android.os.SystemClock
+import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -155,7 +156,10 @@ class AppGesturesTest {
         val start = SystemClock.uptimeMillis()
         fun send(action: Int, targetX: Float) {
             val event = MotionEvent.obtain(start, SystemClock.uptimeMillis(), action, targetX, y, 0)
-            instrumentation.sendPointerSync(event)
+            // Android 16 also dispatches launcher touches to the wallpaper window.
+            // Use the same system input injection as the existing drag tests.
+            event.source = InputDevice.SOURCE_TOUCHSCREEN
+            assertTrue(instrumentation.uiAutomation.injectInputEvent(event, true))
             event.recycle()
         }
         send(MotionEvent.ACTION_DOWN, x)
