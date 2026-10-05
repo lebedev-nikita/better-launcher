@@ -952,6 +952,9 @@ class MainActivity : AppCompatActivity() {
             addView(dimension)
         })
         addView(menuText("Такой же отступ перед избранным · 0–32 dp", 13f).apply { setPadding(0, dp(5), 0, 0) })
+        val preview = WidgetSpacingPreview(this@MainActivity, dimension.typeface).apply { spacingDp = store.widgetSpacing }
+        addView(menuText("Предпросмотр", 13f).apply { setPadding(0, dp(12), 0, 0) })
+        addView(preview, LinearLayout.LayoutParams(-1, -2))
         addView(Slider(this@MainActivity).apply {
             valueFrom = 0f; valueTo = 32f; stepSize = 1f; value = store.widgetSpacing.toFloat()
             setTickVisibilityMode(TickVisibilityMode.TICK_VISIBILITY_HIDDEN)
@@ -962,6 +965,7 @@ class MainActivity : AppCompatActivity() {
                 if (fromUser) {
                     store.widgetSpacing = value.toInt()
                     dimension.text = getString(R.string.widget_dimension_value, store.widgetSpacing)
+                    preview.spacingDp = store.widgetSpacing
                 }
             }
         }, LinearLayout.LayoutParams(-1, dp(48)))

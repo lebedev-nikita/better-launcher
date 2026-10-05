@@ -158,7 +158,18 @@
         "keyboard",
         "accessibility"
       ],
-      "providerPadding": "Preserved along with saved widget movement"
+      "providerPadding": "Preserved along with saved widget movement",
+      "preview": {
+        "kind": "Native labeled schematic",
+        "content": [
+          "Виджет",
+          "Виджет",
+          "Избранное"
+        ],
+        "gaps": "Both track the selected dp at 1:1 scale",
+        "height": "Reserve both 32dp maximum gaps; labels grow with system font scale",
+        "accessibility": "Single summary announces both gaps; decorative children excluded"
+      }
     }
   },
   "components": [

@@ -132,4 +132,8 @@ The app toolbar fills the inset-safe width, with equal 20dp side padding and 48d
 
 ## Shared widget spacing
 
-The widget page and home information-to-favorites boundary use one saved `widgetSpacing` value: default 8dp, 0–32dp in 1dp steps. Appearance settings expose an inline Material slider with autosave, keyboard and accessibility input. The value stays identical in portrait, short windows and either rail mode. Widget ordering uses the same spacing around its existing handles. Provider padding and explicit saved top offsets belong to the widget geometry, not this gap.
+The widget page and home information-to-favorites boundary use one saved `widgetSpacing` value: default 8dp, 0–32dp in 1dp steps. Appearance settings expose an inline Material slider with autosave, keyboard and accessibility input, plus a labeled schematic of two widgets and favorites whose two gaps update immediately. Its height reserves the maximum spacing, preventing list shifts; native labels grow with system fonts. The value stays identical in portrait, short windows and either rail mode. Widget ordering uses the same spacing around its existing handles. Provider padding and explicit saved top offsets belong to the widget geometry, not this gap.
+
+## Widget spacing preview verification
+
+Native checks on dedicated Android 12/API 31 and Android 16/API 36 emulators confirmed immediate preview updates at 0, 8 and 32dp and unchanged preview bounds. Portrait, 945×2100/font scale 1.3 and horizontal windows passed visual checks. Debug assembly, 15 unit tests, lint (0 errors, 27 existing warnings), all six smoke runs and `git diff --check` passed. Display size, font scale and rotation were restored. Captures and logs are local in `.impeccable/review/spacing-preview/`; the preview is included in [rc.54](releases/0.2.0-rc.54.md).
