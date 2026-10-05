@@ -24,8 +24,9 @@ class AppCatalog(private val context: Context, private val store: LauncherStore)
     private fun searchSettings(): Map<String, Any?> = store.prefs.all.filterKeys { it == "hidden" || it.startsWith("alias:") }
     private fun prepare(source: List<AppEntry>, settings: Map<String, Any?>): Prepared {
         val hidden = settings["hidden"] as? Set<*> ?: emptySet<String>()
-        val index = AppSearchIndex(source.filter { it.id !in hidden },
-            { settings["alias:${it.id}"] as? String ?: it.originalLabel }, AppEntry::originalLabel)
+        val index = AppSearchIndex(source,
+            { settings["alias:${it.id}"] as? String ?: it.originalLabel }, AppEntry::originalLabel,
+            { it.id !in hidden })
         return Prepared(source, settings, index)
     }
     fun load() {
