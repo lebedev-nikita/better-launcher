@@ -326,31 +326,41 @@ class MainActivity : AppCompatActivity() {
 
     fun showWidgets(animate: Boolean = false) {
         hideKeyboard(); clearScreen("widgets")
-        val column = vertical().apply { setPadding(dp(20), dp(12), dp(20), 0) }
-        val header = horizontal()
-        header.addView(iconButton(Glyph.BACK, "На главный экран") { returnFromWidgets() })
-        header.addView(text("Виджеты", 26f), LinearLayout.LayoutParams(0, -2, 1f))
-        if (store.pageWidgets.size > 1) header.addView(iconButton(if (orderingWidgets) Glyph.CHECK else Glyph.REORDER,
-            if (orderingWidgets) "Готово" else "Изменить порядок виджетов") { orderingWidgets = !orderingWidgets; showWidgets() })
-        header.addView(iconButton(Glyph.PLUS, "Добавить виджет") { widgets.add() })
-        column.addView(header)
-        val content = vertical().apply { setPadding(dp(8), dp(12), dp(8), dp(24)) }
-        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false }
+        val content = vertical().apply {
+            setPadding(dp(28), 0, dp(28), 0)
+            isFocusableInTouchMode = true
+            setOnLongClickListener {
+                if (orderingWidgets) { orderingWidgets = false; showWidgets() }
+                else widgets.add()
+                true
+            }
+            setOnKeyListener { view, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_UP &&
+                    (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_F10 && event.isShiftPressed)) {
+                    view.performLongClick()
+                } else false
+            }
+            accessibilityDelegate = object : View.AccessibilityDelegate() {
+                override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                    super.onInitializeAccessibilityNodeInfo(host, info)
+                    info.addAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(
+                        android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK,
+                        if (orderingWidgets) "Завершить перестановку виджетов" else "Добавить виджет"))
+                }
+            }
+        }
+        val scroll = ScrollView(this).apply {
+            isVerticalScrollBarEnabled = false
+            isFillViewport = true
+        }
         inlineOrder = widgets.renderPage(content, if (orderingWidgets) scroll else null)
         if (content.isEmpty()) {
-            content.addView(gap(24))
-            content.addView(text("Все нужные виджеты — здесь", 23f))
-            content.addView(gap(12))
-            content.addView(text("Добавьте виджеты. Удерживайте виджет, чтобы изменить размер или перенести его на главный экран.", 16f, secondary))
-            content.addView(gap(16))
-            content.addView(action("Добавить виджет") { widgets.add() })
+            content.addView(text("Удерживайте пустое место, чтобы добавить виджет", 16f, secondary))
         }
         scroll.addView(content); widgetScroll = scroll
-        column.addView(widgetScroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        column.addView(action("На главный экран") { returnFromWidgets() }, LinearLayout.LayoutParams(-1, -2))
-        screen.addView(column, FrameLayout.LayoutParams(-1, -1))
-        widgetScroll?.post { widgetScroll?.scrollTo(0, widgetScrollPosition) }
-        if (animate) animatePage(column, -1)
+        screen.addView(scroll, FrameLayout.LayoutParams(-1, -1))
+        scroll.post { scroll.scrollTo(0, widgetScrollPosition) }
+        if (animate) animatePage(scroll, -1)
     }
 
     private fun returnFromWidgets() {

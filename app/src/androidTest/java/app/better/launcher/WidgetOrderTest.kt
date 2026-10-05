@@ -53,7 +53,10 @@ class WidgetOrderTest {
                 .setClass(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             ActivityScenario.launch<MainActivity>(intent).use { scenario ->
                 scenario.onActivity { it.showWidgets() }
-                click("Изменить порядок виджетов")
+                scenario.onActivity { activity ->
+                    descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().first().performLongClick()
+                }
+                click("Изменить порядок")
                 val label = manager.getAppWidgetInfo(ids[0]).loadLabel(context.packageManager)
                 val first = "$label · 1"
                 val second = "$label · 2"
@@ -150,7 +153,7 @@ class WidgetOrderTest {
                     descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().first().performLongClick()
                 }
                 click("Изменить порядок")
-                node("Готово")
+                node("Перетащить $label · 1")
                 scenario.onActivity { activity ->
                     activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                         .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))

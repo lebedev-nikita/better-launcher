@@ -38,10 +38,8 @@ class AppGesturesTest {
                     else it is TextView && it.text.toString() == label
                 }
                 swipe(target, 1)
-                awaitView(activity) { it is TextView && it.text.toString() == "Виджеты" }
-                instrumentation.runOnMainSync {
-                    views(activity.window.decorView).first { it.contentDescription?.toString() == "На главный экран" }.performClick()
-                }
+                awaitView(activity) { it is TextView && it.text.toString() == "Удерживайте пустое место, чтобы добавить виджет" }
+                instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
                 awaitView(activity) { it.contentDescription?.toString() == "Все приложения и поиск" }
             }
         }
@@ -71,7 +69,7 @@ class AppGesturesTest {
             instrumentation.runOnMainSync { (input as android.widget.EditText).setText(label) }
             val name = awaitView(activity) { it is TextView && it !is android.widget.EditText && it.text.toString() == label }
             swipe(name, 1)
-            awaitView(activity) { it is TextView && it.text.toString() == "Виджеты" }
+            awaitView(activity) { it is TextView && it.text.toString() == "Удерживайте пустое место, чтобы добавить виджет" }
             instrumentation.runOnMainSync { assertNull(dialog(activity)) }
         }
     }
