@@ -12,7 +12,7 @@
 
 ## Сборка и проверки исходников
 
-После интеграции текущего main: assembleDebug, assembleDebugAndroidTest, testDebugUnitTest и lintDebug успешно завершены. Все 15 unit-тестов прошли; lint — 0 ошибок, 27 прежних предупреждений, новых нет. Подготовленная здесь подписанная release-сборка с поиском также прошла assembleRelease и lintRelease; опубликованный rc.40 проверен отдельно по скачанному APK.
+Для коммита `2b25977` после интеграции main: assembleDebug, assembleDebugAndroidTest, testDebugUnitTest и lintDebug успешно завершены. Все 15 unit-тестов прошли; lint — 0 ошибок, 27 прежних предупреждений, новых нет. Подготовленная здесь подписанная release-сборка с поиском также прошла assembleRelease и lintRelease; опубликованный rc.40 проверен отдельно по скачанному APK.
 
 ## Android 12 / API 31
 

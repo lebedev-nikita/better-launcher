@@ -127,10 +127,16 @@ print("PASS: launching an app and returning Home")
 
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x + 220), str(y), "350")
+wait_for("Виджеты")
+adb("shell", "input", "keyevent", "4")
+wait_for("Все приложения и поиск")
+icon = wait_for("Phone: удерживайте для уведомлений и быстрых действий")
+x, y = center(icon)
+adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 wait_for("Добавить приложения")
 assert not any("Открыть Phone" in (n.get("text"), n.get("content-desc")) for n in hierarchy().iter("node"))
 adb("shell", "input", "keyevent", "4")
-print("PASS: horizontal app swipe opens its pop-up")
+print("PASS: rightward app swipe opens widgets; icon hold opens quick actions")
 
 # The menu also has a Phone title; wait for the home window before targeting its row.
 wait_for("Все приложения и поиск")
