@@ -254,7 +254,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.24
+## Current candidate 0.2.0-rc.25
 
 Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites use a recycled drag editor with keyboard/accessibility arrows. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
@@ -265,3 +265,7 @@ Widget management uses the navy app-menu surface and pale blue contour icons, wi
 ### Widget edge editor
 
 The live widget stays on its current screen. Navy 2dp lines mark its four edges; each enabled edge has a 36dp circular chevron control inside a 48dp touch target. Top/bottom handles change height and left/right handles change width around the saved horizontal center. Drag the widget body to move it in both axes within its content column and the visible area above the editor strip. Edited dimensions and movement snap to a 12dp grid; provider bounds take priority if their interval contains no grid point. Existing sizes remain compatible. Top-edge resizing preserves the bottom edge; expanding width clamps the saved horizontal offset to keep the widget inside the column. A navy pill above system navigation explains moving/resizing, reports dimensions and the grid step, and exposes Done. There are no reset arrows over the widget; reset of size and position stays in the long-press menu. Keyboard arrows and four named accessibility actions move the body, while edge handles resize. Cancellation restores the complete gesture snapshot. Back and outside taps finish editing, HOME returns home, and lifecycle cleanup removes the overlay. Provider content and the alphabet remain inert and excluded from accessibility during editing.
+
+## Widget resize feedback
+
+Every applied width/height change emits one native CLOCK_TICK, including keyboard and accessibility input. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
