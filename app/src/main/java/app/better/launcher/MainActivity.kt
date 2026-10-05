@@ -237,10 +237,8 @@ class MainActivity : AppCompatActivity() {
         val shortWindow = viewportDp < 500
         val widgetBox = vertical(); widgets.renderHome(widgetBox)
         val hasWidget = widgetBox.childCount > 0
-        val topPadding = if (shortWindow) dp(24) else if (hasWidget) dp(56)
-            else dp((viewportDp * .14f).coerceIn(36f, 126f))
         // Widgets have their own inset-safe width; only app/information rows reserve the alphabet.
-        content.setPadding(0, topPadding, 0, dp(24))
+        content.setPadding(0, 0, 0, dp(24))
         fun insetColumn() = vertical().apply { setPadding(start, 0, end, 0) }
         if (store.string("weatherCity").isNotBlank()) {
             val line = horizontal()
@@ -254,7 +252,10 @@ class MainActivity : AppCompatActivity() {
             if (content.isNotEmpty()) content.addView(gap(14))
             content.addView(widgetBox)
         }
-        mediaView()?.let { content.addView(gap(12)); content.addView(insetColumn().apply { addView(it) }) }
+        mediaView()?.let {
+            if (content.isNotEmpty()) content.addView(gap(12))
+            content.addView(insetColumn().apply { addView(it) })
+        }
         if (content.isNotEmpty()) content.addView(gap(if (shortWindow) 18 else 30))
         val favoriteColumn = insetColumn()
         val favorites = store.favorites.filter { catalog.find(it) != null || store.folder(it) != null }
