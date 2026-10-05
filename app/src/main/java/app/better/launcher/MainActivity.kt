@@ -558,13 +558,15 @@ class MainActivity : AppCompatActivity() {
         addView(menuText(label, 17f).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
             LinearLayout.LayoutParams(0, -2, 1f))
     }
-    fun sheet(title: String, scrollContent: Boolean = true, icon: android.graphics.drawable.Drawable? = null, build: (LinearLayout, Dialog) -> Unit): Dialog {
+    fun sheet(title: String, scrollContent: Boolean = true, icon: android.graphics.drawable.Drawable? = null, showHeader: Boolean = true, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
-        val body = menuBody()
-        val header = menuHeader(title, icon)
-        header.addView(menuIconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
-        body.addView(header); body.addView(gap(4))
+        val body = menuBody().apply { accessibilityPaneTitle = title }
+        if (showHeader) {
+            val header = menuHeader(title, icon)
+            header.addView(menuIconButton(Glyph.CLOSE, "Закрыть") { dialog.dismiss() })
+            body.addView(header); body.addView(gap(4))
+        }
         build(body, dialog)
         return presentSheet(dialog, body, scrollContent)
     }
