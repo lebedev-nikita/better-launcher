@@ -71,6 +71,11 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+      - name: Free disk space for emulator
+        run: |
+          # This app uses neither .NET, CodeQL nor the Android NDK.
+          sudo rm -rf /usr/share/dotnet /opt/hostedtoolcache/CodeQL /usr/local/lib/android/sdk/ndk
+          df -h /
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
@@ -97,8 +102,10 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_7
+          disk-size: 2048M
           emulator-port: 5554
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back emulated -prop persist.sys.locale=en-US
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back emulated
           disable-animations: false
           disable-spellchecker: true
           script: bash scripts/ci-device-tests.sh emulator-5554 "$CI_DEVICE_SUITE"
