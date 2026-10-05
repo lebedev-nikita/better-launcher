@@ -72,11 +72,14 @@ launcher_nodes = [n for n in hierarchy().iter("node") if n.get("package") == "ap
 assert not any(n.get("content-desc") == "Часы" or re.fullmatch(r"\d{1,2}:\d{2}", n.get("text", ""))
                or re.fullmatch(r"[А-Яа-яЁё]+, \d{1,2} [а-яё]+", n.get("text", "")) for n in launcher_nodes)
 print("PASS: home has no built-in clock or date")
-scroll = next(n for n in hierarchy().iter("node") if n.get("class") == "android.widget.ScrollView")
-x1, y1, x2, y2 = map(int, re.findall(r"\d+", scroll.get("bounds")))
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
-y = int(y2 - 12 * density)  # initial favorites leave free wallpaper above the footer
-adb("shell", "input", "swipe", str(int(x2 * .25)), str(y), str(int(x2 * .65)), str(y), "350")
+# The free footer gap stays available in short windows, outside the scrolling
+# favorites, app gestures and system Back edge. Do not start on an icon button.
+tree = hierarchy()
+search_right = int(re.findall(r"\d+", find(tree, "Все приложения и поиск").get("bounds"))[2])
+x1, y1, x2, y2 = map(int, re.findall(r"\d+", find(tree, "Экран виджетов").get("bounds")))
+x, y = (search_right + x1) // 2, (y1 + y2) // 2
+adb("shell", "input", "swipe", str(x), str(y), str(int(x2 + 24 * density)), str(y), "350")
 wait_for("Виджеты")
 title = wait_for("Виджеты")
 x1, y1, x2, y2 = map(int, re.findall(r"\d+", title.get("bounds")))
@@ -164,6 +167,11 @@ x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 tap("Переименовать Phone")
 wait_for("Переименовать Phone")
+# A short landscape window can scroll Save below the IME, or use an extract UI.
+# Back hides the keyboard; the same rename sheet must remain open.
+if "mInputShown=true" in adb("shell", "dumpsys", "input_method"):
+    adb("shell", "input", "keyevent", "4")
+    wait_for("Переименовать Phone")
 wait_for("Сохранить")
 assert not any(n.get("content-desc") == "Дополнительно" for n in hierarchy().iter("node"))
 assert any(n.get("class") == "android.widget.EditText" and n.get("text") == "Phone"
