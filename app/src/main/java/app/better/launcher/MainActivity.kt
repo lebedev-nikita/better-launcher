@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         wallpaperScrim = WallpaperScrimView(this)
         root.addView(wallpaperScrim, FrameLayout.LayoutParams(-1, -1))
         screen = PageSwipeLayout(this)
-        screen.onSwipe = { if (page == "home") showWidgets(true) else if (page == "widgets") returnFromWidgets() }
+        screen.onSwipe = { if (page == "home" || page == "apps") showWidgets(true) else if (page == "widgets") returnFromWidgets() }
         screen.onTouchFinished = {
             if (notificationRefreshPending && page == "home" && resumed) refreshHomePreservingScroll()
         }
@@ -205,7 +205,7 @@ class MainActivity : AppCompatActivity() {
         widgetScroll?.let { widgetScrollPosition = it.scrollY }
         keyboardRequest?.let(handler::removeCallbacks); keyboardRequest = null
         page = newPage; screen.removeAllViews(); allApps = null; appAdapter = null; emptyApps = null; appQuery = ""; homeScroll = null; homeFooter = null; widgetScroll = null; search = null; weatherText = null
-        screen.direction = when (newPage) { "home" -> 1; "widgets" -> -1; else -> 0 }
+        screen.direction = when (newPage) { "home", "apps" -> 1; "widgets" -> -1; else -> 0 }
         screen.accessibilityPaneTitle = when (newPage) { "home" -> "Главный экран"; "widgets" -> "Виджеты"; "apps" -> "Все приложения"; else -> "Настройки" }
         rail.visibility = if (newPage == "home" || newPage == "apps") View.VISIBLE else View.GONE
         updateRailBounds()
@@ -467,6 +467,7 @@ class MainActivity : AppCompatActivity() {
         val toolbar = horizontal()
         toolbar.addView(iconButton(Glyph.BACK, "На главный экран") { hideKeyboard(); showHome() })
         search = EditText(this).apply {
+            tag = PageSwipeLayout.BLOCK_SWIPE
             hint = "Поиск приложений"; setHintTextColor(secondary); setTextColor(Color.WHITE); textSize = 19f
             background = null; isSingleLine = true; inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
             imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_GO

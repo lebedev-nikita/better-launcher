@@ -61,6 +61,20 @@ class AppGesturesTest {
         }
     }
 
+    @Test fun appListRowSwipeOpensWidgets() {
+        withApp { activity, label ->
+            instrumentation.runOnMainSync {
+                views(activity.window.decorView).first { it.contentDescription?.toString() == "Все приложения и поиск" }.performClick()
+            }
+            val input = awaitView(activity) { it is android.widget.EditText && it.hint?.toString() == "Поиск приложений" }
+            instrumentation.runOnMainSync { (input as android.widget.EditText).setText(label) }
+            val name = awaitView(activity) { it is TextView && it !is android.widget.EditText && it.text.toString() == label }
+            swipe(name, 1)
+            awaitView(activity) { it is TextView && it.text.toString() == "Виджеты" }
+            instrumentation.runOnMainSync { assertNull(dialog(activity)) }
+        }
+    }
+
     @Test fun homeRefreshDuringIconHoldKeepsQuickActions() {
         withApp { activity, label ->
             val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий" }
