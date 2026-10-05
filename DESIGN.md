@@ -254,7 +254,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.29
+## Current candidate 0.2.0-rc.30
 
 Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites reorder in place with keyboard/accessibility arrows. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
@@ -273,7 +273,7 @@ The live widget stays on its current screen. Navy 2dp lines mark its four edges;
 
 ## Widget resize feedback
 
-Every applied width/height change requests one soft SEGMENT_FREQUENT_TICK through AndroidX, including keyboard and accessibility input. Android 14+ uses the native soft effect; Android 12–13 falls back to CLOCK_TICK. Devices unable to produce a suitably soft tick may stay silent on Android 14+. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
+Every applied width/height change requests one native CLOCK_TICK on all supported Android versions, including keyboard and accessibility input. The platform API exposes no amplitude parameter for CLOCK_TICK; strength follows the device implementation and system haptic settings. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
 
 
 ## Top edge controls
