@@ -120,3 +120,8 @@ Before integrating the parallel rc.32 menu changes, 14 unit tests passed and deb
 ## Flat app management menu
 
 Long press opens a single action list. Attached-app selection and hiding are directly available after uninstall, without “Дополнительно” or an expansion step. Favorite apps also expose ordering. The shared contour icons, navy surface, pale blue labels, settings divider and menu animation remain. The sheet scrolls within its 85% screen-height cap on short windows and with larger text; tapping the title still replaces commands with the inline rename editor.
+
+
+## Hidden apps and the alphabet
+
+The rail derives its sections from visible apps whenever home is shown. Hiding the last visible app under A–Z or # immediately removes that entry; a section remains while another visible app uses it. Undo and “Показывать снова” restore the section. Hidden search results do not populate the rail until shown again. The star remains when all apps are hidden. The fix and verification are recorded in [rc.48](releases/0.2.0-rc.48.md).

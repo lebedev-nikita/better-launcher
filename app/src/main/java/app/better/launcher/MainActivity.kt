@@ -241,6 +241,7 @@ class MainActivity : AppCompatActivity() {
 
     fun showHome() {
         clearScreen("home"); rail.selected = "★"; notificationRefreshPending = false
+        updateAlphabet()
         val homeLayout = vertical()
         val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; clipToPadding = false }
         homeScroll = scroll
