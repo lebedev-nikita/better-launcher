@@ -143,19 +143,21 @@ wait_for("Все приложения и поиск")
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 wait_for("О приложении")
-wait_for("Настройки Better Launcher")
-assert not any(n.get("content-desc") == "Переименовать" for n in hierarchy().iter("node"))
-tap("Дополнительно")
-assert not any(n.get("content-desc") == "Переименовать" for n in hierarchy().iter("node"))
-# Additional actions can require scrolling on short windows / larger fonts.
 tree = hierarchy()
-if not any(n.get("content-desc") == "Скрыть приложение" for n in tree.iter("node")):
-    size = adb("shell", "wm", "size")
-    width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
-    adb("shell", "input", "swipe", str(width // 2), str(int(height * .8)), str(width // 2), str(int(height * .4)), "400")
-wait_for("Скрыть приложение")
+assert not any(n.get("content-desc") in ("Переименовать", "Дополнительно") for n in tree.iter("node"))
+# All actions belong to one list; short windows / larger fonts can require scrolling.
+for label in ("Приложения во всплывающем меню", "Скрыть приложение", "Настройки Better Launcher"):
+    for attempt in range(6):
+        tree = hierarchy()
+        if any(n.get("content-desc") == label for n in tree.iter("node")):
+            break
+        scroll = next(n for n in tree.iter("node") if n.get("class") == "android.widget.ScrollView")
+        x1, y1, x2, y2 = map(int, re.findall(r"\d+", scroll.get("bounds")))
+        x = (x1 + x2) // 2
+        adb("shell", "input", "swipe", str(x), str(y2 - (y2 - y1) // 5), str(x), str(y1 + (y2 - y1) // 5), "400")
+    wait_for(label)
 adb("shell", "input", "keyevent", "4")
-print("PASS: app long press exposes management actions")
+print("PASS: app long press exposes a flat management list without Additional")
 wait_for("Все приложения и поиск")
 
 x, y = center(wait_for("Phone"))
