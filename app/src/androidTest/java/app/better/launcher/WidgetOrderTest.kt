@@ -56,7 +56,12 @@ class WidgetOrderTest {
                 val first = "$label · 1"
                 val second = "$label · 2"
                 assertFalse(node("Переместить $first вверх").isEnabled)
-                assertFalse(node("Переместить $label · 3 вниз").isEnabled)
+                var originalViews = emptyList<AppWidgetHostView>()
+                // The actual hosted views stay on the page during ordering.
+                scenario.onActivity { activity ->
+                    originalViews = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>()
+                    assertEquals(listOf(ids[0], ids[2], ids[3]), originalViews.map { it.appWidgetId })
+                }
                 val from = Rect().also { node("Перетащить $first").getBoundsInScreen(it) }
                 val to = Rect().also { node("Перетащить $second").getBoundsInScreen(it) }
                 drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat())
@@ -64,9 +69,17 @@ class WidgetOrderTest {
                 await { store.widgets == dragged }
                 click("Переместить $first вверх")
                 await { store.pageWidgets == listOf(ids[0], ids[2], ids[3]) }
+                // Scroll to the last real widget, whose controls may be below the viewport.
+                scenario.onActivity { activity ->
+                    descendants(activity.window.decorView).filterIsInstance<android.widget.ScrollView>().single().fullScroll(View.FOCUS_DOWN)
+                }
                 click("Переместить $label · 3 вверх")
                 val pageOrder = listOf(ids[0], ids[3], ids[2])
                 await { store.pageWidgets == pageOrder }
+                scenario.onActivity { activity ->
+                    val reorderedViews = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>()
+                    originalViews.forEach { original -> assertSame("Reordering must retain the live host view", original, reorderedViews.single { it.appWidgetId == original.appWidgetId }) }
+                }
                 assertEquals(ids[1], store.homeWidgetId)
                 sizes.forEach { (id, size) -> assertEquals(size, store.widgetSize(id)) }
                 assertTrue(ids.all { manager.getAppWidgetInfo(it) != null })
@@ -105,7 +118,7 @@ class WidgetOrderTest {
                     descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().first().performLongClick()
                 }
                 click("Изменить порядок")
-                node("Перетащить $label · 1")
+                node("Готово")
                 scenario.onActivity { activity ->
                     activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                         .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
