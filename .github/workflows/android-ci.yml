@@ -101,6 +101,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:
           api-level: ${{ matrix.api }}
+          emulator-build: 14472402 # Android Emulator 36.3.10 stable
           target: google_apis
           arch: x86_64
           profile: pixel_7
@@ -110,7 +111,7 @@ jobs:
           emulator-boot-timeout: 300
           # Preserve the Pixel 7's logical dimensions with fewer rendered pixels.
           pre-emulator-launch-script: printf 'hw.lcd.width=720\nhw.lcd.height=1600\nhw.lcd.density=280\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
-          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim -camera-back emulated
+          emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -noaudio -no-boot-anim -camera-back emulated
           disable-animations: false
           disable-spellchecker: true
           script: bash scripts/ci-device-tests.sh emulator-5554 "$CI_DEVICE_SUITE"
