@@ -60,7 +60,7 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
         textSize = 17f; background = null; isSingleLine = true; minHeight = activity.dp(56)
         setPadding(activity.dp(4), activity.dp(12), activity.dp(4), activity.dp(12))
         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-        imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI
+        imeOptions = EditorInfo.IME_ACTION_DONE
         addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { filterProviders() }

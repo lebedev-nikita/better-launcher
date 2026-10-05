@@ -265,7 +265,7 @@
       },
       {
         "name": "Widget picker search",
-        "body": "The provider picker omits its visible heading and separate Close. A single tonal #112B42 search field has a leading contour magnifier, 17sp pale blue text/hint, growing 56dp minimum height and 16dp corners. Its trailing 48dp Clear appears only for nonempty input; space is reserved to prevent shifts. Pane title remains accessible; Back/outside taps dismiss and HOME returns home. A background-prepared index matches widget/application names without case/diacritic sensitivity. Results reset to the top and determine the right alphabet; no matches hides the rail and gives accessible recovery guidance. Keyboard opens on tap; IME Done hides it, with fullscreen extraction disabled in landscape. Browsing/search never allocates IDs.",
+        "body": "The provider picker omits its visible heading and separate Close. A single tonal #112B42 search field has a leading contour magnifier, 17sp pale blue text/hint, growing 56dp minimum height and 16dp corners. Its trailing 48dp Clear appears only for nonempty input; space is reserved to prevent shifts. Pane title remains accessible; Back/outside taps dismiss and HOME returns home. A background-prepared index matches widget/application names without case/diacritic sensitivity. Results reset to the top and determine the right alphabet; no matches hides the rail and gives accessible recovery guidance. Keyboard opens on tap; IME Done hides it, with standard system input in landscape. Browsing/search never allocates IDs.",
         "section": "components"
       },
       {
