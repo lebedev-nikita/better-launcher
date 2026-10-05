@@ -89,7 +89,9 @@ jobs:
       - name: Install Android SDK components
         run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0' 'platform-tools'
       - name: Build application and test APKs
-        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+        run: |
+          ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest -Pkotlin.compiler.execution.strategy=in-process --stacktrace
+          ./gradlew --stop
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -102,10 +104,13 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_7
+          ram-size: 3072M
           disk-size: 2048M
           emulator-port: 5554
           emulator-boot-timeout: 300
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back emulated
+          # Preserve the Pixel 7's logical dimensions with fewer rendered pixels.
+          pre-emulator-launch-script: printf 'hw.lcd.width=720\nhw.lcd.height=1600\nhw.lcd.density=280\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
+          emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -noaudio -no-boot-anim -camera-back emulated
           disable-animations: false
           disable-spellchecker: true
           script: bash scripts/ci-device-tests.sh emulator-5554 "$CI_DEVICE_SUITE"
