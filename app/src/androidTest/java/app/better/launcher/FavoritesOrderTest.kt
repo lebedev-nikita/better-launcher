@@ -37,7 +37,10 @@ class FavoritesOrderTest {
                 home(scenario)
                 val firstLabel = store.alias(apps[0].id) ?: apps[0].originalLabel
                 val secondLabel = store.alias(apps[1].id) ?: apps[1].originalLabel
-                await { node("Изменить порядок избранного").performAction(AccessibilityNodeInfo.ACTION_CLICK) }
+                assertNull("Home must not duplicate the menu's reorder action", find(instrumentation.uiAutomation.rootInActiveWindow) {
+                    it.text?.toString() == "Изменить порядок избранного"
+                })
+                openEditor(firstLabel)
                 node("Готово")
                 node(firstLabel)
                 assertFalse(node("Перетащить $firstLabel").actionList.any { it.id == R.id.reorder_up })
@@ -67,7 +70,7 @@ class FavoritesOrderTest {
                 await { store.favorites == reordered }
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                 await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Перетащить $firstLabel" } == null }
-                node("Изменить порядок избранного")
+                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow) { it.text?.toString() == "Изменить порядок избранного" })
                 val folderBounds = Rect().also { node("Test folder").getBoundsInScreen(it) }
                 val appBounds = Rect().also { node(secondLabel).getBoundsInScreen(it) }
                 assertTrue("Home must display the saved favorite order", folderBounds.top < appBounds.top)
