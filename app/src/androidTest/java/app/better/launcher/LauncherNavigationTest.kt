@@ -68,7 +68,7 @@ class LauncherNavigationTest {
             assertVisible(activity, "Виджеты")
             // Dismissing the provider picker keeps the widget page open.
             click(activity, "Добавить виджет")
-            bounds(activity, "Добавить виджет", dialog = true)
+            bounds(activity, "Поиск виджетов", dialog = true)
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             assertVisible(activity, "Виджеты")
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
