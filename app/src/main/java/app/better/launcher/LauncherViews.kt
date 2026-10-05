@@ -91,15 +91,17 @@ open class AlphabetRail @JvmOverloads constructor(context: Context, private val 
     var selected = "★"
         set(value) { field = value; contentDescription = "$alphabetLabel, $value. Проведите вверх или вниз для выбора."; invalidate() }
     var leftHanded = false
+    var contentTopInset = 0
+        set(value) { field = value; invalidate() }
     private var dragging = false
     private var finger = -1000f
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL) }
     init { isFocusable = true; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES; selected = "★" }
     // Anchor the compact alphabet above the footer/insets reserved by its parent.
-    private fun top() = (height - context.dp(24) - letters.size * spacing()).coerceAtLeast(0f)
+    private fun top() = (height - context.dp(24) - letters.size * spacing()).coerceAtLeast(contentTopInset.toFloat())
     private fun spacing(): Float {
         val preferred = context.dp(22) * resources.configuration.fontScale.coerceAtLeast(1f)
-        val available = (height - context.dp(48)).coerceAtLeast(1).toFloat() / letters.size
+        val available = (height - contentTopInset - context.dp(48)).coerceAtLeast(1).toFloat() / letters.size
         return min(preferred, available)
     }
     override fun onDraw(canvas: Canvas) {
@@ -119,7 +121,8 @@ open class AlphabetRail @JvmOverloads constructor(context: Context, private val 
         }
         if (dragging) {
             val x = if (leftHanded) width - context.dp(30).toFloat() else context.dp(30).toFloat()
-            val y = finger.coerceIn(context.dp(30).toFloat(), height - context.dp(30).toFloat())
+            val bottom = height - context.dp(30).toFloat()
+            val y = finger.coerceIn(min(contentTopInset + context.dp(30).toFloat(), bottom), bottom)
             paint.color = bubbleColor; canvas.drawCircle(x, y, context.dp(25).toFloat(), paint)
             paint.textSize = 27f * resources.displayMetrics.scaledDensity; paint.color = foreground
             canvas.drawText(selected, x, y - (paint.ascent() + paint.descent()) / 2f, paint)

@@ -165,7 +165,7 @@
       "name": "App search field",
       "kind": "input",
       "refersTo": "search-field",
-      "description": "Illustrative native translation. Transparent single-line EditText with a pale blue hint. Filtering and IME launch remain native runtime behavior.",
+      "description": "Illustrative native translation. Transparent single-line EditText with a pale blue hint. Filtering and IME launch remain native runtime behavior. App search toolbar fills inset-safe width with symmetric 20dp edges, 48dp Back/Clear and weighted input; alphabet reservation belongs only to results. The rail starts below toolbar/top spacing (68dp) on apps, keeping controls reachable on short windows and both rail sides.",
       "html": "<div class=\"ds-search-stage\"><input class=\"ds-search\" type=\"search\" placeholder=\"Поиск приложений\" aria-label=\"Поиск приложений\"/></div>",
       "css": ".ds-search-stage { background:#031629; padding:12px; } .ds-search { width:100%; height:56px; padding:0; border:0; background:transparent; color:#FFFFFF; caret-color:#BCD7F3; font:400 19px sans-serif; } .ds-search::placeholder { color:#BCD7F3; opacity:1; } .ds-search:hover, .ds-search:focus-visible, .ds-search:active { outline:none; }"
     },

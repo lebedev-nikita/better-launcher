@@ -222,9 +222,10 @@ class MainActivity : AppCompatActivity() {
     private fun updateRailBounds() {
         val params = rail.layoutParams as FrameLayout.LayoutParams
         params.topMargin = screen.paddingTop
+        rail.contentTopInset = if (page == "apps") dp(68) else 0
         params.leftMargin = screen.paddingLeft; params.rightMargin = screen.paddingRight
         homeFooter?.height?.takeIf { it > 0 }?.let { homeFooterHeight = it }
-        // Keep the alphabet under the finger when a drag opens the app list.
+        // Preserve the bottom anchor; app search controls stay above the rail.
         params.bottomMargin = screen.paddingBottom + homeFooterHeight.coerceAtLeast(dp(66))
         rail.layoutParams = params
     }
@@ -464,8 +465,8 @@ class MainActivity : AppCompatActivity() {
     private fun showApps(keyboard: Boolean) {
         clearScreen("apps"); store.set("gesturesLearned", true)
         val column = vertical().apply { isFocusableInTouchMode = true }
-        val (start, end) = contentMargins(); column.setPadding(start - dp(8), dp(12), end, dp(12))
-        val toolbar = horizontal()
+        column.setPadding(0, dp(12), 0, dp(12))
+        val toolbar = horizontal().apply { setPadding(dp(20), 0, dp(20), 0) }
         toolbar.addView(iconButton(Glyph.BACK, "На главный экран") { hideKeyboard(); showHome() })
         search = EditText(this).apply {
             tag = PageSwipeLayout.BLOCK_SWIPE
@@ -482,8 +483,9 @@ class MainActivity : AppCompatActivity() {
         }
         toolbar.addView(search, LinearLayout.LayoutParams(0, dp(56), 1f))
         toolbar.addView(iconButton(Glyph.CLOSE, "Очистить поиск") { search?.setText("") })
-        column.addView(toolbar)
-        val results = FrameLayout(this)
+        column.addView(toolbar, LinearLayout.LayoutParams(-1, -2))
+        val (start, end) = contentMargins()
+        val results = FrameLayout(this).apply { setPadding(start - dp(8), 0, end, 0) }
         appAdapter = AppListAdapter(catalog::label,
             { app, recycled -> ((recycled as? AppRow) ?: AppRow(false)).apply { bind(app) } },
             { section, recycled -> ((recycled as? TextView) ?: text("", 16f, secondary).apply { setPadding(0, dp(18), 0, dp(8)) }).apply { text = section } })

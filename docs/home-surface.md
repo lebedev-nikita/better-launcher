@@ -125,3 +125,7 @@ Long press opens a single action list. Attached-app selection and hiding are dir
 ## Hidden apps and the alphabet
 
 The rail derives its sections from visible apps whenever home is shown. Hiding the last visible app under A–Z or # immediately removes that entry; a section remains while another visible app uses it. Undo and “Показывать снова” restore the section. Hidden search results do not populate the rail until shown again. The star remains when all apps are hidden. The fix and verification are recorded in [rc.48](releases/0.2.0-rc.48.md).
+
+## App search width
+
+The app toolbar fills the inset-safe width, with equal 20dp side padding and 48dp Back/Clear actions. The text field takes the remaining width. Only the results retain the alphabet reservation; left-handed mode leaves the toolbar geometry unchanged. The rail begins below the 56dp toolbar and 12dp top gap, including narrow windows and landscape.
