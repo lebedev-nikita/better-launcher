@@ -103,6 +103,7 @@ class AppGesturesTest {
         while (SystemClock.uptimeMillis() < deadline) {
             var result: View? = null
             instrumentation.runOnMainSync {
+                if (!dialog && !activity.hasWindowFocus()) return@runOnMainSync
                 val root = if (dialog) dialog(activity)?.window?.decorView else activity.window.decorView
                 result = root?.let { views(it).firstOrNull { v -> predicate(v) && v.isShown && v.getGlobalVisibleRect(Rect()) } }
             }
