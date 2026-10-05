@@ -85,6 +85,28 @@ class WidgetController(private val activity: MainActivity, private val store: La
             render(container, id, false)
         }
     }
+    fun editOrder() {
+        prune()
+        val labels = store.pageWidgets.mapNotNull { id ->
+            manager.getAppWidgetInfo(id)?.let { id to it.loadLabel(activity.packageManager) }
+        }
+        if (labels.size < 2) return
+        val occurrences = mutableMapOf<String, Int>()
+        val entries = labels.map { (id, label) ->
+            // Distinguish multiple instances of the same provider without exposing host IDs.
+            val number = occurrences.getOrDefault(label, 0) + 1
+            occurrences[label] = number
+            OrderEntry(id.toString(), if (labels.count { it.second == label } > 1) "$label · $number" else label)
+        }
+        activity.sheet("Порядок виджетов", scrollContent = false) { body, _ ->
+            body.addView(activity.text("Перетаскивайте строки за ≡ или используйте стрелки. Порядок сохраняется сразу.", 14f, activity.secondary))
+            body.addView(OrderEditor(activity, entries, "Порядок виджетов",
+                readOrder = { store.widgets.map(Int::toString) },
+                saveOrder = { store.widgets = it.map(String::toInt) },
+                onChanged = { activity.showWidgets() },
+            ).view, LinearLayout.LayoutParams(-1, 0, 1f))
+        }
+    }
     private fun render(container: LinearLayout, id: Int, home: Boolean) {
         val info = manager.getAppWidgetInfo(id) ?: return
         val view = host.createView(hostContext, id, info)
@@ -155,6 +177,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
                 runCatching { activity.catalog.launcherApps.startAppDetailsActivity(info.provider, info.profile, null, null) }
                     .onFailure { activity.message("Не удалось открыть настройки приложения") }
             }
+            if (!home && store.pageWidgets.size > 1) command(Glyph.REORDER, "Изменить порядок") { editOrder() }
             command(Glyph.RESIZE, "Переместить и изменить размер") { resize(id, info, frame, view) }
             if (info.configure != null) command(Glyph.EDIT, "Настройки виджета") {
                 runCatching { host.startAppWidgetConfigureActivityForResult(activity, id, 0, RECONFIGURE, null) }
