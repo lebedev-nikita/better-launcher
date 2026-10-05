@@ -79,7 +79,7 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
 }
 
 /** One continuous control, with scroll accessibility actions and keyboard alternatives. */
-open class AlphabetRail(context: Context) : View(context) {
+open class AlphabetRail @JvmOverloads constructor(context: Context, private val foreground: Int = Color.WHITE, private val bubbleColor: Int = 0xE6352E2A.toInt()) : View(context) {
     var letters = AppListRules.railLetters(emptySet())
         set(value) { field = value; invalidate() }
     var activeLetters = emptySet<String>()
@@ -113,14 +113,14 @@ open class AlphabetRail(context: Context) : View(context) {
             // Keep the larger letters readable without overlap in a short window.
             val restingSize = min(16f * resources.displayMetrics.scaledDensity, spacing * .8f)
             paint.textSize = min(restingSize + wave * 7f * resources.displayMetrics.scaledDensity, spacing * 1.05f)
-            paint.color = if (letter == selected) Color.WHITE else if (letter in activeLetters || letter == "★") 0xE6FFFFFF.toInt() else 0x9EFFFFFF.toInt()
+            paint.color = if (letter == selected) foreground else Color.argb(if (letter in activeLetters || letter == "★") 230 else 158, Color.red(foreground), Color.green(foreground), Color.blue(foreground))
             canvas.drawText(letter, x, y - (paint.ascent() + paint.descent()) / 2f, paint)
         }
         if (dragging) {
             val x = if (leftHanded) width - context.dp(30).toFloat() else context.dp(30).toFloat()
             val y = finger.coerceIn(context.dp(30).toFloat(), height - context.dp(30).toFloat())
-            paint.color = 0xE6352E2A.toInt(); canvas.drawCircle(x, y, context.dp(25).toFloat(), paint)
-            paint.textSize = 27f * resources.displayMetrics.scaledDensity; paint.color = Color.WHITE
+            paint.color = bubbleColor; canvas.drawCircle(x, y, context.dp(25).toFloat(), paint)
+            paint.textSize = 27f * resources.displayMetrics.scaledDensity; paint.color = foreground
             canvas.drawText(selected, x, y - (paint.ascent() + paint.descent()) / 2f, paint)
         }
     }

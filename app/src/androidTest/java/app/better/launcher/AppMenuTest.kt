@@ -162,10 +162,15 @@ class AppMenuTest {
         return dialog
     }
     private fun openMenu(label: String) {
-        // HOME can replace the Activity; act on the currently visible row.
-        var row: AccessibilityNodeInfo? = node { it.text?.toString() == label }
-        while (row != null && !row.isLongClickable) row = row.parent
-        assertTrue("Missing long-press action for $label", row?.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK) == true)
+        // HOME replaces the Activity, and an exiting sheet can briefly expose its old title.
+        // Resolve a fresh home row and retry only rejected long-click actions.
+        await {
+            var row: AccessibilityNodeInfo? = findNode(instrumentation.uiAutomation.rootInActiveWindow) {
+                it.text?.toString() == label && it.isVisibleToUser
+            }
+            while (row != null && !row.isLongClickable) row = row.parent
+            row?.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK) == true
+        }
         node { it.contentDescription == "Переименовать $label" }
     }
     private fun setName(value: String) {
