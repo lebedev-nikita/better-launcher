@@ -9,7 +9,7 @@ import android.view.ViewConfiguration
 import android.widget.FrameLayout
 import kotlin.math.abs
 
-/** Page swipes start inside the window; app rows and widget content keep their own gestures. */
+/** Page swipes include app rows; widget content and ordering controls keep their gestures. */
 class PageSwipeLayout(context: Context) : FrameLayout(context) {
     var direction = 0 // +1: widgets to the left of home; -1: home to the right of widgets.
     var onSwipe: () -> Unit = {}
