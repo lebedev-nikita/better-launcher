@@ -61,13 +61,15 @@ class AlphabetBoundsTest {
                     touch(MotionEvent.ACTION_MOVE, z + step * .1f)
                     if (finalMove) touch(MotionEvent.ACTION_MOVE, below)
                     touch(MotionEvent.ACTION_UP, below)
-                    assertEquals("symbols=$symbols, left=$left, finalMove=$finalMove", listOf("Z", "#"), selections)
+                    val expected = if (symbols) listOf("Z", "#") else listOf("Z")
+                    assertEquals("symbols=$symbols, left=$left, finalMove=$finalMove", expected, selections)
+                    assertEquals(if (symbols) "#" else "Z", rail.letters.last())
                     assertEquals(adapter.count - 1, list.lastVisiblePosition)
                     assertTrue("Overflow must not return to the first apps", list.firstVisiblePosition > 0)
                     touch(MotionEvent.ACTION_DOWN, z)
                     touch(MotionEvent.ACTION_CANCEL, below)
                     touch(MotionEvent.ACTION_UP, below)
-                    assertEquals("A late release must not reactivate a cancelled gesture", listOf("Z", "#", "Z"), selections)
+                    assertEquals("A late release must not reactivate a cancelled gesture", expected + "Z", selections)
                     parent.removeAllViews()
                 }
             }

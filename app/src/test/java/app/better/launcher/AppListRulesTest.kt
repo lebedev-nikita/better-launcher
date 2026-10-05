@@ -10,13 +10,13 @@ class AppListRulesTest {
         assertTrue(AppListRules.matches("google maps", "Google Карты", "Google Maps"))
         assertFalse(AppListRules.matches("maps camera", "Google Maps"))
     }
-    @Test fun `rail shows only populated letters in alphabetical order and keeps navigation entries`() {
+    @Test fun `rail shows only populated sections including hash and keeps home navigation`() {
         assertEquals(listOf("★", "A", "B", "V", "#"),
             AppListRules.railLetters(setOf("V", "#", "B", "A")))
-        assertEquals(listOf("★", "B", "#"), AppListRules.railLetters(setOf("B")))
-        assertEquals(listOf("★", "#"), AppListRules.railLetters(emptySet()))
+        assertEquals(listOf("★", "B"), AppListRules.railLetters(setOf("B")))
+        assertEquals(listOf("★"), AppListRules.railLetters(emptySet()))
         assertEquals(listOf("★", "#"), AppListRules.railLetters(setOf("#")))
-        assertEquals(listOf("★") + ('A'..'Z').map(Char::toString) + "#",
+        assertEquals(listOf("★") + ('A'..'Z').map(Char::toString),
             AppListRules.railLetters(('A'..'Z').map(Char::toString).toSet()))
     }
     @Test fun `favorites can move without duplication and stop at boundaries`() {
