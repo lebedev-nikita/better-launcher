@@ -32,6 +32,7 @@ class WidgetSpacingTest {
         val capturePrefix = InstrumentationRegistry.getArguments().getString("spacingCaptures")
         var granted = false
         fun hostView(id: Int) = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>().single { it.appWidgetId == id }
+        fun content(id: Int) = hostView(id).getChildAt(0)
         fun y(view: View) = IntArray(2).also(view::getLocationOnScreen)[1]
         fun await(predicate: () -> Boolean) {
             val deadline = SystemClock.uptimeMillis() + 15_000
@@ -72,19 +73,27 @@ class WidgetSpacingTest {
                     store.widgetSpacing = spacing
                     activity.showWidgets()
                 }
-                await { hostView(ids[1]).height > 0 && hostView(ids[2]).height > 0 }
+                await { ids.drop(1).all { id -> hostView(id).height > 0 && descendants(hostView(id)).filterIsInstance<TextView>().any { it.text == "Layout preview content" } } }
+                if (spacing == 0) capture("page-zero-$left")
                 instrumentation.runOnMainSync {
                     assertEquals("Page gap uses saved dp", activity.dp(spacing),
                         y(hostView(ids[2])) - y(hostView(ids[1])) - hostView(ids[1]).height)
+                    val providerHeight = (content(ids[1]).height / activity.resources.displayMetrics.density).toInt()
+                    assertEquals("Reported provider height matches visible content", providerHeight,
+                        manager.getAppWidgetOptions(ids[1]).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))
+                    assertEquals("Visible provider content has no extra page gap", activity.dp(spacing),
+                        y(content(ids[2])) - y(content(ids[1])) - content(ids[1]).height)
                     activity.showHome()
                 }
-                await { hostView(ids[0]).height > 0 }
+                await { hostView(ids[0]).height > 0 && descendants(hostView(ids[0])).filterIsInstance<TextView>().any { it.text == "Layout preview content" } }
                 instrumentation.runOnMainSync {
                     val label = activity.catalog.label(activity.catalog.find(store.favorites.first())!!)
                     val name = descendants(activity.window.decorView).filterIsInstance<TextView>().first { it.text.toString() == label }
                     val row = generateSequence(name.parent as? View) { it.parent as? View }.first { it.isClickable }
                     assertEquals("Home gap matches the page gap", activity.dp(spacing),
                         y(row) - y(hostView(ids[0])) - hostView(ids[0]).height)
+                    assertEquals("Visible provider content has the same gap before favorites", activity.dp(spacing),
+                        y(row) - y(content(ids[0])) - content(ids[0]).height)
                 }
                 if (spacing == 8) {
                     capture("home-$left")

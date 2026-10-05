@@ -17,8 +17,8 @@ android {
         applicationId = "app.better.launcher"
         minSdk = 31
         targetSdk = 36
-        versionCode = 63
-        versionName = "0.2.0-rc.54"
+        versionCode = 64
+        versionName = "0.2.0-rc.55"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {

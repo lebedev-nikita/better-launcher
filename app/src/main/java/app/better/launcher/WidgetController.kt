@@ -105,6 +105,9 @@ class WidgetController(private val activity: MainActivity, private val store: La
     private fun render(container: LinearLayout, id: Int, home: Boolean) {
         val info = manager.getAppWidgetInfo(id) ?: return
         val view = host.createView(hostContext, id, info)
+        val frameworkPadding = AppWidgetHostView.getDefaultPaddingForWidget(hostContext, info.provider, null)
+        // The shared setting owns vertical gaps; keep only the framework side insets.
+        view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         val frame = WidgetTouchFrame(activity).apply {
             contentDescription = "Виджет ${info.loadLabel(activity.packageManager)}"
             setOnLongClickListener { showControls(id, info, home, this, view); true }
@@ -117,8 +120,10 @@ class WidgetController(private val activity: MainActivity, private val store: La
         view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (right > left && bottom > top && (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop)) {
                 val density = activity.resources.displayMetrics.density
-                // Framework removes host padding and publishes both legacy ranges and Android 12 sizes.
-                view.updateAppWidgetSize(Bundle(), listOf(SizeF((right - left) / density, (bottom - top) / density)))
+                // This API subtracts default padding, even when the host overrides it.
+                // Compensate for the removed vertical insets so providers receive their actual height.
+                view.updateAppWidgetSize(Bundle(), listOf(SizeF((right - left) / density,
+                    (bottom - top + frameworkPadding.top + frameworkPadding.bottom) / density)))
             }
         }
         container.addView(frame, LinearLayout.LayoutParams(-1, -2))
@@ -135,16 +140,15 @@ class WidgetController(private val activity: MainActivity, private val store: La
         return lower..upper
     }
 
-    private fun ranges(info: AppWidgetProviderInfo, frame: View): Pair<IntRange, IntRange> {
-        val padding = AppWidgetHostView.getDefaultPaddingForWidget(activity, info.provider, null)
+    private fun ranges(info: AppWidgetProviderInfo, frame: View, view: AppWidgetHostView): Pair<IntRange, IntRange> {
         val width = (frame.width / activity.resources.displayMetrics.density).toInt().coerceIn(32, 1600)
-        return sizeRange(info.minWidth, info.minResizeWidth, info.maxResizeWidth, padding.left + padding.right, width) to
-            sizeRange(info.minHeight, info.minResizeHeight, info.maxResizeHeight, padding.top + padding.bottom, 1600)
+        return sizeRange(info.minWidth, info.minResizeWidth, info.maxResizeWidth, view.paddingLeft + view.paddingRight, width) to
+            sizeRange(info.minHeight, info.minResizeHeight, info.maxResizeHeight, view.paddingTop + view.paddingBottom, 1600)
     }
 
     private fun applySize(id: Int, info: AppWidgetProviderInfo, frame: View, view: AppWidgetHostView, home: Boolean) {
         val size = store.widgetSize(id)
-        val (widths, heights) = ranges(info, frame)
+        val (widths, heights) = ranges(info, frame, view)
         val params = view.layoutParams as FrameLayout.LayoutParams
         val preferredWidth = if (home) ((frame.width / activity.resources.displayMetrics.density).toInt() - 72)
             .coerceIn(widths) else widths.last
@@ -199,7 +203,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
             info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0,
             info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0,
             readSize = { editingSize },
-            ranges = { ranges(info, frame) },
+            ranges = { ranges(info, frame, view) },
             onChange = { size ->
                 editingSize = size
                 store.setWidgetSize(id, if (size.width == (frame.width / density).toInt()) size.copy(width = 0) else size)

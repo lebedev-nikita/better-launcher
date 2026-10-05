@@ -169,7 +169,8 @@
         "gaps": "Both track the selected dp at 1:1 scale",
         "height": "Reserve both 32dp maximum gaps; labels grow with system font scale",
         "accessibility": "Single summary announces both gaps; decorative children excluded"
-      }
+      },
+      "hostPadding": "Zero top/bottom framework padding; retain side insets and provider-owned padding"
     }
   },
   "components": [
