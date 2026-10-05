@@ -89,3 +89,10 @@ Debug assembly, all 14 unit tests and lint passed with 0 errors and the same 27 
 ## Restored widget CLOCK_TICK review — 2026-10-05
 
 Review verdict: ready for this feedback change. Widget resizing again requests native CLOCK_TICK on every supported Android version. Its amplitude follows the device/system because View.performHapticFeedback exposes no strength parameter. All 14 unit tests and all 10 targeted instrumentation tests passed on each dedicated API 31/API 36 emulator, including exact feedback type/count and native widget interaction. Signed-release smoke passed on both; the API 36 initial swipe timeout passed on the repeated gesture and complete smoke rerun. Editor captures confirm portrait, 945×2100/font scale 1.3 and actual 2400×1080 landscape, resizing and Done/Back/HOME. Test fixtures and temporary display settings were removed/restored. Debug/release lint has 0 errors and the same 27 existing warnings. Physical feedback strength remains unverified. Scoped checks, retries and APK verification are recorded in [rc.30](releases/0.2.0-rc.30.md); captures are local in `.impeccable/review/rc30/`.
+
+
+## Inline ordering review — 2026-10-05
+
+Review verdict: ready for this change. On dedicated Android 12/API 31 and Android 16/API 36 emulators, actual app/folder rows and live hosted widgets reorder on their existing home/page surface without an order sheet. Native captures confirm 48dp controls, preserved label width and fixed Done in portrait, 945×2100/font scale 1.3, landscape (API 31: 2160×1080, API 36: 2400×1080) and left-handed mode. Drag, arrows, saved order after process restart, Back and HOME passed; temporary display/font/rotation settings and fixture widgets were restored. Full instrumentation suites passed 30/30 on both versions. Local evidence: `.impeccable/review/inline-order/`.
+
+Signed release APK also passed inline favorites drag/arrows/Done and the complete smoke script on both versions; no launcher runtime crashes were found.
