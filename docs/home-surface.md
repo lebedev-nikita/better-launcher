@@ -112,6 +112,10 @@ Review verdict: ready for this layout change. Native Android 12/API 31 and Andro
 
 Before integrating the parallel rc.32 menu changes, 14 unit tests passed and debug lint had 0 errors/27 existing warnings. API 36 passed all 30 instrumentation tests; API 31 passed 29/30 with temporary system HOME, and its remaining app-menu test passed separately. Earlier API 31 ActivityScenario teardown, system transaction and HOME timeout failures remain recorded in [rc.33](releases/0.2.0-rc.34.md). After integrating rc.32, the debug build, 14 unit tests and lint passed again with the same 27 warnings, and complete instrumentation suites passed 30/30 on both versions. The verified home/widget ordering layout is retained by the merge. Final signed-APK checks are recorded in the GitHub Release. Full TalkBack and physical/OEM rendering remain unverified.
 
+## Всплывающие сообщения
+
+Все сообщения Better Launcher, включая «Приложение скрыто» с действием «Отменить», можно закрыть горизонтальным смахиванием в любую сторону. Они исчезают максимум через три секунды, в том числе при удержании пальца. Короткий или отменённый жест возвращает сообщение на место; закрытие не отменяет выполненное действие. Новое сообщение заменяет предыдущее. Escape/Delete при фокусе и accessibility-действие закрытия доступны без свайпа. Сообщения учитывают system/cutout/IME insets и растут при переносе текста.
+
 
 ## Flat app management menu
 
