@@ -171,16 +171,13 @@ class WidgetController(private val activity: MainActivity, private val store: La
                     .onFailure { activity.message("Не удалось открыть настройки приложения") }
             }
             if (!home && store.pageWidgets.size > 1) command(Glyph.REORDER, "Изменить порядок") { editOrder() }
-            command(Glyph.RESIZE, "Переместить и изменить размер") { resize(id, info, frame, view) }
+            command(Glyph.MOVE, "Переместить и изменить размер") { resize(id, info, frame, view) }
             if (info.configure != null) command(Glyph.EDIT, "Настройки виджета") {
                 runCatching { host.startAppWidgetConfigureActivityForResult(activity, id, 0, RECONFIGURE, null) }
                     .onFailure { activity.message("Приложение не смогло открыть настройки виджета") }
             }
-            command(if (home) Glyph.WIDGETS else Glyph.STAR, if (home) "На экран виджетов" else "На главный экран") {
-                store.homeWidgetId = if (home) null else id; showDestination(home)
-            }
-            if (store.widgetSize(id) != null) command(Glyph.RESIZE, "Сбросить размер и положение") {
-                store.setWidgetSize(id, null); applySize(id, info, frame, view, home)
+            if (!home) command(Glyph.STAR, "На главный экран") {
+                store.homeWidgetId = id; showDestination(home)
             }
             command(Glyph.PLUS, "Добавить виджет") { add() }
             command(Glyph.DELETE, "Удалить виджет") {

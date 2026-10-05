@@ -28,7 +28,7 @@ class WallpaperScrimView(context: Context) : View(context) {
     }
 }
 
-enum class Glyph { SEARCH, SETTINGS, BACK, CLOSE, MORE, UP, DOWN, CHEVRON, FOLDER, PLUS, CHECK, SUN, PLAY, PAUSE, NEXT, PREVIOUS, EDIT, NOTIFICATIONS, WIDGETS, STAR, INFO, DELETE, HIDE, REORDER, RESIZE }
+enum class Glyph { SEARCH, SETTINGS, BACK, CLOSE, MORE, UP, DOWN, CHEVRON, FOLDER, PLUS, CHECK, SUN, PLAY, PAUSE, NEXT, PREVIOUS, EDIT, NOTIFICATIONS, WIDGETS, STAR, INFO, DELETE, HIDE, REORDER, MOVE }
 
 class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE) : View(context) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.8f; strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND }
@@ -51,7 +51,11 @@ class GlyphView(context: Context, val glyph: Glyph, var color: Int = Color.WHITE
             Glyph.CHEVRON -> path(9f, 6f, 15f, 12f, 9f, 18f)
             Glyph.UP -> path(5f, 15f, 12f, 8f, 19f, 15f)
             Glyph.DOWN -> path(5f, 9f, 12f, 16f, 19f, 9f)
-            Glyph.RESIZE -> { path(3f, 7f, 3f, 3f, 7f, 3f); path(17f, 3f, 21f, 3f, 21f, 7f); path(21f, 17f, 21f, 21f, 17f, 21f); path(7f, 21f, 3f, 21f, 3f, 17f); line(8f, 16f, 16f, 8f) }
+            Glyph.MOVE -> {
+                line(3f, 12f, 21f, 12f); line(12f, 3f, 12f, 21f)
+                path(6f, 9f, 3f, 12f, 6f, 15f); path(18f, 9f, 21f, 12f, 18f, 15f)
+                path(9f, 6f, 12f, 3f, 15f, 6f); path(9f, 18f, 12f, 21f, 15f, 18f)
+            }
             Glyph.REORDER -> { for (y in listOf(6f, 12f, 18f)) line(5f, y, 19f, y) }
             Glyph.STAR -> path(12f, 2f, 15f, 8.5f, 22f, 9.5f, 17f, 14.5f, 18.2f, 22f, 12f, 18.5f, 5.8f, 22f, 7f, 14.5f, 2f, 9.5f, 9f, 8.5f, 12f, 2f)
             Glyph.INFO -> { canvas.drawCircle(12f, 12f, 9f, paint); line(12f, 11f, 12f, 17f); line(12f, 7f, 12f, 7.2f) }
