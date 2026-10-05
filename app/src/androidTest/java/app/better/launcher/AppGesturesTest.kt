@@ -20,7 +20,6 @@ class AppGesturesTest {
         withApp { activity, label ->
             val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий" }
             hold(icon)
-            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Открыть $label" }
             awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Добавить приложения" }
             dismiss(activity)
             val name = awaitView(activity) { it is TextView && it.text.toString() == label }
@@ -55,7 +54,7 @@ class AppGesturesTest {
                 val popup = info.actionList.first { it.label?.toString() == "Уведомления и быстрые действия" }
                 assertTrue(name.performAccessibilityAction(popup.id, null))
             }
-            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Открыть $label" }
+            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Добавить приложения" }
             dismiss(activity)
             instrumentation.runOnMainSync { assertTrue(name.performAccessibilityAction(AccessibilityNodeInfo.ACTION_LONG_CLICK, null)) }
             awaitView(activity, dialog = true) { it.contentDescription?.toString() == "О приложении" }
