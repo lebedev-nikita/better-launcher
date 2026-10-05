@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
             val ime = insets.getInsets(WindowInsets.Type.ime())
             screen.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
             updateRailBounds()
-            currentMessage?.let { updateMessageInsets(it, insets) }
+            currentMessage?.takeIf { it.parent === root }?.let { updateMessageInsets(it, insets) }
             insets
         }
         setContentView(root)
@@ -1110,9 +1110,27 @@ class MainActivity : AppCompatActivity() {
         }
         bar.addView(text(value, 14f, secondary), LinearLayout.LayoutParams(0, -2, 1f))
         if (undo != null) bar.addView(action(undo) { bar.dismiss(); onUndo() }.apply { setTextColor(secondary) })
+        bar.setOnApplyWindowInsetsListener { _, insets -> updateMessageInsets(bar, insets); insets }
+        bar.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(view: View) = Unit
+            override fun onViewDetachedFromWindow(view: View) { if (currentMessage === bar) currentMessage = null }
+        })
         currentMessage = bar
         root.addView(bar, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { leftMargin = dp(16); rightMargin = dp(16); bottomMargin = dp(84) })
         root.rootWindowInsets?.let { updateMessageInsets(bar, it) }
+        // Choose the active window after the action has finished closing any menus.
+        root.post {
+            if (currentMessage !== bar) return@post
+            val host = currentDialog?.takeIf { it.isShowing }?.window?.decorView as? FrameLayout ?: root
+            if (host !== root) {
+                val params = FrameLayout.LayoutParams(bar.layoutParams as FrameLayout.LayoutParams)
+                root.removeView(bar)
+                currentMessage = bar
+                host.addView(bar, params)
+                host.rootWindowInsets?.let { updateMessageInsets(bar, it) }
+                bar.requestApplyInsets()
+            }
+        }
     }
     private fun updateMessageInsets(bar: View, insets: WindowInsets) {
         val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())

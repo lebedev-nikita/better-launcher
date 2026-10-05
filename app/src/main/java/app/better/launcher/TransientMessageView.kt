@@ -1,6 +1,7 @@
 package app.better.launcher
 
 import android.content.Context
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.ViewConfiguration
@@ -17,6 +18,7 @@ class TransientMessageView(context: Context) : LinearLayout(context) {
     private var downY = 0f
     private var dragging = false
     private var dismissed = false
+    private var expiresAt = 0L
 
     init {
         isClickable = true
@@ -26,7 +28,8 @@ class TransientMessageView(context: Context) : LinearLayout(context) {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        postDelayed(timeout, 3000)
+        if (expiresAt == 0L) expiresAt = SystemClock.uptimeMillis() + 3000
+        postDelayed(timeout, (expiresAt - SystemClock.uptimeMillis()).coerceAtLeast(0))
     }
 
     override fun onDetachedFromWindow() {
