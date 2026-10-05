@@ -112,6 +112,30 @@ class TransientMessageTest {
         }
     }
 
+    @Test fun feedbackInAnOpenMenuUsesTheActiveWindowAndCanBeSwiped() = launch { scenario ->
+        var app: AppEntry? = null
+        await { scenario.onActivity { app = it.catalog.apps.firstOrNull() }; app != null }
+        lateinit var dialog: android.app.Dialog
+        scenario.onActivity {
+            MainActivity::class.java.getDeclaredMethod("showAppMenu", AppEntry::class.java).apply { isAccessible = true }.invoke(it, app!!)
+            dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(it) as android.app.Dialog
+        }
+        await { dialog.window!!.decorView.hasWindowFocus() }
+        lateinit var bar: TransientMessageView
+        scenario.onActivity { it.message("Не удалось выполнить действие"); bar = message(it) }
+        await { bar.windowToken === dialog.window!!.decorView.windowToken && bar.width > 0 }
+        scenario.onActivity {
+            val down = SystemClock.uptimeMillis()
+            val start = bar.width / 2f
+            touch(bar, MotionEvent.ACTION_DOWN, start, down)
+            touch(bar, MotionEvent.ACTION_MOVE, start - bar.width * .4f, down)
+            touch(bar, MotionEvent.ACTION_UP, start - bar.width * .4f, down)
+            assertNull(bar.parent)
+            assertTrue("Dismissing feedback must keep the menu open", dialog.isShowing)
+            dialog.dismiss()
+        }
+    }
+
     @Test fun hidingAppOffersWorkingUndoAndDismissalKeepsItHidden() {
         val store = LauncherStore(context)
         val original = store.export()
