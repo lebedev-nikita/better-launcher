@@ -2,6 +2,7 @@
 # Temporary cold-boot reproducer, independent of the APK and Gradle.
 set -euo pipefail
 probe_serial=${1:?Disposable emulator serial required}
+probe_boot=${2:-cold}
 [[ "$probe_serial" == emulator-* ]] || exit 2
 probe_output=app/build/emulator-probe
 mkdir -p "$probe_output"
@@ -20,6 +21,24 @@ probe_capture() {
 trap probe_capture EXIT
 cat "${ANDROID_HOME}/system-images/android-36/google_apis/x86_64/source.properties" > "$probe_output/image.txt"
 sleep 60
+if [[ "$probe_boot" == warm ]]; then
+  probe_adb logcat -d > "$probe_output/cold-logcat.txt"
+  probe_adb shell dumpsys activity activities > "$probe_output/cold-activities.txt"
+  probe_adb exec-out screencap -p > "$probe_output/cold-screen.png"
+  probe_old_boot=$(probe_adb shell cat /proc/sys/kernel/random/boot_id | tr -d '\r')
+  probe_adb reboot
+  for probe_attempt in {1..150}; do
+    probe_new_boot=$(probe_adb shell cat /proc/sys/kernel/random/boot_id 2>/dev/null | tr -d '\r' || true)
+    probe_completed=$(probe_adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
+    if [[ -n "$probe_new_boot" && "$probe_new_boot" != "$probe_old_boot" && "$probe_completed" == 1 ]]; then
+      break
+    fi
+    sleep 2
+  done
+  [[ -n "$probe_new_boot" && "$probe_new_boot" != "$probe_old_boot" && "$probe_completed" == 1 ]] || exit 1
+  echo '[BOOT-PROBE] New boot ID confirmed; waiting for warm-boot services.'
+  sleep 60
+fi
 probe_adb shell input keyevent KEYCODE_WAKEUP
 probe_adb shell wm dismiss-keyguard
 probe_adb shell input keyevent KEYCODE_HOME
@@ -30,7 +49,7 @@ for probe_attempt in {1..15}; do
   sleep 2
 done
 probe_adb logcat -d > "$probe_output/logcat.txt"
-if rg -q 'ANR in com.android.systemui' "$probe_output/logcat.txt"; then
+if grep -q 'ANR in com.android.systemui' "$probe_output/logcat.txt"; then
   echo '[BOOT-PROBE] System UI timed out during cold boot.' >&2
   exit 1
 fi
