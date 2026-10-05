@@ -191,7 +191,7 @@ Favorites, app details, notifications/shortcuts, and uninstall remain directly a
 
 ### Favorites Order
 
-Home exposes “Изменить порядок избранного” below favorites. Ordering keeps the actual app/folder rows on home. One 48dp drag handle sits at the trailing edge of the title line, vertically centered with the name, including wrapped names and notification previews below. There is no second controls line or visible up/down button; popup/folder chevrons are hidden during ordering while row taps retain their actions. The handle remains inside the favorites column, clear of the alphabet and system Back edge. With keyboard focus, up/down keys move the item; named TalkBack actions expose valid upward/downward moves without extra buttons. Boundary actions are omitted. Drag/drop saves, cancellation restores positions, and edge scrolling reaches long lists. Done stays in the fixed footer; Back ends ordering and HOME restores home. Apps/folders share the saved full list, retaining unavailable IDs. Refresh waits while ordering. App selection and folder creation retain their management sheet.
+Home has no reorder button below favorites. “Изменить порядок” in a favorite app’s long-press menu enables ordering. Ordering keeps the actual app/folder rows on home. One 48dp drag handle sits at the trailing edge of the title line, vertically centered with the name, including wrapped names and notification previews below. There is no second controls line or visible up/down button; popup/folder chevrons are hidden during ordering while row taps retain their actions. The handle remains inside the favorites column, clear of the alphabet and system Back edge. With keyboard focus, up/down keys move the item; named TalkBack actions expose valid upward/downward moves without extra buttons. Boundary actions are omitted. Drag/drop saves, cancellation restores positions, and edge scrolling reaches long lists. Done stays in the fixed footer; Back ends ordering and HOME restores home. Apps/folders share the saved full list, retaining unavailable IDs. Refresh waits while ordering. App selection and folder creation retain their management sheet.
 
 ### Inputs / Fields
 
@@ -241,9 +241,9 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.34
+## Current candidate 0.2.0-rc.35
 
-Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites reorder in place with keyboard/accessibility moves on the drag handle. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
+Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites enter in-place ordering from the long-press app menu; there is no duplicate reorder button below favorites. Keyboard/accessibility moves remain on the drag handle. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
 ## Widget edge editor
 
