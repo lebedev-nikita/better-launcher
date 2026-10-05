@@ -164,9 +164,9 @@ The phone UI uses one vertical content column. Home content and the app list res
 
 The alphabet forms a compact column anchored 24dp above the bottom of its inset-safe area (above the home footer). Letter centers are 22dp apart at default font scale; the step grows with larger system fonts and shrinks only to fit short windows with 24dp top/bottom clearance. Drawing and touch selection share this geometry, on either side of the screen.
 
-The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). Without a home widget, home top padding is 14% of viewport height, clamped to (36–126dp). A home widget instead starts 56dp below the inset-safe top (24dp in short windows) in a separate full-width region. Its default centered width leaves approximately 36dp on each side, plus framework/provider padding; favorites and information rows keep their alphabet margins. Below a viewport height (500dp), it becomes (24dp), the optional information-to-list gap decreases, while the alphabet always shows only populated Latin app sections plus favorites and a final hash. The smaller home padding is a height adaptation; no width breakpoint or tablet layout is implemented.
+The home list sits in a `ScrollView` above a separate footer with a minimum height (66dp). All home content starts immediately at the inset-safe top, with zero decorative top padding, in portrait and short windows, with or without a widget. System bars and cutouts remain reserved. The home widget has a separate full-width region; its default centered width leaves approximately 36dp on each side, plus framework/provider padding. Favorites and information rows keep their alphabet margins. Below a viewport height (500dp), the optional information-to-list gap decreases. No width breakpoint or tablet layout is implemented.
 
-Home has no built-in clock or date. When no weather, widget, or media content is present, favorites start directly after the top padding; otherwise an (18dp) short-window or (30dp) normal gap separates that content from favorites. Calendar events remain available from settings.
+Home has no built-in clock or date. When no weather, widget, or media content is present, favorites start directly at the inset-safe top; otherwise an (18dp) short-window or (30dp) normal gap separates that content from favorites. Calendar events remain available from settings.
 
 Normal app rows have a minimum height (62dp); compact mode uses (54dp). Installed app icons are (38dp) with a trailing gap (16dp). Settings rows have a minimum height (76dp), grow with their text, and separate label from description with (5dp). The shared spacing steps in the frontmatter recur across actions, content, and containers; they do not imply an enforced grid.
 
@@ -254,7 +254,7 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.26
+## Current candidate 0.2.0-rc.28
 
 Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites use a recycled drag editor with keyboard/accessibility arrows. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
@@ -270,3 +270,8 @@ The live widget stays on its current screen. Navy 2dp lines mark its four edges;
 ## Widget resize feedback
 
 Every applied width/height change emits one native CLOCK_TICK, including keyboard and accessibility input. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
+
+
+## Top edge controls
+
+The widget editor reserves top system-bar/cutout insets for the complete 48dp touch target. When the widget starts at the inset-safe top, the upper handle is placed inside its bounds; the widget itself gains no layout padding. Saved local movement offsets still apply.

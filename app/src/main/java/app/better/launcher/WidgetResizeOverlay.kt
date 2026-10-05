@@ -46,6 +46,7 @@ fun widgetResizeOverlay(
     private var observer: ViewTreeObserver? = null
     private var barsLeft = 0
     private var barsRight = 0
+    private var barsTop = 0
     private val preDraw = ViewTreeObserver.OnPreDrawListener {
         if (target.isAttachedToWindow) positionHandles() else onFinish()
         true
@@ -73,7 +74,7 @@ fun widgetResizeOverlay(
         }
         setOnApplyWindowInsetsListener { _, insets ->
             val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
-            barsLeft = bars.left; barsRight = bars.right
+            barsLeft = bars.left; barsRight = bars.right; barsTop = bars.top
             (toolbar.layoutParams as LayoutParams).apply {
                 leftMargin = context.dp(28) + bars.left; rightMargin = context.dp(28) + bars.right
                 bottomMargin = context.dp(12) + bars.bottom
@@ -123,7 +124,7 @@ fun widgetResizeOverlay(
         if (dragParams.width != target.width || dragParams.height != target.height) {
             dragParams.width = target.width; dragParams.height = target.height; dragSurface.layoutParams = dragParams
         }
-        val safeTop = paddingTop + context.dp(24).toFloat()
+        val safeTop = maxOf(paddingTop, barsTop) + context.dp(24).toFloat()
         val safeBottom = (toolbar.top - context.dp(32)).toFloat().coerceAtLeast(safeTop)
         val top = bounds.top.coerceIn(safeTop, safeBottom)
         val bottom = bounds.bottom.coerceIn(top, safeBottom)

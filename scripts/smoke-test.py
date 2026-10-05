@@ -75,7 +75,7 @@ print("PASS: home has no built-in clock or date")
 scroll = next(n for n in hierarchy().iter("node") if n.get("class") == "android.widget.ScrollView")
 x1, y1, x2, y2 = map(int, re.findall(r"\d+", scroll.get("bounds")))
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
-y = int(y1 + 12 * density)  # free space above favorites, inside system insets
+y = int(y2 - 12 * density)  # initial favorites leave free wallpaper above the footer
 adb("shell", "input", "swipe", str(int(x2 * .25)), str(y), str(int(x2 * .65)), str(y), "350")
 wait_for("Виджеты")
 title = wait_for("Виджеты")

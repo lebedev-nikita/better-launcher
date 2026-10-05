@@ -34,6 +34,8 @@ class WidgetHomeLayoutTest {
         fun capture(name: String) {
             if (capturePrefix == null) return
             instrumentation.waitForIdleSync()
+            // Accessibility/layout completion precedes the compositor's next displayed frame.
+            SystemClock.sleep(200)
             val bitmap = instrumentation.uiAutomation.takeScreenshot()
             java.io.File(instrumentation.targetContext.filesDir, "$capturePrefix-$name.png").outputStream().use {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
@@ -90,8 +92,8 @@ class WidgetHomeLayoutTest {
                     assertEquals(frame.width / 2f, view.left + view.width / 2f, 1f)
                     val bounds = Rect().also { view.getGlobalVisibleRect(it) }
                     val screenBounds = Rect().also { screen.getGlobalVisibleRect(it) }
-                    assertTrue("Widget starts near the top, independently of the favorites padding",
-                        bounds.top - screenBounds.top - screen.paddingTop <= activity.dp(72))
+                    assertEquals("Widget starts immediately below system insets",
+                        screenBounds.top + screen.paddingTop, bounds.top)
                 }
                 capture("default-$left")
                 if (capturePrefix != null && activity.resources.displayMetrics.heightPixels / activity.resources.displayMetrics.density > 500) {
@@ -108,6 +110,13 @@ class WidgetHomeLayoutTest {
                 await { node("Переместить и изменить размер") != null }
                 assertTrue(node("Переместить и изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
                 await { node("Правая граница виджета") != null }
+                instrumentation.runOnMainSync {
+                    val handle = descendants(activity.window.decorView).first { it.contentDescription == "Верхняя граница виджета" }
+                    val handleBounds = Rect().also { handle.getGlobalVisibleRect(it) }
+                    val screen = descendants(activity.window.decorView).filterIsInstance<PageSwipeLayout>().single()
+                    val screenBounds = Rect().also { screen.getGlobalVisibleRect(it) }
+                    assertTrue("Top handle stays below system bars", handleBounds.top >= screenBounds.top + screen.paddingTop)
+                }
                 assertTrue(node("Правая граница виджета")!!.performAction(android.R.id.accessibilityActionSetProgress,
                     Bundle().apply { putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, 1600f) }))
                 fun maximumWidth(): Int {
@@ -135,6 +144,19 @@ class WidgetHomeLayoutTest {
                     assertEquals(activity.dp(24), (widget().layoutParams as android.widget.FrameLayout.LayoutParams).topMargin)
                 }
             }
+            instrumentation.runOnMainSync {
+                activity.store.homeWidgetId = null
+                activity.showHome()
+            }
+            await { descendants(activity.window.decorView).any { it.tag == PageSwipeLayout.BLOCK_SWIPE && it.isClickable && it.height > 0 } }
+            instrumentation.runOnMainSync {
+                val row = descendants(activity.window.decorView).first { it.tag == PageSwipeLayout.BLOCK_SWIPE && it.isClickable }
+                val bounds = Rect().also { row.getGlobalVisibleRect(it) }
+                val screen = descendants(activity.window.decorView).filterIsInstance<PageSwipeLayout>().single()
+                val screenBounds = Rect().also { screen.getGlobalVisibleRect(it) }
+                assertEquals("Favorites also start immediately below system insets", screenBounds.top + screen.paddingTop, bounds.top)
+            }
+            capture("favorites")
         } finally {
             instrumentation.runOnMainSync {
                 host.deleteAppWidgetId(id)
