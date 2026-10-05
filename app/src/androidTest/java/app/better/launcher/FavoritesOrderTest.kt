@@ -71,9 +71,12 @@ class FavoritesOrderTest {
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                 await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Перетащить $firstLabel" } == null }
                 assertNull(find(instrumentation.uiAutomation.rootInActiveWindow) { it.text?.toString() == "Изменить порядок избранного" })
-                val folderBounds = Rect().also { node("Test folder").getBoundsInScreen(it) }
-                val appBounds = Rect().also { node(secondLabel).getBoundsInScreen(it) }
-                assertTrue("Home must display the saved favorite order", folderBounds.top < appBounds.top)
+                // Back rebuilds the rows; accessibility bounds settle after the next layout.
+                await {
+                    val folderBounds = Rect().also { node("Test folder").getBoundsInScreen(it) }
+                    val appBounds = Rect().also { node(secondLabel).getBoundsInScreen(it) }
+                    folderBounds.top < appBounds.top
+                }
                 scenario.recreate()
                 assertEquals(reordered, LauncherStore(context).favorites)
                 val backup = store.export()

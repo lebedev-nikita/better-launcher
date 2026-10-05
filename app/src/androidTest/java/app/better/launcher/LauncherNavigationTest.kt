@@ -68,6 +68,7 @@ class LauncherNavigationTest {
             assertVisible(activity, "Виджеты")
             // Dismissing the provider picker keeps the widget page open.
             click(activity, "Добавить виджет")
+            bounds(activity, "Добавить виджет", dialog = true)
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             assertVisible(activity, "Виджеты")
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
@@ -103,13 +104,15 @@ class LauncherNavigationTest {
     private fun assertVisible(activity: MainActivity, label: String, stage: String = label) {
         bounds(activity, label, stage)
     }
-    private fun bounds(activity: MainActivity, label: String, stage: String = label): Rect {
+    private fun bounds(activity: MainActivity, label: String, stage: String = label, dialog: Boolean = false): Rect {
         val deadline = SystemClock.uptimeMillis() + 5000
         while (SystemClock.uptimeMillis() < deadline) {
             val bounds = Rect()
             var visible = false
             instrumentation.runOnMainSync {
-                visible = activity.hasWindowFocus() && find(activity.window.decorView, label)?.getGlobalVisibleRect(bounds) == true && !bounds.isEmpty
+                val root = if (dialog) (MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }
+                    .get(activity) as? android.app.Dialog)?.window?.decorView else activity.window.decorView
+                visible = root?.hasWindowFocus() == true && find(root, label)?.getGlobalVisibleRect(bounds) == true && !bounds.isEmpty
             }
             if (visible) return bounds
             SystemClock.sleep(50)

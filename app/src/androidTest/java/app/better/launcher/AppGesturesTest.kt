@@ -61,6 +61,19 @@ class AppGesturesTest {
         }
     }
 
+    @Test fun homeRefreshDuringIconHoldKeepsQuickActions() {
+        withApp { activity, label ->
+            val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий" }
+            gesture(icon, 0, 850) {
+                instrumentation.runOnMainSync {
+                    MainActivity::class.java.getDeclaredMethod("refreshHomePreservingScroll")
+                        .apply { isAccessible = true }.invoke(activity)
+                }
+            }
+            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Добавить приложения" }
+        }
+    }
+
     private fun withApp(hideIcons: Boolean = false, test: (MainActivity, String) -> Unit) {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
@@ -118,7 +131,7 @@ class AppGesturesTest {
     }
     private fun hold(view: View) = gesture(view, 0, 850)
     private fun swipe(view: View, direction: Int) = gesture(view, direction, 300)
-    private fun gesture(view: View, direction: Int, duration: Int) {
+    private fun gesture(view: View, direction: Int, duration: Int, afterDown: () -> Unit = {}) {
         val rect = Rect()
         instrumentation.runOnMainSync { assertTrue(view.getGlobalVisibleRect(rect)) }
         val width = instrumentation.targetContext.resources.displayMetrics.widthPixels
@@ -132,6 +145,7 @@ class AppGesturesTest {
             event.recycle()
         }
         send(MotionEvent.ACTION_DOWN, x)
+        afterDown()
         for (step in 1..10) {
             SystemClock.sleep((duration / 10).toLong())
             send(MotionEvent.ACTION_MOVE, x + direction * distance * step / 10f)

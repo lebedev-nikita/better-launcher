@@ -134,7 +134,8 @@
       "nameHold": "launcher app management",
       "homeRightSwipe": "widget page, including app/folder rows",
       "rowSwipePopup": false,
-      "hiddenIconAlternative": "named quick-actions accessibility action on the name and management menu entry"
+      "hiddenIconAlternative": "named quick-actions accessibility action on the name and management menu entry",
+      "homeRefresh": "deferred until touch end or sheet dismissal, preserving scroll"
     }
   },
   "components": [

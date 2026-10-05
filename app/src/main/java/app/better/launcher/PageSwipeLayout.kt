@@ -13,11 +13,31 @@ import kotlin.math.abs
 class PageSwipeLayout(context: Context) : FrameLayout(context) {
     var direction = 0 // +1: widgets to the left of home; -1: home to the right of widgets.
     var onSwipe: () -> Unit = {}
+    var onTouchFinished: () -> Unit = {}
+    var isTouching = false
+        private set
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
     private var downX = 0f
     private var downY = 0f
     private var eligible = false
     private var swiping = false
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) isTouching = true
+        return try {
+            super.dispatchTouchEvent(event)
+        } finally {
+            if (isTouching && (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL)) {
+                isTouching = false
+                onTouchFinished()
+            }
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        isTouching = false
+        super.onDetachedFromWindow()
+    }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {

@@ -97,6 +97,9 @@ class MainActivity : AppCompatActivity() {
         root.addView(wallpaperScrim, FrameLayout.LayoutParams(-1, -1))
         screen = PageSwipeLayout(this)
         screen.onSwipe = { if (page == "home") showWidgets(true) else if (page == "widgets") returnFromWidgets() }
+        screen.onTouchFinished = {
+            if (notificationRefreshPending && page == "home" && resumed) refreshHomePreservingScroll()
+        }
         root.addView(screen, FrameLayout.LayoutParams(-1, -1))
         rail = AlphabetRail(this)
         rail.onSelect = { letter ->
@@ -229,7 +232,7 @@ class MainActivity : AppCompatActivity() {
         rail.letters = AppListRules.railLetters(sections)
     }
     private fun refreshHomePreservingScroll() {
-        if (widgets.isResizing || orderingFavorites) { notificationRefreshPending = true; return }
+        if (screen.isTouching || currentDialog != null || widgets.isResizing || orderingFavorites) { notificationRefreshPending = true; return }
         val y = homeScroll?.scrollY ?: 0
         showHome(); homeScroll?.post { homeScroll?.scrollTo(0, y) }
     }
