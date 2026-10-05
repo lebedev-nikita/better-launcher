@@ -1,6 +1,7 @@
 package app.better.launcher
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.HapticFeedbackConstants
@@ -61,7 +62,9 @@ class WidgetResizeHapticTest {
                         50f + if (horizontal) offset else 0f, 50f + if (horizontal) 0f else offset, 0)
                     try { assertTrue(view.onTouchEvent(event)) } finally { event.recycle() }
                 }
-                fun ticks(count: Int) = assertEquals(List(count) { HapticFeedbackConstants.CLOCK_TICK }, feedback)
+                val expectedTick = if (Build.VERSION.SDK_INT >= 34) HapticFeedbackConstants.SEGMENT_FREQUENT_TICK
+                    else HapticFeedbackConstants.CLOCK_TICK
+                fun ticks(count: Int) = assertEquals(List(count) { expectedTick }, feedback)
                 for ((index, label) in labels.withIndex()) {
                     size = initial; feedback.clear()
                     val handle = control(label)
