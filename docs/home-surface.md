@@ -12,7 +12,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 ## Favorites order
 
-Home shows “Изменить порядок избранного” below favorites. Ordering retains the actual app/folder rows with one trailing 48dp handle on the same title line, centered with the name, including wrapped labels and notification previews below. There is no separate controls line or visible up/down button. Keyboard up/down and named accessibility moves live on the focused handle; boundaries omit the corresponding action. Dropping saves, cancel preserves order, and edge scrolling supports long lists. Done remains in the fixed footer; Back ends the mode and HOME restores normal home. Unavailable IDs and existing selection/folder management remain intact.
+Home has no reorder button below favorites. “Изменить порядок” in a favorite app’s long-press menu enables ordering on home. Ordering retains the actual app/folder rows with one trailing 48dp handle on the same title line, centered with the name, including wrapped labels and notification previews below. There is no separate controls line or visible up/down button. Keyboard up/down and named accessibility moves live on the focused handle; boundaries omit the corresponding action. Dropping saves, cancel preserves order, and edge scrolling supports long lists. Done remains in the fixed footer; Back ends the mode and HOME restores normal home. Unavailable IDs and existing selection/folder management remain intact.
 
 ## Widgets and navigation
 

@@ -286,11 +286,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         favoriteColumn.addView(favoriteItems)
-        if (favorites.size > 1 && !orderingFavorites) favoriteColumn.addView(action(
-            "Изменить порядок избранного"
-        ) { orderingFavorites = true; showHome() }.apply {
-            setPadding(0, dp(8), dp(8), dp(8))
-        })
         favoriteColumn.addView(gap(14))
         if (!store.bool("gesturesLearned")) {
             favoriteColumn.addView(text("Проведите по алфавиту, чтобы найти приложение", 12f, secondary).apply { setPadding(0, dp(8), dp(6), dp(8)) })

@@ -256,7 +256,7 @@
       },
       {
         "name": "The Favorites Order Rule",
-        "body": "Favorites reorder on home with a single 48dp handle at the trailing edge of each title line, vertically centered with the app/folder name, including wrapped labels. No separate button line or visible up/down buttons. Keyboard arrows and valid named accessibility moves belong to the handle; boundary actions are omitted. Preserve alphabet margins, Back corridor, full IDs, edge scrolling, save on drop, cancellation, fixed Done and Back/HOME exit.",
+        "body": "Favorites enter ordering from the long-press app menu, with no duplicate button below favorites. They reorder on home with a single 48dp handle at the trailing edge of each title line, vertically centered with the app/folder name, including wrapped labels. No separate button line or visible up/down buttons. Keyboard arrows and valid named accessibility moves belong to the handle; boundary actions are omitted. Preserve alphabet margins, Back corridor, full IDs, edge scrolling, save on drop, cancellation, fixed Done and Back/HOME exit.",
         "section": "components"
       }
     ],
