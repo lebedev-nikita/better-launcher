@@ -37,7 +37,7 @@ class WidgetResizeGeometry(
         return -limit..limit
     }
     fun resizeWidth(size: WidgetSize, width: Int): WidgetSize {
-        val selected = snap(width, widths)
+        val selected = if (width >= widths.last) widths.last else snap(width, widths)
         return size.copy(width = selected, offsetX = snap(size.offsetX, horizontalRange(selected)))
     }
 

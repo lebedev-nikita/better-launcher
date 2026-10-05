@@ -235,35 +235,45 @@ class MainActivity : AppCompatActivity() {
         val (start, end) = contentMargins()
         val viewportDp = resources.displayMetrics.heightPixels / resources.displayMetrics.density
         val shortWindow = viewportDp < 500
-        content.setPadding(start, if (shortWindow) dp(24) else dp((viewportDp * .14f).coerceIn(36f, 126f)), end, dp(24))
+        val widgetBox = vertical(); widgets.renderHome(widgetBox)
+        val hasWidget = widgetBox.childCount > 0
+        val topPadding = if (shortWindow) dp(24) else if (hasWidget) dp(56)
+            else dp((viewportDp * .14f).coerceIn(36f, 126f))
+        // Widgets have their own inset-safe width; only app/information rows reserve the alphabet.
+        content.setPadding(0, topPadding, 0, dp(24))
+        fun insetColumn() = vertical().apply { setPadding(start, 0, end, 0) }
         if (store.string("weatherCity").isNotBlank()) {
             val line = horizontal()
             line.addView(GlyphView(this, Glyph.SUN), LinearLayout.LayoutParams(dp(24), dp(32)))
             weatherText = text(weatherLabel(), 14f, secondary).apply { setPadding(dp(8), 0, 0, 0) }
             line.addView(weatherText)
             line.minimumHeight = dp(48); line.isFocusable = true; line.background = touchBackground()
-            line.setOnClickListener { showWeather() }; content.addView(line)
+            line.setOnClickListener { showWeather() }; content.addView(insetColumn().apply { addView(line) })
         }
-        val widgetBox = vertical(); widgets.renderHome(widgetBox)
-        if (widgetBox.childCount > 0) { content.addView(gap(14)); content.addView(widgetBox) }
-        mediaView()?.let { content.addView(gap(12)); content.addView(it) }
+        if (hasWidget) {
+            if (content.isNotEmpty()) content.addView(gap(14))
+            content.addView(widgetBox)
+        }
+        mediaView()?.let { content.addView(gap(12)); content.addView(insetColumn().apply { addView(it) }) }
         if (content.isNotEmpty()) content.addView(gap(if (shortWindow) 18 else 30))
+        val favoriteColumn = insetColumn()
         val favorites = store.favorites.filter { catalog.find(it) != null || store.folder(it) != null }
         if (favorites.isEmpty()) {
-            content.addView(text(if (loadingApps) "Загружаем приложения…" else "Ваши приложения, всегда под рукой", 20f))
-            content.addView(gap(12)); content.addView(action("Выбрать избранные") { editFavorites() })
+            favoriteColumn.addView(text(if (loadingApps) "Загружаем приложения…" else "Ваши приложения, всегда под рукой", 20f))
+            favoriteColumn.addView(gap(12)); favoriteColumn.addView(action("Выбрать избранные") { editFavorites() })
         }
         favorites.forEach { id ->
             val folder = store.folder(id)
-            if (folder != null) content.addView(folderRow(folder)) else catalog.find(id)?.let { content.addView(appRow(it, true)) }
+            if (folder != null) favoriteColumn.addView(folderRow(folder)) else catalog.find(id)?.let { favoriteColumn.addView(appRow(it, true)) }
         }
-        if (favorites.size > 1) content.addView(action("Изменить порядок избранного") { editFavorites() }.apply {
+        if (favorites.size > 1) favoriteColumn.addView(action("Изменить порядок избранного") { editFavorites() }.apply {
             setPadding(0, dp(8), dp(8), dp(8))
         })
-        content.addView(gap(14))
+        favoriteColumn.addView(gap(14))
         if (!store.bool("gesturesLearned")) {
-            content.addView(text("Проведите по алфавиту, чтобы найти приложение", 12f, secondary).apply { setPadding(0, dp(8), dp(6), dp(8)) })
+            favoriteColumn.addView(text("Проведите по алфавиту, чтобы найти приложение", 12f, secondary).apply { setPadding(0, dp(8), dp(6), dp(8)) })
         }
+        content.addView(favoriteColumn)
         scroll.addView(content); homeLayout.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         val gesture = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onDown(e: MotionEvent) = true

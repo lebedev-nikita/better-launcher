@@ -277,7 +277,7 @@ fun widgetResizeOverlay(
         private fun progress(value: Int): Boolean {
             val size = readSize(); val selected = WidgetResizeGeometry.snap(value, range())
             onGestureStart()
-            change(if (isWidthHandle) geometry().resizeWidth(size, selected) else geometry().drag(size, edge,
+            change(if (isWidthHandle) geometry().resizeWidth(size, value) else geometry().drag(size, edge,
                 if (edge == WidgetEdge.TOP) size.height - selected else selected - size.height))
             return true
         }

@@ -10,6 +10,7 @@
 
 | Документ | Когда читать |
 | --- | --- |
+| [docs/releases/0.2.0-rc.26.md](docs/releases/0.2.0-rc.26.md) | Главный виджет по центру и на всю ширину |
 | [docs/releases/0.2.0-rc.27.md](docs/releases/0.2.0-rc.27.md) | Перестановка виджетов и прямой вход в порядок избранного |
 | [docs/releases/0.2.0-rc.25.md](docs/releases/0.2.0-rc.25.md) | Виброотклик при изменении размера виджета |
 | [docs/releases/0.2.0-rc.24.md](docs/releases/0.2.0-rc.24.md) | Перетаскивание виджета и мелкая сетка 12 dp |
@@ -214,6 +215,7 @@ AppWidgetHost слушает обновления между `onStart` и `onSto
 | [WidgetPickerTest](app/src/androidTest/java/app/better/launcher/WidgetPickerTest.kt) | Превью layout/image, отсутствие и повреждение превью, алфавит, выбор провайдера и отсутствие привязки при просмотре |
 | [LauncherNavigationTest](app/src/androidTest/java/app/better/launcher/LauncherNavigationTest.kt) | Кнопки экрана виджетов, отмена выбора, Back и HOME; стабильное положение алфавита между избранным и списком приложений |
 | [WidgetResizeGeometryTest](app/src/test/java/app/better/launcher/WidgetResizeGeometryTest.kt) | Четыре границы, центрирование ширины, верхний отступ и ограничения окна/провайдера |
+| [WidgetHomeLayoutTest](app/src/androidTest/java/app/better/launcher/WidgetHomeLayoutTest.kt) | Отдельная область главного виджета, центрирование, верхний отступ, полная ширина и сохранение для обеих сторон алфавита |
 | [WidgetResizeHapticTest](app/src/androidTest/java/app/better/launcher/WidgetResizeHapticTest.kt) | CLOCK_TICK на изменении размеров четырёх границ, повтор значения, пределы, отмена, отпускание, клавиатура/accessibility и тихое перемещение |
 | Android lint | `app/build/reports/lint-results-debug.html` |
 | [smoke-test.py](scripts/smoke-test.py) | Отсутствие встроенных часов и даты, UI-сценарии, включая экран виджетов, через adb и отсутствие аварий процесса лаунчера |
