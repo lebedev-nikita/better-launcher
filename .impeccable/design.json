@@ -262,7 +262,7 @@
       },
       {
         "name": "The Open List Rule",
-        "body": "Keep launcher app rows unboxed at rest and throughout favorites dragging; reserve opaque containers for sheets, settings, notification detail, and transient feedback, as the current build does.",
+        "body": "Keep launcher app rows unboxed at rest and throughout favorites and widget dragging; widget providers retain their own backgrounds; reserve opaque containers for sheets, settings, notification detail, and transient feedback, as the current build does.",
         "section": "elevation"
       },
       {
