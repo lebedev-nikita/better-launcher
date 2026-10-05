@@ -127,7 +127,7 @@ class TransientMessageTest {
                     // Use the actual long-press menu and hide action, not a synthetic store write.
                     menu.isAccessible = true; menu.invoke(it, entry)
                     val dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(it) as android.app.Dialog
-                    descendants(dialog.window!!.decorView).first { it.contentDescription == "Дополнительно" }.performClick()
+                    descendants(dialog.window!!.decorView).firstOrNull { it.contentDescription == "Дополнительно" }?.performClick()
                     descendants(dialog.window!!.decorView).first { it.contentDescription == "Скрыть приложение" }.performClick()
                     bar = message(it)
                     assertTrue(entry.id in store.hidden)
