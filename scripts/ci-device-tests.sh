@@ -22,6 +22,7 @@ device_adb() { adb -s "$ci_device_serial" "$@"; }
 capture() {
   device_adb logcat -d > "$ci_output/$ci_stage-logcat.txt" 2>&1 || true
   device_adb shell dumpsys activity activities > "$ci_output/$ci_stage-activities.txt" 2>&1 || true
+  device_adb shell dumpsys SurfaceFlinger > "$ci_output/$ci_stage-surfaceflinger.txt" 2>&1 || true
   device_adb shell dumpsys window windows > "$ci_output/$ci_stage-windows.txt" 2>&1 || true
   device_adb exec-out screencap -p > "$ci_output/$ci_stage.png" || true
   device_adb shell uiautomator dump /data/local/tmp/better-ci.xml >/dev/null 2>&1 || true
