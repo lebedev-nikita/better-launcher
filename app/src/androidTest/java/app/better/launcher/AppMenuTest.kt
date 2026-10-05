@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.WindowInsets
+import android.view.WindowInsetsAnimation
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.ScrollView
 import android.widget.TextView
@@ -118,13 +119,15 @@ class AppMenuTest {
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
 
             openMenu("Renamed app")
+            val backDialog = currentDialog(activity) as Dialog
+            val ime = observeIme(backDialog)
             node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Discard with Back")
-            val backDialog = currentDialog(activity) as Dialog
-            // IME appearance/hiding is asynchronous on cold CI emulators.
-            await(30000) { imeVisible(backDialog) }
+            // Insets report the target visibility before the animation finishes.
+            // Both Back presses must start with the keyboard in a settled state.
+            await(30000) { imeSettled(backDialog, ime, visible = true) }
             instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
-            await { !imeVisible(backDialog) }
+            await { imeSettled(backDialog, ime, visible = false) }
             instrumentation.runOnMainSync {
                 assertTrue("First Back must hide the keyboard and keep the editor", backDialog.isShowing)
             }
@@ -218,12 +221,26 @@ class AppMenuTest {
         }
         return dialog
     }
-    private fun imeVisible(dialog: Dialog): Boolean {
-        var visible = false
-        instrumentation.runOnMainSync {
-            visible = dialog.window?.decorView?.rootWindowInsets?.isVisible(WindowInsets.Type.ime()) == true
+    private class ImeAnimations : WindowInsetsAnimation.Callback(DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+        val running = mutableSetOf<WindowInsetsAnimation>()
+        override fun onPrepare(animation: WindowInsetsAnimation) {
+            if (animation.typeMask and WindowInsets.Type.ime() != 0) running.add(animation)
         }
-        return visible
+        override fun onProgress(insets: WindowInsets, runningAnimations: MutableList<WindowInsetsAnimation>): WindowInsets = insets
+        override fun onEnd(animation: WindowInsetsAnimation) {
+            running.remove(animation)
+        }
+    }
+    private fun observeIme(dialog: Dialog): ImeAnimations = ImeAnimations().also { observer ->
+        instrumentation.runOnMainSync { dialog.window!!.decorView.setWindowInsetsAnimationCallback(observer) }
+    }
+    private fun imeSettled(dialog: Dialog, observer: ImeAnimations, visible: Boolean): Boolean {
+        var settled = false
+        instrumentation.runOnMainSync {
+            val insets = dialog.window?.decorView?.rootWindowInsets
+            settled = insets != null && insets.isVisible(WindowInsets.Type.ime()) == visible && observer.running.isEmpty()
+        }
+        return settled
     }
     private fun openMenu(label: String) {
         // HOME replaces the Activity, and an exiting sheet can briefly expose its old title.
