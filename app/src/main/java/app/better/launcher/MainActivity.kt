@@ -267,6 +267,9 @@ class MainActivity : AppCompatActivity() {
             val folder = store.folder(id)
             if (folder != null) favoriteColumn.addView(folderRow(folder)) else catalog.find(id)?.let { favoriteColumn.addView(appRow(it, true)) }
         }
+        if (favorites.size > 1) favoriteColumn.addView(action("Изменить порядок избранного") { editFavorites() }.apply {
+            setPadding(0, dp(8), dp(8), dp(8))
+        })
         favoriteColumn.addView(gap(14))
         if (!store.bool("gesturesLearned")) {
             favoriteColumn.addView(text("Проведите по алфавиту, чтобы найти приложение", 12f, secondary).apply { setPadding(0, dp(8), dp(6), dp(8)) })
@@ -303,6 +306,7 @@ class MainActivity : AppCompatActivity() {
         val header = horizontal()
         header.addView(iconButton(Glyph.BACK, "На главный экран") { returnFromWidgets() })
         header.addView(text("Виджеты", 26f), LinearLayout.LayoutParams(0, -2, 1f))
+        if (store.pageWidgets.size > 1) header.addView(iconButton(Glyph.REORDER, "Изменить порядок виджетов") { widgets.editOrder() })
         header.addView(iconButton(Glyph.PLUS, "Добавить виджет") { widgets.add() })
         column.addView(header)
         val content = vertical().apply { setPadding(dp(8), dp(12), dp(8), dp(24)) }
