@@ -17,6 +17,7 @@ class InlineOrderEditor(
     private val scroll: ScrollView,
     private val readOrder: () -> List<String>,
     private val saveOrder: (List<String>) -> Unit,
+    private val dragBackgroundColor: Int = activity.surface,
 ) {
     private data class Item(val id: String, val label: String, val row: LinearLayout, val handle: View)
     private val items = mutableListOf<Item>()
@@ -82,7 +83,7 @@ class InlineOrderEditor(
                 MotionEvent.ACTION_DOWN -> {
                     dragged = item; destination = items.indexOf(item); pointerY = event.rawY
                     row.getLocationOnScreen(location); offsetY = pointerY - location[1]
-                    row.elevation = activity.dp(6).toFloat(); row.setBackgroundColor(activity.surface)
+                    row.elevation = activity.dp(6).toFloat(); row.setBackgroundColor(dragBackgroundColor)
                     handle.parent.requestDisallowInterceptTouchEvent(true)
                     handle.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                     scroll.postOnAnimation(scrollStep)

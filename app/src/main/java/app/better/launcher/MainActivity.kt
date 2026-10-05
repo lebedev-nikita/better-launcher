@@ -273,7 +273,8 @@ class MainActivity : AppCompatActivity() {
         }
         val favoriteItems = vertical()
         val order = if (orderingFavorites) InlineOrderEditor(this, favoriteItems, scroll,
-            readOrder = { store.favorites }, saveOrder = { store.favorites = it }).also { inlineOrder = it } else null
+            readOrder = { store.favorites }, saveOrder = { store.favorites = it },
+            dragBackgroundColor = Color.TRANSPARENT).also { inlineOrder = it } else null
         favorites.forEach { id ->
             val folder = store.folder(id)
             val app = catalog.find(id)

@@ -16,7 +16,7 @@ Hidden apps are excluded from the empty app list and alphabet. A nonblank search
 
 ## Favorites order
 
-Home has no reorder button below favorites. “Изменить порядок” in a favorite app’s long-press menu enables ordering on home. Ordering retains the actual app/folder rows with one trailing 48dp handle on the same title line, centered with the name, including wrapped labels and notification previews below. There is no separate controls line or visible up/down button. Keyboard up/down and named accessibility moves live on the focused handle; boundaries omit the corresponding action. Dropping saves, cancel preserves order, and edge scrolling supports long lists. Done remains in the fixed footer; Back ends the mode and HOME restores normal home. Unavailable IDs and existing selection/folder management remain intact.
+Home has no reorder button below favorites. “Изменить порядок” in a favorite app’s long-press menu enables ordering on home. Ordering retains the actual app/folder rows with one trailing 48dp handle on the same title line, centered with the name, including wrapped labels and notification previews below. There is no separate controls line or visible up/down button. Keyboard up/down and named accessibility moves live on the focused handle; boundaries omit the corresponding action. Favorites stay transparent over the wallpaper throughout dragging, including apps and folders; elevation keeps the moving row above its neighbors. Dropping saves, cancel preserves order, and edge scrolling supports long lists. Done remains in the fixed footer; Back ends the mode and HOME restores normal home. Unavailable IDs and existing selection/folder management remain intact.
 
 ## Widgets and navigation
 
