@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.view.InputDevice
@@ -20,6 +21,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
 import org.junit.Test
+import java.io.File
 
 class WidgetOrderTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
@@ -65,7 +67,36 @@ class WidgetOrderTest {
                 }
                 val from = Rect().also { node("Перетащить $first").getBoundsInScreen(it) }
                 val to = Rect().also { node("Перетащить $second").getBoundsInScreen(it) }
-                drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat())
+                val providerBackgrounds = originalViews.associateWith { it.getChildAt(0).background }
+                fun checkTransparentDrag() {
+                    if (InstrumentationRegistry.getArguments().getString("dragCapture") == "true") instrumentation.uiAutomation.takeScreenshot()?.let { bitmap ->
+                        File(context.cacheDir, "widget-drag.png").outputStream().use {
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+                        }
+                        bitmap.recycle()
+                    }
+                    scenario.onActivity { activity ->
+                        val frame = descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>()
+                            .single { descendants(it).filterIsInstance<AppWidgetHostView>().any { hostView -> hostView.appWidgetId == ids[0] } }
+                        val row = (frame.parent as View).parent as View
+                        assertTrue("The dragged widget must stay above its neighbors", row.elevation > 0f)
+                        assertEquals("Dragging must not add an opaque background around the widget", 0,
+                            (row.background as? ColorDrawable)?.alpha ?: 0)
+                        providerBackgrounds.forEach { (view, background) ->
+                            assertSame("Keep the provider's own background", background, view.getChildAt(0).background)
+                        }
+                    }
+                }
+                drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat(), cancel = true, onHeld = ::checkTransparentDrag)
+                assertEquals("Cancelling a widget drag must preserve the saved order", ids, store.widgets)
+                scenario.onActivity { activity ->
+                    val frame = descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().first()
+                    val row = (frame.parent as View).parent as View
+                    assertEquals(0f, row.elevation)
+                    assertNull(row.background)
+                    assertEquals(0f, row.translationY)
+                }
+                drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat(), onHeld = ::checkTransparentDrag)
                 val dragged = listOf(ids[1], ids[2], ids[0], ids[3])
                 await { store.widgets == dragged }
                 assertTrue(node("Перетащить $first").performAction(R.id.reorder_up))
@@ -169,7 +200,7 @@ class WidgetOrderTest {
         }
         error("Widget order or editor state did not appear")
     }
-    private fun drag(x: Float, from: Float, to: Float) {
+    private fun drag(x: Float, from: Float, to: Float, cancel: Boolean = false, onHeld: () -> Unit = {}) {
         val down = SystemClock.uptimeMillis()
         fun send(action: Int, y: Float) {
             val event = MotionEvent.obtain(down, SystemClock.uptimeMillis(), action, x, y, 0)
@@ -178,11 +209,13 @@ class WidgetOrderTest {
             event.recycle()
         }
         send(MotionEvent.ACTION_DOWN, from)
+        onHeld()
         repeat(20) { index ->
             SystemClock.sleep(25)
             send(MotionEvent.ACTION_MOVE, from + (to - from) * (index + 1) / 20)
         }
         SystemClock.sleep(100)
-        send(MotionEvent.ACTION_UP, to)
+        onHeld()
+        send(if (cancel) MotionEvent.ACTION_CANCEL else MotionEvent.ACTION_UP, to)
     }
 }

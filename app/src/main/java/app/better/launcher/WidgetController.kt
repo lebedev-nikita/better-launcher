@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.SizeF
 import android.view.Gravity
@@ -83,7 +84,8 @@ class WidgetController(private val activity: MainActivity, private val store: La
         val labels = store.pageWidgets.mapNotNull { id -> manager.getAppWidgetInfo(id)?.let { id to it.loadLabel(activity.packageManager) } }
         val occurrences = mutableMapOf<String, Int>()
         val order = scroll?.let { InlineOrderEditor(activity, container, it,
-            readOrder = { store.widgets.map(Int::toString) }, saveOrder = { store.widgets = it.map(String::toInt) }) }
+            readOrder = { store.widgets.map(Int::toString) }, saveOrder = { store.widgets = it.map(String::toInt) },
+            dragBackgroundColor = Color.TRANSPARENT) }
         labels.forEachIndexed { index, (id, label) ->
             if (order == null) {
                 if (index > 0) container.addView(activity.gap(24))

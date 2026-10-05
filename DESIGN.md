@@ -256,7 +256,7 @@ The live widget stays on its current screen. Navy 2dp lines mark its four edges;
 
 ## Widget order
 
-“Изменить порядок виджетов” enables ordering on the page with live hosted views. Each widget has one trailing 48dp drag handle below its content; there are no visible up/down buttons. The focused handle accepts keyboard up/down and named accessibility moves, omitting boundary actions. Dragging previews the real view and scrolls near the edge; dropping saves and cancellation restores positions. Duplicate providers have ordinal accessible labels for the session. Home identity, bindings, sizes and offsets remain attached to each ID. Done in the header and Back end the mode; HOME returns normal home. Empty/single-widget pages omit the entry.
+“Изменить порядок виджетов” enables ordering on the page with live hosted views. Each widget has one trailing 48dp drag handle below its content; there are no visible up/down buttons. The focused handle accepts keyboard up/down and named accessibility moves, omitting boundary actions. Dragging previews the real view above its neighbors with a transparent outer row, including the handle and spacing; provider-rendered backgrounds remain intact. It scrolls near the edge; dropping saves and cancellation restores positions. Duplicate providers have ordinal accessible labels for the session. Home identity, bindings, sizes and offsets remain attached to each ID. Done in the header and Back end the mode; HOME returns normal home. Empty/single-widget pages omit the entry.
 
 ## Widget resize feedback
 
