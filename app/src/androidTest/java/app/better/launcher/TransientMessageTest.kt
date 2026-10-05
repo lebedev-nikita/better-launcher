@@ -98,10 +98,17 @@ class TransientMessageTest {
             assertNotNull("Old timeout must not remove the replacement", latest.parent)
             assertTrue(latest.performAccessibilityAction(AccessibilityNodeInfo.ACTION_DISMISS, null))
             assertNull(latest.parent)
-            it.message("Закрытие с клавиатуры")
-            val keyboard = message(it)
-            keyboard.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ESCAPE))
-            assertNull(keyboard.parent)
+        }
+        for (key in listOf(KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_DEL)) {
+            lateinit var keyboard: TransientMessageView
+            scenario.onActivity { it.message("Закрытие с клавиатуры"); keyboard = message(it) }
+            // ViewGroup only dispatches keys after its focus target has been laid out.
+            await { keyboard.width > 0 }
+            scenario.onActivity {
+                assertTrue("Keyboard dismissal requires focus", keyboard.requestFocusFromTouch())
+                assertTrue("A visible focused message must handle the key", keyboard.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, key)))
+                assertNull(keyboard.parent)
+            }
         }
     }
 
