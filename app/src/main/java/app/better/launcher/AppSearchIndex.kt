@@ -3,7 +3,12 @@ package app.better.launcher
 import java.text.Collator
 
 /** Prepare labels and ordering once, then filter without sorting or normalizing each app again. */
-class AppSearchIndex<T>(items: List<T>, label: (T) -> String, originalLabel: (T) -> String) {
+class AppSearchIndex<T>(
+    items: List<T>,
+    label: (T) -> String,
+    originalLabel: (T) -> String,
+    includeInList: (T) -> Boolean = { true },
+) {
     private data class Entry<T>(val item: T, val label: String, val normalized: String, val original: String, val section: String)
     private val entries: List<Entry<T>>
     val apps: List<T>
@@ -16,8 +21,9 @@ class AppSearchIndex<T>(items: List<T>, label: (T) -> String, originalLabel: (T)
             Entry(item, name, AppListRules.normalized(name), AppListRules.normalized(originalLabel(item)), AppListRules.section(name))
         }.sortedWith(compareBy<Entry<T>> { AppListRules.sectionOrder(it.section) }
             .thenComparator { a, b -> collator.compare(a.label, b.label) })
-        apps = entries.map { it.item }
-        sections = entries.map { it.section }.toSet()
+        val listed = entries.filter { includeInList(it.item) }
+        apps = listed.map { it.item }
+        sections = listed.map { it.section }.toSet()
     }
 
     fun matching(query: String): List<T> {
