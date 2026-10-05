@@ -115,3 +115,8 @@ Before integrating the parallel rc.32 menu changes, 14 unit tests passed and deb
 ## Всплывающие сообщения
 
 Все сообщения Better Launcher, включая «Приложение скрыто» с действием «Отменить», можно закрыть горизонтальным смахиванием в любую сторону. Они исчезают максимум через три секунды, в том числе при удержании пальца. Короткий или отменённый жест возвращает сообщение на место; закрытие не отменяет выполненное действие. Новое сообщение заменяет предыдущее. Escape/Delete при фокусе и accessibility-действие закрытия доступны без свайпа. Сообщения учитывают system/cutout/IME insets и растут при переносе текста.
+
+
+## Flat app management menu
+
+Long press opens a single action list. Attached-app selection and hiding are directly available after uninstall, without “Дополнительно” or an expansion step. Favorite apps also expose ordering. The shared contour icons, navy surface, pale blue labels, settings divider and menu animation remain. The sheet scrolls within its 85% screen-height cap on short windows and with larger text; tapping the title still replaces commands with the inline rename editor.

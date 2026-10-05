@@ -91,7 +91,8 @@ class AppMenuTest {
             oldAlias = activity.store.alias(entry.id)
             val initialLabel = activity.catalog.label(entry)
             openMenu(initialLabel)
-            node { it.contentDescription == "Дополнительно" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
+            node { it.contentDescription == "Приложения во всплывающем меню" }
             node { it.contentDescription == "Скрыть приложение" }
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Переименовать" })
             val menu = currentDialog(activity)
@@ -170,7 +171,7 @@ class AppMenuTest {
             val entry = app!!
             val label = activity.catalog.label(entry)
             openMenu(label)
-            node { it.contentDescription == "Дополнительно" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
             node { it.contentDescription == "Скрыть приложение" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             node { it.contentDescription == "Все приложения и поиск" }
             assertTrue(entry.id in store.hidden)
@@ -192,7 +193,7 @@ class AppMenuTest {
 
             openMenu(label)
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Показывать снова" })
-            node { it.contentDescription == "Дополнительно" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
             node { it.contentDescription == "Скрыть приложение" }
         } finally {
             instrumentation.runOnMainSync {
