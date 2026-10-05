@@ -204,7 +204,7 @@ Favorites, app details, notifications/shortcuts, and uninstall remain directly a
 
 ### Favorites Order
 
-Home exposes “Изменить порядок избранного” below the favorites. It enables ordering on the home surface, keeping the actual app and folder rows visible. Each row has a separate trailing line of 48dp drag/up/down controls, preserving label width and wrapping. The fixed footer contains Done; Back ends ordering and HOME restores normal home. Drag previews move the actual views, edge scrolling reaches long lists, and dropping saves the order. Cancellation restores the previous positions. Arrows save immediately and support keyboard/accessibility. Apps and folders share the saved list; unavailable app/profile IDs remain stored. Notification/catalog refresh waits while ordering to preserve the gesture. App selection and folder creation remain in the management sheet.
+Home exposes “Изменить порядок избранного” below favorites. Ordering keeps the actual app/folder rows on home. One 48dp drag handle sits at the trailing edge of the title line, vertically centered with the name, including wrapped names and notification previews below. There is no second controls line or visible up/down button; popup/folder chevrons are hidden during ordering while row taps retain their actions. The handle remains inside the favorites column, clear of the alphabet and system Back edge. With keyboard focus, up/down keys move the item; named TalkBack actions expose valid upward/downward moves without extra buttons. Boundary actions are omitted. Drag/drop saves, cancellation restores positions, and edge scrolling reaches long lists. Done stays in the fixed footer; Back ends ordering and HOME restores home. Apps/folders share the saved full list, retaining unavailable IDs. Refresh waits while ordering. App selection and folder creation retain their management sheet.
 
 ### Inputs / Fields
 
@@ -254,9 +254,9 @@ The sidecar's self-contained HTML/CSS samples are **illustrative translations of
 - **Don't** treat panel CSS samples or synthesized tonal ramps as Android source values.
 - **Don't** claim exact Niagara fidelity, full feature parity, tablet support, or physical-device validation from this phone build.
 
-## Current candidate 0.2.0-rc.30
+## Current candidate 0.2.0-rc.33
 
-Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites reorder in place with keyboard/accessibility arrows. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
+Only populated A–Z sections appear at every window height; ★ and final # remain navigation entries. The resting type is 16sp with a 22dp step, capped to available height. The same footer reservation remains in home and apps. App management keeps a fixed full-height transparent window and bottom-anchored scrolling sheet; inline rename reserves IME space and aligns Save to the right. Favorites reorder in place with keyboard/accessibility moves on the drag handle. Widget touch wrappers observe long press without replacing child taps or scrolling; four-edge editing respects provider constraints, window width and local widget identity, with keyboard/accessibility alternatives and no reset controls over the widget.
 
 ## Widget edge editor
 
@@ -269,7 +269,7 @@ The live widget stays on its current screen. Navy 2dp lines mark its four edges;
 
 ## Widget order
 
-“Изменить порядок виджетов” in the page header enables ordering directly on the widget page. The actual hosted views remain visible and receiving updates. Each has a trailing line with a 48dp drag handle and named up/down controls; boundary arrows are disabled. Dragging previews the real widget position and scrolls near the viewport edge; dropping saves, while cancelling restores positions. Arrows save immediately. Repeated providers have ordinal accessibility labels for the session. Home widget identity, binding IDs, size and offsets remain attached to each ID. Done in the header and Back end the mode; HOME returns to normal home. A single-widget or empty page omits the entry.
+“Изменить порядок виджетов” enables ordering on the page with live hosted views. Each widget has one trailing 48dp drag handle below its content; there are no visible up/down buttons. The focused handle accepts keyboard up/down and named accessibility moves, omitting boundary actions. Dragging previews the real view and scrolls near the edge; dropping saves and cancellation restores positions. Duplicate providers have ordinal accessible labels for the session. Home identity, bindings, sizes and offsets remain attached to each ID. Done in the header and Back end the mode; HOME returns normal home. Empty/single-widget pages omit the entry.
 
 ## Widget resize feedback
 

@@ -279,7 +279,8 @@ class MainActivity : AppCompatActivity() {
             val app = catalog.find(id)
             val row = if (folder != null) folderRow(folder) else app?.let { appRow(it, true) }
             if (row != null) {
-                if (order != null) order.add(id, folder?.name ?: catalog.label(app!!), row)
+                if (order != null) order.add(id, folder?.name ?: catalog.label(app!!), row,
+                    handleRow = if (row is AppRow) row.orderHandleRow else row as LinearLayout)
                 else favoriteItems.addView(row)
             }
         }
@@ -371,7 +372,8 @@ class MainActivity : AppCompatActivity() {
         private val labels = vertical().apply { setPadding(0, dp(8), 0, dp(8)) }
         private val name = text("", if (store.bool("largeText")) 25f else 21f).apply { maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
         private val preview = text("", 13f, secondary).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
-        private val menu: View? = if (favorite) iconButton(Glyph.CHEVRON, "") { showAppPopup(app) } else null
+        val orderHandleRow: LinearLayout? = if (favorite && orderingFavorites) horizontal() else null
+        private val menu: View? = if (favorite && !orderingFavorites) iconButton(Glyph.CHEVRON, "") { showAppPopup(app) } else null
 
         init {
             orientation = HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
@@ -382,7 +384,11 @@ class MainActivity : AppCompatActivity() {
                 icon.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 addView(icon, LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
             }
-            labels.addView(name)
+            if (orderHandleRow != null) {
+                labels.setPadding(0, 0, 0, 0)
+                orderHandleRow.addView(name, LayoutParams(0, -2, 1f))
+                labels.addView(orderHandleRow)
+            } else labels.addView(name)
             if (favorite) {
                 labels.addView(preview)
                 preview.setOnClickListener { showAppPopup(app) }; preview.isFocusable = true
@@ -428,7 +434,7 @@ class MainActivity : AppCompatActivity() {
         minimumHeight = dp(62); background = touchBackground(); isFocusable = true
         addView(GlyphView(this@MainActivity, Glyph.FOLDER), LinearLayout.LayoutParams(dp(38), dp(38)).apply { marginEnd = dp(16) })
         addView(text(folder.name, 21f), LinearLayout.LayoutParams(0, -2, 1f))
-        addView(iconButton(Glyph.CHEVRON, "Открыть ${folder.name}") { showFolder(folder) })
+        if (!orderingFavorites) addView(iconButton(Glyph.CHEVRON, "Открыть ${folder.name}") { showFolder(folder) })
         setOnClickListener { showFolder(folder) }; setOnLongClickListener { editFolder(folder); true }
     }
     private fun launch(app: AppEntry) {

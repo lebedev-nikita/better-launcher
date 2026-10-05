@@ -16,7 +16,7 @@ class FavoritesOrderTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private val context get() = instrumentation.targetContext
 
-    @Test fun dragAndArrowsSaveOrderWithoutClosingEditorAndHomeUsesIt() {
+    @Test fun dragHandleKeyboardAndAccessibilitySaveOrderOnHome() {
         val store = LauncherStore(context)
         val original = store.export()
         try {
@@ -32,6 +32,7 @@ class FavoritesOrderTest {
                 val missing = "99999:unavailable/.Main"
                 store.favorites = listOf(apps[0].id, missing, apps[1].id, folder, apps[2].id)
                 store.set("initialized", true)
+                store.rename(apps[0].id, "Очень длинное название избранного приложения")
                 // HOME refreshes the surface from the persisted list.
                 home(scenario)
                 val firstLabel = store.alias(apps[0].id) ?: apps[0].originalLabel
@@ -39,9 +40,12 @@ class FavoritesOrderTest {
                 await { node("Изменить порядок избранного").performAction(AccessibilityNodeInfo.ACTION_CLICK) }
                 node("Готово")
                 node(firstLabel)
-                assertFalse(node("Переместить $firstLabel вверх").isEnabled)
+                assertFalse(node("Перетащить $firstLabel").actionList.any { it.id == R.id.reorder_up })
+                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Переместить $firstLabel вниз" })
                 val from = Rect().also { node("Перетащить $firstLabel").getBoundsInScreen(it) }
                 val to = Rect().also { node("Перетащить $secondLabel").getBoundsInScreen(it) }
+                val nameBounds = Rect().also { node(firstLabel).getBoundsInScreen(it) }
+                assertTrue("Handle must share the title line, including wrapped names", kotlin.math.abs(from.centerY() - nameBounds.centerY()) <= 2)
                 val beforeCancel = store.favorites
                 drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat(), cancel = true)
                 assertEquals("Cancelled drag must preserve saved order", beforeCancel, store.favorites)
@@ -51,13 +55,14 @@ class FavoritesOrderTest {
                 try { await { store.favorites == dragged } } catch (failure: IllegalStateException) {
                     throw AssertionError("Dragged order: expected $dragged, actual ${store.favorites}", failure)
                 }
-                assertTrue(node("Переместить $firstLabel вверх").isEnabled)
-                assertTrue(node("Переместить $firstLabel вверх").performAction(AccessibilityNodeInfo.ACTION_CLICK))
+                await { node("Перетащить $firstLabel").actionList.any { it.id == R.id.reorder_up } }
+                await { node("Перетащить $firstLabel").performAction(AccessibilityNodeInfo.ACTION_FOCUS) }
+                instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP)
                 await { store.favorites == listOf(missing, apps[0].id, apps[1].id, folder, apps[2].id) }
                 // The same editor stays open, with accessible controls and the folder intact.
                 node("Перетащить $firstLabel")
                 node("Перетащить Test folder")
-                assertTrue(node("Переместить Test folder вверх").performAction(AccessibilityNodeInfo.ACTION_CLICK))
+                assertTrue(node("Перетащить Test folder").performAction(R.id.reorder_up))
                 val reordered = listOf(missing, apps[0].id, folder, apps[1].id, apps[2].id)
                 await { store.favorites == reordered }
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)

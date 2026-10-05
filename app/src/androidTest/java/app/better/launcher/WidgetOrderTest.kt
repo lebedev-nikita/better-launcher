@@ -25,7 +25,7 @@ class WidgetOrderTest {
     private val instrumentation get() = InstrumentationRegistry.getInstrumentation()
     private val context get() = instrumentation.targetContext
 
-    @Test fun pageDragAndArrowsKeepHomeBindingSizesAndUpdatesAcrossRecreation() {
+    @Test fun pageHandleAndAccessibilityKeepHomeBindingSizesAndLiveViews() {
         val store = LauncherStore(context)
         val previous = store.widgets
         val previousHome = store.homeWidgetId
@@ -55,7 +55,8 @@ class WidgetOrderTest {
                 val label = manager.getAppWidgetInfo(ids[0]).loadLabel(context.packageManager)
                 val first = "$label · 1"
                 val second = "$label · 2"
-                assertFalse(node("Переместить $first вверх").isEnabled)
+                assertFalse(node("Перетащить $first").actionList.any { it.id == R.id.reorder_up })
+                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow, "Переместить $first вниз"))
                 var originalViews = emptyList<AppWidgetHostView>()
                 // The actual hosted views stay on the page during ordering.
                 scenario.onActivity { activity ->
@@ -67,13 +68,13 @@ class WidgetOrderTest {
                 drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat())
                 val dragged = listOf(ids[1], ids[2], ids[0], ids[3])
                 await { store.widgets == dragged }
-                click("Переместить $first вверх")
+                assertTrue(node("Перетащить $first").performAction(R.id.reorder_up))
                 await { store.pageWidgets == listOf(ids[0], ids[2], ids[3]) }
                 // Scroll to the last real widget, whose controls may be below the viewport.
                 scenario.onActivity { activity ->
                     descendants(activity.window.decorView).filterIsInstance<android.widget.ScrollView>().single().fullScroll(View.FOCUS_DOWN)
                 }
-                click("Переместить $label · 3 вверх")
+                assertTrue(node("Перетащить $label · 3").performAction(R.id.reorder_up))
                 val pageOrder = listOf(ids[0], ids[3], ids[2])
                 await { store.pageWidgets == pageOrder }
                 scenario.onActivity { activity ->

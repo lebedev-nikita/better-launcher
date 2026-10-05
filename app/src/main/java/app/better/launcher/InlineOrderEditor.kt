@@ -1,6 +1,9 @@
 package app.better.launcher
 
 import android.annotation.SuppressLint
+import android.os.Bundle
+import android.view.KeyEvent
+import android.view.accessibility.AccessibilityNodeInfo
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -15,7 +18,7 @@ class InlineOrderEditor(
     private val readOrder: () -> List<String>,
     private val saveOrder: (List<String>) -> Unit,
 ) {
-    private data class Item(val id: String, val label: String, val row: LinearLayout, val up: View, val down: View)
+    private data class Item(val id: String, val label: String, val row: LinearLayout, val handle: View)
     private val items = mutableListOf<Item>()
     private var dragged: Item? = null
     private var destination = -1
@@ -37,25 +40,43 @@ class InlineOrderEditor(
         }
     }
 
-    @SuppressLint("ClickableViewAccessibility") // Labeled arrows provide keyboard and accessibility moves.
-    fun add(id: String, label: String, content: View, spacing: Int = 0) {
+    @SuppressLint("ClickableViewAccessibility") // The handle provides keyboard and named accessibility moves.
+    fun add(id: String, label: String, content: View, spacing: Int = 0, handleRow: LinearLayout? = null) {
         val row = activity.vertical().apply {
             tag = PageSwipeLayout.BLOCK_SWIPE
             setPadding(0, 0, 0, activity.dp(spacing))
             addView(content)
         }
-        val controls = activity.horizontal()
-        controls.addView(View(activity), LinearLayout.LayoutParams(0, 1, 1f))
-        val handle = activity.iconButton(Glyph.REORDER, "Перетащить $label") {
-            activity.message("Перетащите за ≡ или используйте стрелки")
+        val controls = handleRow ?: activity.horizontal().apply {
+            addView(View(activity), LinearLayout.LayoutParams(0, 1, 1f))
+            row.addView(this)
         }
-        lateinit var item: Item
-        val up = activity.iconButton(Glyph.UP, "Переместить $label вверх") { move(item, items.indexOf(item) - 1) }
-        val down = activity.iconButton(Glyph.DOWN, "Переместить $label вниз") { move(item, items.indexOf(item) + 1) }
-        controls.addView(handle); controls.addView(up); controls.addView(down)
-        row.addView(controls)
-        item = Item(id, label, row, up, down)
+        val handle = activity.iconButton(Glyph.REORDER, "Перетащить $label") {
+            activity.message("Перетащите за ≡. С клавиатуры — ↑ и ↓")
+        }
+        val item = Item(id, label, row, handle)
+        controls.addView(handle)
         items.add(item); container.addView(row, LinearLayout.LayoutParams(-1, -2))
+        handle.setOnKeyListener { _, key, event ->
+            if (key != KeyEvent.KEYCODE_DPAD_UP && key != KeyEvent.KEYCODE_DPAD_DOWN) false
+            else {
+                if (event.action == KeyEvent.ACTION_DOWN) move(item, items.indexOf(item) + if (key == KeyEvent.KEYCODE_DPAD_UP) -1 else 1)
+                true
+            }
+        }
+        handle.accessibilityDelegate = object : View.AccessibilityDelegate() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                val index = items.indexOf(item)
+                if (index > 0) info.addAction(AccessibilityNodeInfo.AccessibilityAction(R.id.reorder_up, "Переместить $label вверх"))
+                if (index in 0 until items.lastIndex) info.addAction(AccessibilityNodeInfo.AccessibilityAction(R.id.reorder_down, "Переместить $label вниз"))
+            }
+            override fun performAccessibilityAction(host: View, action: Int, arguments: Bundle?): Boolean = when (action) {
+                R.id.reorder_up -> move(item, items.indexOf(item) - 1)
+                R.id.reorder_down -> move(item, items.indexOf(item) + 1)
+                else -> super.performAccessibilityAction(host, action, arguments)
+            }
+        }
         handle.setOnTouchListener { _, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -113,27 +134,25 @@ class InlineOrderEditor(
         if (commit) move(item, destination)
     }
 
-    private fun move(item: Item, to: Int) {
+    private fun move(item: Item, to: Int): Boolean {
         val from = items.indexOf(item)
-        if (dragged != null || from !in items.indices || to !in items.indices || from == to) return
+        if (dragged != null || from !in items.indices || to !in items.indices || from == to) return false
         val stored = readOrder()
         val source = stored.indexOf(item.id)
         val target = stored.indexOf(items[to].id)
-        if (source < 0 || target < 0) return
+        if (source < 0 || target < 0) return false
         saveOrder(AppListRules.move(stored, item.id, target - source))
         val focus = item.row.findFocus()
         items.removeAt(from); items.add(to, item)
         container.removeView(item.row); container.addView(item.row, to)
         updateControls()
         focus?.requestFocus()
+        return true
     }
 
     private fun updateControls() {
         items.forEachIndexed { index, item ->
-            item.row.stateDescription = "${index + 1} из ${items.size}"
-            item.up.isEnabled = index > 0; item.down.isEnabled = index < items.lastIndex
-            item.up.alpha = if (item.up.isEnabled) 1f else .35f
-            item.down.alpha = if (item.down.isEnabled) 1f else .35f
+            item.handle.stateDescription = "${index + 1} из ${items.size}"
         }
     }
 }
