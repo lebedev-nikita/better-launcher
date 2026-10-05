@@ -91,7 +91,8 @@ class AppMenuTest {
             oldAlias = activity.store.alias(entry.id)
             val initialLabel = activity.catalog.label(entry)
             openMenu(initialLabel)
-            node { it.contentDescription == "Дополнительно" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
+            node { it.contentDescription == "Приложения во всплывающем меню" }
             node { it.contentDescription == "Скрыть приложение" }
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Переименовать" })
             val menu = currentDialog(activity)
