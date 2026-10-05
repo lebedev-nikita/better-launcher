@@ -15,13 +15,14 @@ esac
 
 ci_output=app/build/ci-device
 ci_apk=app/build/outputs/apk/debug/app-debug.apk
-ci_stage=instrumentation
+ci_stage=bootstrap
 mkdir -p "$ci_output"
 
 device_adb() { adb -s "$ci_device_serial" "$@"; }
 capture() {
   device_adb logcat -d > "$ci_output/$ci_stage-logcat.txt" 2>&1 || true
   device_adb shell dumpsys activity activities > "$ci_output/$ci_stage-activities.txt" 2>&1 || true
+  device_adb shell dumpsys window windows > "$ci_output/$ci_stage-windows.txt" 2>&1 || true
   device_adb exec-out screencap -p > "$ci_output/$ci_stage.png" || true
   device_adb shell uiautomator dump /data/local/tmp/better-ci.xml >/dev/null 2>&1 || true
   device_adb shell cat /data/local/tmp/better-ci.xml > "$ci_output/$ci_stage-ui.xml" 2>/dev/null || true
@@ -63,8 +64,25 @@ install_home() {
 }
 
 install_home
+for ci_attempt in {1..30}; do
+  ci_focus=$(device_adb shell dumpsys window windows | sed -n '/mCurrentFocus=/p')
+  if [[ "$ci_focus" == *'Application Not Responding'* ]]; then
+    echo "Emulator system is unresponsive before tests: $ci_focus" >&2
+    exit 1
+  fi
+  if [[ "$ci_focus" == *app.better.launcher/* ]]; then
+    break
+  fi
+  echo "Waiting for launcher focus ($ci_attempt/30): $ci_focus"
+  sleep 2
+done
+if [[ "$ci_focus" != *app.better.launcher/* ]]; then
+  echo "Launcher did not receive focus before tests: $ci_focus" >&2
+  exit 1
+fi
+ci_stage=instrumentation
 device_adb logcat -c
-ANDROID_SERIAL="$ci_device_serial" ./gradlew :app:connectedDebugAndroidTest --stacktrace
+ANDROID_SERIAL="$ci_device_serial" ./gradlew :app:connectedDebugAndroidTest --no-daemon '-Dorg.gradle.jvmargs=-Xmx1024m -Dfile.encoding=UTF-8' --stacktrace
 capture
 # Always reinstall after connected tests before any further UI checks.
 install_home
