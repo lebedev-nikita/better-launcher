@@ -330,8 +330,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(dp(28), 0, dp(28), 0)
             isFocusableInTouchMode = true
             setOnLongClickListener {
-                if (orderingWidgets) { orderingWidgets = false; showWidgets() }
-                else widgets.add()
+                widgets.add()
                 true
             }
             setOnKeyListener { view, keyCode, event ->
@@ -345,7 +344,7 @@ class MainActivity : AppCompatActivity() {
                     super.onInitializeAccessibilityNodeInfo(host, info)
                     info.addAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(
                         android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK,
-                        if (orderingWidgets) "Завершить перестановку виджетов" else "Добавить виджет"))
+                        "Добавить виджет"))
                 }
             }
         }

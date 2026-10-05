@@ -57,6 +57,13 @@ class WidgetOrderTest {
                     descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().first().performLongClick()
                 }
                 click("Изменить порядок")
+                // Adding by holding free space also works while ordering is active.
+                scenario.onActivity { activity ->
+                    val scroll = descendants(activity.window.decorView).filterIsInstance<android.widget.ScrollView>().single()
+                    assertTrue(scroll.getChildAt(0).performLongClick())
+                }
+                node("Поиск виджетов")
+                instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                 val label = manager.getAppWidgetInfo(ids[0]).loadLabel(context.packageManager)
                 val first = "$label · 1"
                 val second = "$label · 2"
