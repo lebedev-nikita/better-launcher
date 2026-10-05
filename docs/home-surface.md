@@ -53,3 +53,10 @@ Signed release smoke passed on both Android versions. Native captures and scenar
 ## Widget resize feedback
 
 Every applied width/height change emits one native CLOCK_TICK, including keyboard and accessibility input. Repeated snapped dimensions, provider/window limits, movement without resizing, release without a new size and cancellation add no tick. Android haptic settings remain respected.
+
+
+## Home widget width review — 2026-10-05
+
+Review verdict: ready for this geometry change. The widget has its own inset-safe-width region and starts higher than the favorites-only layout. Native API 31/API 36 captures show symmetric default side margins, exact full width in portrait, and provider maximum-width constraints in landscape. Portrait, 945×2100/font scale 1.3, landscape and both rail sides passed on both Android versions; tests preserve custom sizes/offsets after recreation. The four edge handles, cancellation, child interaction, Back/HOME and RemoteViews updates remain covered. Display settings were restored.
+
+After integrating rc25 from published main, debug assembly, all 14 unit tests and lint passed (0 errors, 27 existing warnings, no new findings). All 29 instrumentation tests passed on API 31; all 13 widget/storage tests passed on API 36. Captures and logs are local in `.impeccable/review/widget-layout/`. The provider is an androidTest fixture; physical Todoist/OEM rendering remains unverified. Signed release smoke and artifact checks are recorded with the GitHub release.
