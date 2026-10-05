@@ -34,7 +34,7 @@ object AppListRules {
     }
 
     fun railLetters(sections: Set<String>): List<String> =
-        listOf("★") + ('A'..'Z').map(Char::toString).filter { it in sections } + "#"
+        listOf("★") + (('A'..'Z').map(Char::toString) + "#").filter { it in sections }
 
     fun matches(query: String, vararg labels: String): Boolean {
         val terms = terms(query)
