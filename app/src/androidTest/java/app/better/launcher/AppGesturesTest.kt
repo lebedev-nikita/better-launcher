@@ -20,11 +20,11 @@ class AppGesturesTest {
     @Test fun iconAndNameHoldsOpenDifferentMenusAndRowSwipesOpenWidgets() {
         withApp { activity, label ->
             val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий" }
-            hold(icon)
+            hold(icon, activity)
             awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Добавить приложения" }
             dismiss(activity)
             val name = awaitView(activity) { it is TextView && it.text.toString() == label }
-            hold(name)
+            hold(name, activity)
             awaitView(activity, dialog = true) { it.contentDescription?.toString() == "О приложении" }
             dismiss(activity)
             // A leftward gesture no longer opens the app popup or launches the app.
@@ -79,7 +79,7 @@ class AppGesturesTest {
     @Test fun homeRefreshDuringIconHoldKeepsQuickActions() {
         withApp { activity, label ->
             val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий" }
-            gesture(icon, 0, 850) {
+            gesture(icon, 0, 850, activity) {
                 instrumentation.runOnMainSync {
                     MainActivity::class.java.getDeclaredMethod("refreshHomePreservingScroll")
                         .apply { isAccessible = true }.invoke(activity)
@@ -90,6 +90,8 @@ class AppGesturesTest {
     }
 
     private fun withApp(hideIcons: Boolean = false, test: (MainActivity, String) -> Unit) {
+        // Connect system input before locating views; connecting can trigger window updates.
+        instrumentation.uiAutomation
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         val oldHide = activity.store.bool("hideIcons")
@@ -144,9 +146,9 @@ class AppGesturesTest {
         }
         error("Expected visible ${if (dialog) "menu" else "launcher"} element")
     }
-    private fun hold(view: View) = gesture(view, 0, 850)
+    private fun hold(view: View, activity: MainActivity) = gesture(view, 0, 850, activity)
     private fun swipe(view: View, direction: Int) = gesture(view, direction, 300)
-    private fun gesture(view: View, direction: Int, duration: Int, afterDown: () -> Unit = {}) {
+    private fun gesture(view: View, direction: Int, duration: Int, activity: MainActivity? = null, afterDown: () -> Unit = {}) {
         val rect = Rect()
         instrumentation.runOnMainSync { assertTrue(view.getGlobalVisibleRect(rect)) }
         val width = instrumentation.targetContext.resources.displayMetrics.widthPixels
@@ -163,12 +165,18 @@ class AppGesturesTest {
             event.recycle()
         }
         send(MotionEvent.ACTION_DOWN, x)
-        afterDown()
-        for (step in 1..10) {
-            SystemClock.sleep((duration / 10).toLong())
-            send(MotionEvent.ACTION_MOVE, x + direction * distance * step / 10f)
+        try {
+            afterDown()
+            if (direction == 0) {
+                // Keep the finger down until Android handles the long press, even on a busy emulator.
+                awaitView(requireNotNull(activity), dialog = true) { true }
+            } else for (step in 1..10) {
+                SystemClock.sleep((duration / 10).toLong())
+                send(MotionEvent.ACTION_MOVE, x + direction * distance * step / 10f)
+            }
+        } finally {
+            send(MotionEvent.ACTION_UP, x + direction * distance)
         }
-        send(MotionEvent.ACTION_UP, x + direction * distance)
         instrumentation.waitForIdleSync()
     }
 }
