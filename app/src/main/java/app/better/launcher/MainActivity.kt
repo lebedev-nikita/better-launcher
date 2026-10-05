@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private val executor = Executors.newFixedThreadPool(2)
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
+    private var currentMessage: TransientMessageView? = null
     private lateinit var wallpaperScrim: WallpaperScrimView
     private lateinit var screen: PageSwipeLayout
     private lateinit var rail: AlphabetRail
@@ -111,6 +112,7 @@ class MainActivity : AppCompatActivity() {
             val ime = insets.getInsets(WindowInsets.Type.ime())
             screen.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
             updateRailBounds()
+            currentMessage?.let { updateMessageInsets(it, insets) }
             insets
         }
         setContentView(root)
@@ -134,7 +136,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); currentDialog?.dismiss(); hideKeyboard(); orderingFavorites = false; orderingWidgets = false; showHome() }
     override fun onStart() { super.onStart(); widgets.start() }
-    override fun onStop() { widgets.stop(); super.onStop() }
+    override fun onStop() { currentMessage?.dismiss(); widgets.stop(); super.onStop() }
     override fun onResume() {
         super.onResume(); resumed = true
         NotificationHub.onChanged = {
@@ -1083,10 +1085,23 @@ class MainActivity : AppCompatActivity() {
     }
     private fun hideKeyboard() { currentFocus?.let { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(it.windowToken, 0) } }
     fun message(value: String, undo: String? = null, onUndo: () -> Unit = {}) {
-        val bar = horizontal().apply { setPadding(dp(16), dp(8), dp(8), dp(8)); background = rounded(surface, dp(12).toFloat()); elevation = dp(6).toFloat() }
-        bar.addView(text(value, 14f), LinearLayout.LayoutParams(0, -2, 1f))
-        if (undo != null) bar.addView(action(undo) { onUndo(); root.removeView(bar) })
+        currentMessage?.dismiss()
+        val bar = TransientMessageView(this).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; minimumHeight = dp(48)
+            setPadding(dp(16), dp(8), dp(8), dp(8)); background = rounded(surface, dp(12).toFloat()); elevation = dp(6).toFloat()
+        }
+        bar.addView(text(value, 14f, secondary), LinearLayout.LayoutParams(0, -2, 1f))
+        if (undo != null) bar.addView(action(undo) { bar.dismiss(); onUndo() }.apply { setTextColor(secondary) })
+        currentMessage = bar
         root.addView(bar, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM).apply { leftMargin = dp(16); rightMargin = dp(16); bottomMargin = dp(84) })
-        handler.postDelayed({ root.removeView(bar) }, if (undo != null) 6000 else 4000)
+        root.rootWindowInsets?.let { updateMessageInsets(bar, it) }
+    }
+    private fun updateMessageInsets(bar: View, insets: WindowInsets) {
+        val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+        val ime = insets.getInsets(WindowInsets.Type.ime())
+        bar.layoutParams = (bar.layoutParams as FrameLayout.LayoutParams).apply {
+            leftMargin = dp(16) + bars.left; rightMargin = dp(16) + bars.right
+            bottomMargin = dp(84) + maxOf(bars.bottom, ime.bottom)
+        }
     }
 }

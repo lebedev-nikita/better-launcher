@@ -102,6 +102,11 @@
         "name": "alphabet-finger-wave",
         "value": "Immediate Canvas redraw; Gaussian finger-distance displacement",
         "purpose": "The continuous rail follows touch events without a custom animator; haptic tick on section change."
+      },
+      {
+        "name": "transient-message-dismiss",
+        "value": "Horizontal drag in either direction; 140ms reset; hard 3000ms lifetime",
+        "purpose": "Dismiss feedback without undoing; short/cancelled drags reset. Touch does not extend lifetime; new messages replace old feedback."
       }
     ],
     "breakpoints": [
