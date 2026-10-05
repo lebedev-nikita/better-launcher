@@ -281,7 +281,7 @@ adb -s emulator-5580 logcat -d -s AndroidRuntime:E
 
 Основная ветка — `main`, основной remote — `origin` (`https://github.com/better-launcher/better-launcher.git`). В исходной рабочей копии также есть `personal`, указывающий на стартовый репозиторий; он не является целью публикации Better Launcher. Перед коммитом и пушем сверяйте ветку, remote и состав изменений.
 
-Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.9 соответствует `v0.1.9`; новый кандидат — `v0.2.0-rc.41`. В GitHub Release кандидата публикуются `better-launcher-0.2.0-rc.41-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
+Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.1.9 соответствует `v0.1.9`; новый кандидат — `v0.2.0-rc.42`. В GitHub Release кандидата публикуются `better-launcher-0.2.0-rc.42-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
 
 Подпись настраивается через `BETTER_LAUNCHER_SIGNING_PROPERTIES`: абсолютный путь к приватному Java properties-файлу вне Git. Поля: `storeFile`, `storePassword`, `keyAlias`, `keyPassword`. `storeFile` задаёт абсолютный путь к keystore. Файл свойств и keystore храните с доступом только владельцу; значения паролей не выводите в логи. Без этих данных release-сборка не подписывается и не проходит проверку подписи Gradle.
 
