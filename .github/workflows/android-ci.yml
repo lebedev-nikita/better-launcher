@@ -109,7 +109,7 @@ jobs:
           emulator-port: 5554
           emulator-boot-timeout: 300
           # Preserve the Pixel 7's logical dimensions with fewer rendered pixels.
-          pre-emulator-launch-script: printf 'hw.lcd.width=720\nhw.lcd.height=1600\nhw.lcd.density=280\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
+          pre-emulator-launch-script: printf 'hw.lcd.width=540\nhw.lcd.height=1200\nhw.lcd.density=210\n' >> "$ANDROID_AVD_HOME/test.avd/config.ini"
           emulator-options: -no-window -gpu swiftshader_indirect -feature -Vulkan -no-snapshot -noaudio -no-boot-anim -camera-back emulated
           disable-animations: false
           disable-spellchecker: true

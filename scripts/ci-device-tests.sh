@@ -55,6 +55,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Let first-boot services finish before installing and instrumenting the launcher.
+echo 'Waiting for first-boot services to settle (60 seconds).'
+sleep 60
+
 install_home() {
   device_adb install -r "$ci_apk"
   device_adb shell cmd package set-home-activity app.better.launcher/.MainActivity
