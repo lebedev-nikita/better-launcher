@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.view.WindowInsets
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.ScrollView
 import android.widget.TextView
@@ -119,12 +120,15 @@ class AppMenuTest {
             openMenu("Renamed app")
             node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Discard with Back")
+            val backDialog = currentDialog(activity) as Dialog
+            // IME appearance/hiding is asynchronous on cold CI emulators.
+            await(30000) { imeVisible(backDialog) }
             instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
-            instrumentation.waitForIdleSync(); SystemClock.sleep(500)
-            // HOME may replace the Activity; inspect the active window, not the old Activity.
-            if (findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.className == "android.widget.EditText" } != null) {
-                instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+            await { !imeVisible(backDialog) }
+            instrumentation.runOnMainSync {
+                assertTrue("First Back must hide the keyboard and keep the editor", backDialog.isShowing)
             }
+            instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
             node { it.text == "Renamed app" }
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
 
@@ -213,6 +217,13 @@ class AppMenuTest {
             dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(resumed)
         }
         return dialog
+    }
+    private fun imeVisible(dialog: Dialog): Boolean {
+        var visible = false
+        instrumentation.runOnMainSync {
+            visible = dialog.window?.decorView?.rootWindowInsets?.isVisible(WindowInsets.Type.ime()) == true
+        }
+        return visible
     }
     private fun openMenu(label: String) {
         // HOME replaces the Activity, and an exiting sheet can briefly expose its old title.
