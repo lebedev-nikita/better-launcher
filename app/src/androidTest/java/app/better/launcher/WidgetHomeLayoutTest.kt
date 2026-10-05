@@ -148,9 +148,15 @@ class WidgetHomeLayoutTest {
                 activity.store.homeWidgetId = null
                 activity.showHome()
             }
-            await { descendants(activity.window.decorView).any { it.tag == PageSwipeLayout.BLOCK_SWIPE && it.isClickable && it.height > 0 } }
+            fun favoriteRow(): View? {
+                val app = activity.store.favorites.firstNotNullOfOrNull(activity.catalog::find) ?: return null
+                val name = descendants(activity.window.decorView).filterIsInstance<android.widget.TextView>()
+                    .firstOrNull { it.text.toString() == activity.catalog.label(app) } ?: return null
+                return generateSequence(name.parent as? View) { it.parent as? View }.firstOrNull { it.isClickable }
+            }
+            await { favoriteRow()?.let { it.isShown && it.height > 0 } == true }
             instrumentation.runOnMainSync {
-                val row = descendants(activity.window.decorView).first { it.tag == PageSwipeLayout.BLOCK_SWIPE && it.isClickable }
+                val row = favoriteRow()!!
                 val bounds = Rect().also { row.getGlobalVisibleRect(it) }
                 val screen = descendants(activity.window.decorView).filterIsInstance<PageSwipeLayout>().single()
                 val screenBounds = Rect().also { screen.getGlobalVisibleRect(it) }
