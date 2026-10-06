@@ -119,7 +119,7 @@ Before integrating the parallel rc.32 menu changes, 14 unit tests passed and deb
 
 ## Flat app management menu
 
-Long press opens a single action list. Attached-app selection and hiding are directly available after uninstall, without “Дополнительно” or an expansion step. Favorite apps also expose ordering. The shared contour icons, navy surface, pale blue labels, settings divider and menu animation remain. The sheet scrolls within its 85% screen-height cap on short windows and with larger text; tapping the title still replaces commands with the inline rename editor.
+Long press opens a single action list. Favorites and ordering for favorites retain their positions. Visible apps then expose “Скрыть приложение”, “Удалить приложение” and “О приложении” in that order, with no “Дополнительно” or expansion step. Hidden search results retain “Показывать снова” at the top and omit hide. Notifications/quick actions and attached-app selection are absent from management: hold the icon for the pop-up and use its “Добавить приложения” action. The shared contour icons, navy surface, pale blue labels, settings divider and menu animation remain. The sheet scrolls within its 85% screen-height cap on short windows and with larger text; tapping the title still replaces commands with the inline rename editor.
 
 
 ## Hidden apps and the alphabet

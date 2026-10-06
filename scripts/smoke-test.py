@@ -166,9 +166,9 @@ x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 wait_for("О приложении")
 tree = hierarchy()
-assert not any(n.get("content-desc") in ("Переименовать", "Дополнительно") for n in tree.iter("node"))
+assert not any(n.get("content-desc") in ("Переименовать", "Дополнительно", "Уведомления и быстрые действия", "Приложения во всплывающем меню") for n in tree.iter("node"))
 # All actions belong to one list; short windows / larger fonts can require scrolling.
-for label in ("Приложения во всплывающем меню", "Скрыть приложение", "Настройки Better Launcher"):
+for label in ("Скрыть приложение", "Удалить приложение", "О приложении", "Настройки Better Launcher"):
     for attempt in range(6):
         tree = hierarchy()
         if any(n.get("content-desc") == label for n in tree.iter("node")):

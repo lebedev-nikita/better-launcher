@@ -746,17 +746,15 @@ class MainActivity : AppCompatActivity() {
             showHome(); message(if (favorite) "Убрано из избранного" else "Добавлено в избранное")
         }
         if (favorite) menuAction(commands, Glyph.REORDER, "Изменить порядок") { startFavoritesOrder() }
-        menuAction(commands, Glyph.INFO, "О приложении") {
-            runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
-        }
-        menuAction(commands, Glyph.NOTIFICATIONS, "Уведомления и быстрые действия") { showAppPopup(app) }
-        menuAction(commands, Glyph.DELETE, "Удалить приложение") {
-            if (app.user == Process.myUserHandle()) safeStart(Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))) else message("Удалите приложение через настройки рабочего профиля")
-        }
-        menuAction(commands, Glyph.FOLDER, "Приложения во всплывающем меню") { selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } }
         if (!hidden) menuAction(commands, Glyph.HIDE, "Скрыть приложение") {
             store.hidden = store.hidden + app.id; store.favorites = store.favorites - app.id; showHome()
             message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - app.id; if (favorite) store.favorites = store.favorites + app.id; showHome() }
+        }
+        menuAction(commands, Glyph.DELETE, "Удалить приложение") {
+            if (app.user == Process.myUserHandle()) safeStart(Intent(Intent.ACTION_DELETE, Uri.parse("package:${app.packageName}"))) else message("Удалите приложение через настройки рабочего профиля")
+        }
+        menuAction(commands, Glyph.INFO, "О приложении") {
+            runCatching { catalog.launcherApps.startAppDetailsActivity(app.component, app.user, null, null) }.onFailure { message("Не удалось открыть настройки приложения") }
         }
         commands.addView(gap(16))
         commands.addView(View(this).apply { setBackgroundColor(foreground); importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }, LinearLayout.LayoutParams(-1, dp(1)).apply { marginStart = dp(8); marginEnd = dp(8) })

@@ -100,10 +100,21 @@ class AppMenuTest {
             val initialLabel = activity.catalog.label(entry)
             openMenu(initialLabel)
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
-            node { it.contentDescription == "Приложения во всплывающем меню" }
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Приложения во всплывающем меню" })
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Уведомления и быстрые действия" })
             node { it.contentDescription == "Скрыть приложение" }
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Переименовать" })
             val menu = currentDialog(activity)
+            instrumentation.runOnMainSync {
+                fun commands(view: View): List<String> = buildList {
+                    if (!view.isShown) return@buildList
+                    if (view.isClickable && view.contentDescription != null) add(view.contentDescription.toString())
+                    if (view is ViewGroup) for (index in 0 until view.childCount) addAll(commands(view.getChildAt(index)))
+                }
+                assertEquals(listOf("Переименовать $initialLabel", "Убрать из избранного", "Изменить порядок",
+                    "Скрыть приложение", "Удалить приложение", "О приложении", "Настройки Better Launcher"),
+                    commands((menu as Dialog).window!!.decorView))
+            }
             node { it.contentDescription == "Переименовать $initialLabel" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Renamed app")
             assertSame("Editing must keep the original app menu", menu, currentDialog(activity))
