@@ -74,7 +74,7 @@ class HiddenAlphabetTest {
                         hide(2)
                         expect("★")
 
-                        views(activity.window.decorView).first { it.contentDescription == "Все приложения и поиск" }.performClick()
+                        views(activity.window.decorView).first { it.contentDescription == "Главный экран" }.performAccessibilityAction(R.id.home_search, null)
                         views(activity.window.decorView).filterIsInstance<EditText>().single().setText(labels[3])
                         assertEquals(apps[3].id, activity.catalog.visible(labels[3]).single().id)
                         expect("★")

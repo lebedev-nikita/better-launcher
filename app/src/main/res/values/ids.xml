@@ -7,4 +7,7 @@
     <item name="widget_move_down" type="id" />
     <item name="reorder_up" type="id" />
     <item name="reorder_down" type="id" />
+    <item name="home_search" type="id" />
+    <item name="home_widgets" type="id" />
+    <item name="home_settings" type="id" />
 </resources>

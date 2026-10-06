@@ -23,7 +23,7 @@ class LauncherNavigationTest {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         try {
-            bounds(activity, "Все приложения и поиск")
+            bounds(activity, "Главный экран")
             val before = Rect()
             lateinit var rail: AlphabetRail
             instrumentation.runOnMainSync {
@@ -45,7 +45,7 @@ class LauncherNavigationTest {
                 assertEquals("Opening apps must keep letters under the finger", before, after)
                 rail.onSelect("★")
             }
-            bounds(activity, "Все приложения и поиск")
+            bounds(activity, "Главный экран")
             instrumentation.runOnMainSync {
                 val after = Rect()
                 assertTrue(rail.getGlobalVisibleRect(after))
@@ -59,12 +59,12 @@ class LauncherNavigationTest {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         try {
             instrumentation.waitForIdleSync()
-            bounds(activity, "Все приложения и поиск")
-            click(activity, "Экран виджетов")
+            bounds(activity, "Главный экран")
+            openWidgets(activity)
             assertVisible(activity, "Удерживайте пустое место, чтобы добавить виджет")
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            assertVisible(activity, "Все приложения и поиск", "system Back")
-            click(activity, "Экран виджетов")
+            assertVisible(activity, "Главный экран", "system Back")
+            openWidgets(activity)
             assertVisible(activity, "Удерживайте пустое место, чтобы добавить виджет")
             // Dismissing the provider picker keeps the widget page open.
             instrumentation.runOnMainSync {
@@ -75,8 +75,8 @@ class LauncherNavigationTest {
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             assertVisible(activity, "Удерживайте пустое место, чтобы добавить виджет")
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            assertVisible(activity, "Все приложения и поиск", "system Back")
-            click(activity, "Экран виджетов")
+            assertVisible(activity, "Главный экран", "system Back")
+            openWidgets(activity)
             instrumentation.runOnMainSync {
                 activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                     .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -90,7 +90,7 @@ class LauncherNavigationTest {
                     homeVisible = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
                         .filterIsInstance<MainActivity>().any {
                             val bounds = Rect()
-                            it.hasWindowFocus() && find(it.window.decorView, "Все приложения и поиск")?.getGlobalVisibleRect(bounds) == true && !bounds.isEmpty
+                            it.hasWindowFocus() && find(it.window.decorView, "Главный экран")?.getGlobalVisibleRect(bounds) == true && !bounds.isEmpty
                         }
                 }
                 if (!homeVisible) SystemClock.sleep(50)
@@ -122,8 +122,10 @@ class LauncherNavigationTest {
         }
         error("Missing $label after $stage")
     }
-    private fun click(activity: MainActivity, label: String) {
-        instrumentation.runOnMainSync { assertTrue("Missing $label", find(activity.window.decorView, label)?.performClick() == true) }
+    private fun openWidgets(activity: MainActivity) {
+        instrumentation.runOnMainSync {
+            assertTrue(find(activity.window.decorView, "Главный экран")!!.performAccessibilityAction(R.id.home_widgets, null))
+        }
         instrumentation.waitForIdleSync()
     }
 }

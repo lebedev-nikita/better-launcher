@@ -189,12 +189,12 @@ class AppMenuTest {
             openMenu(label)
             assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
             node { it.contentDescription == "Скрыть приложение" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            node { it.contentDescription == "Все приложения и поиск" }
+            node { it.contentDescription == "Главный экран" }
             assertTrue(entry.id in store.hidden)
             assertFalse(entry.id in store.favorites)
             assertFalse(activity.catalog.visible().any { it.id == entry.id })
 
-            node { it.contentDescription == "Все приложения и поиск" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Главный экран" }.performAction(R.id.home_search)
             setName(label)
             openMenu(label)
             // Restore is immediately available, without expanding additional actions.

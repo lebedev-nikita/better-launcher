@@ -93,7 +93,12 @@ class WidgetHostTest {
                         "Правая граница виджета" -> kotlin.math.abs(rect.centerX() - widgetBounds.right) <= 2
                         "Левая граница виджета" -> kotlin.math.abs(rect.centerX() - widgetBounds.left) <= 2
                         "Переместить виджет" -> kotlin.math.abs(rect.centerX() - widgetBounds.centerX()) <= 2 && kotlin.math.abs(rect.centerY() - widgetBounds.centerY()) <= 2
-                        else -> kotlin.math.abs(rect.centerY() - widgetBounds.top) <= 2
+                        else -> {
+                            // A top-aligned widget keeps the complete handle below system bars.
+                            val bars = activity.window.decorView.rootWindowInsets.getInsets(
+                                android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout())
+                            kotlin.math.abs(rect.centerY() - maxOf(widgetBounds.top, bars.top + activity.dp(24))) <= 2
+                        }
                     }
                 }
                 val started = SystemClock.uptimeMillis()

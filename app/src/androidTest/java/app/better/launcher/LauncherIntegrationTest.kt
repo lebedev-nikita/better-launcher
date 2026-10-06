@@ -242,7 +242,7 @@ class LauncherIntegrationTest {
         store.wallpaperDimming = 20
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                descendants(activity.window.decorView).first { it.contentDescription == "Настройки лаунчера" }.performClick()
+                descendants(activity.window.decorView).first { it.contentDescription == "Главный экран" }.performAccessibilityAction(R.id.home_settings, null)
                 val slider = descendants(activity.window.decorView).filterIsInstance<Slider>().single { it.contentDescription == "Затемнение обоев" }
                 assertEquals(20f, slider.value, 0f)
                 slider.requestFocus()
@@ -262,7 +262,7 @@ class LauncherIntegrationTest {
                 scrim.draw(Canvas(bitmap))
                 assertEquals((.37f * 255).toInt(), Color.alpha(bitmap.getPixel(0, 0)))
                 bitmap.recycle()
-                descendants(activity.window.decorView).first { it.contentDescription == "Настройки лаунчера" }.performClick()
+                descendants(activity.window.decorView).first { it.contentDescription == "Главный экран" }.performAccessibilityAction(R.id.home_settings, null)
                 assertEquals(37f, descendants(activity.window.decorView).filterIsInstance<Slider>().single { it.contentDescription == "Затемнение обоев" }.value, 0f)
             }
         }

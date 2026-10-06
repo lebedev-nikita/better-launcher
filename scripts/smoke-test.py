@@ -72,7 +72,7 @@ def tap(label):
 def home():
     adb("shell", "input", "keyevent", "3")
     time.sleep(.5)
-    wait_for("Все приложения и поиск")
+    wait_for("Главный экран")
 
 
 home()
@@ -82,13 +82,11 @@ assert not any(n.get("content-desc") == "Часы" or re.fullmatch(r"\d{1,2}:\d{
                or re.fullmatch(r"[А-Яа-яЁё]+, \d{1,2} [а-яё]+", n.get("text", "")) for n in launcher_nodes)
 print("PASS: home has no built-in clock or date")
 density = int(re.findall(r"\d+", adb("shell", "wm", "density"))[-1]) / 160
-# The free footer gap stays available in short windows, outside the scrolling
-# favorites, app gestures and system Back edge. Do not start on an icon button.
-tree = hierarchy()
-search_right = int(re.findall(r"\d+", find(tree, "Все приложения и поиск").get("bounds"))[2])
-x1, y1, x2, y2 = map(int, re.findall(r"\d+", find(tree, "Экран виджетов").get("bounds")))
-x, y = (search_right + x1) // 2, (y1 + y2) // 2
-adb("shell", "input", "swipe", str(x), str(y), str(int(x2 + 24 * density)), str(y), "350")
+# Navigate from a real app row: the normal home has no footer controls.
+assert not any(n.get("content-desc") in ("Все приложения и поиск", "Экран виджетов", "Настройки лаунчера")
+               for n in launcher_nodes)
+x, y = center(wait_for("Phone"))
+adb("shell", "input", "swipe", str(x), str(y), str(int(x + 90 * density)), str(y), "350")
 wait_for("Удерживайте пустое место, чтобы добавить виджет")
 page_hint = wait_for("Удерживайте пустое место, чтобы добавить виджет")
 launcher_nodes = [n for n in hierarchy().iter("node") if n.get("package") == "app.better.launcher"]
@@ -101,22 +99,26 @@ wait_for("Поиск виджетов")
 adb("shell", "input", "keyevent", "4")
 wait_for("Удерживайте пустое место, чтобы добавить виджет")
 adb("shell", "input", "swipe", str(x2 - 20), str(y), str(x1 + 20), str(y), "350")
-wait_for("Все приложения и поиск")
-tap("Экран виджетов")
+wait_for("Главный экран")
+adb("shell", "input", "keyevent", "KEYCODE_MENU")
+wait_for("Домашний экран")
+tap("Виджеты")
 wait_for("Удерживайте пустое место, чтобы добавить виджет")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения и поиск")
-tap("Экран виджетов")
+wait_for("Главный экран")
+adb("shell", "input", "keyevent", "KEYCODE_MENU")
+wait_for("Домашний экран")
+tap("Виджеты")
 home()
-print("PASS: widget page swipe, button, Back and Home navigation")
+print("PASS: widget page swipe, settings entry, Back and Home navigation")
 
-tap("Настройки лаунчера")
+adb("shell", "input", "keyevent", "KEYCODE_MENU")
 wait_for("Домашний экран")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения и поиск")
+wait_for("Главный экран")
 print("PASS: settings entry and system Back")
 
-tap("Все приложения и поиск")
+adb("shell", "input", "keyevent", "KEYCODE_SEARCH")
 wait_for("Поиск приложений")
 # Pace injected keys on cold / busy emulators, then wait for the actual query.
 for character in "camera":
@@ -149,7 +151,7 @@ x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x + 220), str(y), "350")
 wait_for("Удерживайте пустое место, чтобы добавить виджет")
 adb("shell", "input", "keyevent", "4")
-wait_for("Все приложения и поиск")
+wait_for("Главный экран")
 icon = wait_for("Phone: удерживайте для уведомлений и быстрых действий")
 x, y = center(icon)
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
@@ -159,7 +161,7 @@ adb("shell", "input", "keyevent", "4")
 print("PASS: rightward app swipe opens widgets; icon hold opens quick actions")
 
 # The menu also has a Phone title; wait for the home window before targeting its row.
-wait_for("Все приложения и поиск")
+wait_for("Главный экран")
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
 wait_for("О приложении")
@@ -178,7 +180,7 @@ for label in ("Приложения во всплывающем меню", "Ск
     wait_for(label)
 adb("shell", "input", "keyevent", "4")
 print("PASS: app long press exposes a flat management list without Additional")
-wait_for("Все приложения и поиск")
+wait_for("Главный экран")
 
 x, y = center(wait_for("Phone"))
 adb("shell", "input", "swipe", str(x), str(y), str(x), str(y), "850")
@@ -204,12 +206,12 @@ rail = next(n for n in hierarchy().iter("node")
 _, _, rail_right, rail_bottom = map(int, re.findall(r"\d+", rail.get("bounds")))
 x = int(rail_right - 32 * density)  # clear Back and landscape system-bar insets
 # Use the measured rail rather than portrait display dimensions after rotation.
-adb("shell", "input", "swipe", str(x), str(int(rail_bottom - 48 * density)), str(x), str(int(rail_bottom + 48 * density)), "1000")
+adb("shell", "input", "swipe", str(x), str(int(rail_bottom - 48 * density)), str(x), str(int(rail_bottom - 2 * density)), "1000")
 wait_for("Поиск приложений")
 tree = hierarchy()
 assert any(re.match(r"Алфавит приложений, [A-Z#]\.", n.get("content-desc", "")) for n in tree.iter("node"))
 assert not any(n.get("text") == "Camera" for n in tree.iter("node"))
-print("PASS: release below the alphabet keeps the app list at the final section")
+print("PASS: release at the bottom below the letters keeps the app list at the final section")
 adb("shell", "input", "keyevent", "4")
 home()
 print("PASS: alphabet gesture opens the app list")

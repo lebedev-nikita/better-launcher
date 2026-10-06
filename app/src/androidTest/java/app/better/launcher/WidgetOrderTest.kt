@@ -165,7 +165,7 @@ class WidgetOrderTest {
                     activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                         .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
-                node("Все приложения и поиск")
+                node("Главный экран")
                 await { find(instrumentation.uiAutomation.rootInActiveWindow, "Перетащить $label · 1") == null }
                 assertEquals(pageOrder, store.pageWidgets)
                 scenario.onActivity { activity ->

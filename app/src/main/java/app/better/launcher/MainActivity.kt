@@ -60,7 +60,6 @@ class MainActivity : AppCompatActivity() {
     private var keyboardRequest: Runnable? = null
     private var homeScroll: ScrollView? = null
     private var homeFooter: View? = null
-    private var homeFooterHeight = 0
     private var widgetScroll: ScrollView? = null
     private var homeScrollPosition = 0
     private var widgetScrollPosition = 0
@@ -97,6 +96,25 @@ class MainActivity : AppCompatActivity() {
         wallpaperScrim = WallpaperScrimView(this)
         root.addView(wallpaperScrim, FrameLayout.LayoutParams(-1, -1))
         screen = PageSwipeLayout(this)
+        screen.accessibilityDelegate = object : View.AccessibilityDelegate() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                if (page == "home") {
+                    listOf(R.id.home_search to "Все приложения и поиск", R.id.home_widgets to "Экран виджетов",
+                        R.id.home_settings to "Настройки лаунчера").forEach { (id, label) ->
+                        info.addAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction(id, label))
+                    }
+                }
+            }
+            override fun performAccessibilityAction(host: View, action: Int, args: Bundle?): Boolean {
+                if (page == "home") when (action) {
+                    R.id.home_search -> { showApps(true); return true }
+                    R.id.home_widgets -> { showWidgets(true); return true }
+                    R.id.home_settings -> { showSettings(); return true }
+                }
+                return super.performAccessibilityAction(host, action, args)
+            }
+        }
         screen.onSwipe = { if (page == "home" || page == "apps") showWidgets(true) else if (page == "widgets") returnFromWidgets() }
         screen.onTouchFinished = {
             if (notificationRefreshPending && page == "home" && resumed) refreshHomePreservingScroll()
@@ -135,6 +153,15 @@ class MainActivity : AppCompatActivity() {
         outState.putInt("homeScrollPosition", homeScroll?.scrollY ?: homeScrollPosition)
         outState.putInt("widgetScrollPosition", widgetScroll?.scrollY ?: widgetScrollPosition)
         super.onSaveInstanceState(outState)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        if (page == "home" && currentDialog == null && !widgets.isResizing) when (keyCode) {
+            KeyEvent.KEYCODE_SEARCH -> { showApps(true); return true }
+            KeyEvent.KEYCODE_MENU -> { showSettings(); return true }
+            KeyEvent.KEYCODE_F10 -> if (event.isShiftPressed) { showSettings(); return true }
+        }
+        return super.onKeyUp(keyCode, event)
     }
 
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); currentDialog?.dismiss(); hideKeyboard(); orderingFavorites = false; orderingWidgets = false; showHome() }
@@ -208,6 +235,7 @@ class MainActivity : AppCompatActivity() {
         // Paint behind transparent system bars as well as the inset-safe content.
         screen.setBackgroundColor(if (newPage == "settings") surface else Color.TRANSPARENT)
         screen.direction = when (newPage) { "home", "apps" -> 1; "widgets" -> -1; else -> 0 }
+        screen.contentDescription = if (newPage == "home") "Главный экран" else null
         screen.accessibilityPaneTitle = when (newPage) { "home" -> "Главный экран"; "widgets" -> "Виджеты"; "apps" -> "Все приложения"; else -> "Настройки" }
         rail.visibility = if (newPage == "home" || newPage == "apps") View.VISIBLE else View.GONE
         updateRailBounds()
@@ -226,9 +254,8 @@ class MainActivity : AppCompatActivity() {
         params.topMargin = screen.paddingTop
         rail.contentTopInset = if (page == "apps") dp(68) else 0
         params.leftMargin = screen.paddingLeft; params.rightMargin = screen.paddingRight
-        homeFooter?.height?.takeIf { it > 0 }?.let { homeFooterHeight = it }
-        // Preserve the bottom anchor; app search controls stay above the rail.
-        params.bottomMargin = screen.paddingBottom + homeFooterHeight.coerceAtLeast(dp(66))
+        // Normal home and apps share the same anchor; only ordering reserves Done.
+        params.bottomMargin = screen.paddingBottom + (homeFooter?.height ?: 0)
         rail.layoutParams = params
     }
     private fun updateAlphabet() {
@@ -246,7 +273,7 @@ class MainActivity : AppCompatActivity() {
         clearScreen("home"); rail.selected = "★"; notificationRefreshPending = false
         updateAlphabet()
         val homeLayout = vertical()
-        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; clipToPadding = false }
+        val scroll = ScrollView(this).apply { isVerticalScrollBarEnabled = false; clipToPadding = false; isFillViewport = true }
         homeScroll = scroll
         val content = vertical()
         val (start, end) = contentMargins()
@@ -309,18 +336,15 @@ class MainActivity : AppCompatActivity() {
         })
         content.setOnTouchListener { _, event -> gesture.onTouchEvent(event) }
         content.isLongClickable = true; content.setOnLongClickListener { showSettings(); true }
-        val footer = horizontal().apply { setPadding(dp(22), dp(7), dp(22), dp(7)); minimumHeight = dp(66) }
-        homeFooter = footer
-        footer.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
-            if (bottom - top != oldBottom - oldTop) updateRailBounds()
+        if (orderingFavorites) {
+            val footer = horizontal().apply { setPadding(dp(22), dp(7), dp(22), dp(7)); minimumHeight = dp(66) }
+            homeFooter = footer
+            footer.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+                if (bottom - top != oldBottom - oldTop) updateRailBounds()
+            }
+            footer.addView(action("Готово") { orderingFavorites = false; showHome() })
+            homeLayout.addView(footer, LinearLayout.LayoutParams(-1, -2))
         }
-        if (orderingFavorites) footer.addView(action("Готово") { orderingFavorites = false; showHome() })
-        else footer.addView(iconButton(Glyph.SEARCH, "Все приложения и поиск") { showApps(true) })
-        footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
-        footer.addView(iconButton(Glyph.WIDGETS, "Экран виджетов") { showWidgets(true) })
-        footer.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f))
-        footer.addView(iconButton(Glyph.SETTINGS, "Настройки лаунчера") { showSettings() })
-        homeLayout.addView(footer, LinearLayout.LayoutParams(-1, -2))
         screen.addView(homeLayout, FrameLayout.LayoutParams(-1, -1))
     }
 

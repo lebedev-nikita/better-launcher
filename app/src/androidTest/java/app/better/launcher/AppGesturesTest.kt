@@ -29,7 +29,7 @@ class AppGesturesTest {
             dismiss(activity)
             // A leftward gesture no longer opens the app popup or launches the app.
             swipe(name, -1)
-            awaitView(activity) { it.contentDescription?.toString() == "Все приложения и поиск" }
+            awaitView(activity) { it.contentDescription?.toString() == "Главный экран" }
             instrumentation.runOnMainSync { assertNull(dialog(activity)) }
             // Both the name and icon must allow the parent page gesture.
             for (onIcon in listOf(false, true)) {
@@ -40,7 +40,7 @@ class AppGesturesTest {
                 swipe(target, 1)
                 awaitView(activity) { it is TextView && it.text.toString() == "Удерживайте пустое место, чтобы добавить виджет" }
                 instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
-                awaitView(activity) { it.contentDescription?.toString() == "Все приложения и поиск" }
+                awaitView(activity) { it.contentDescription?.toString() == "Главный экран" }
             }
         }
     }
@@ -63,7 +63,7 @@ class AppGesturesTest {
     @Test fun appListRowSwipeOpensWidgets() {
         withApp { activity, label ->
             instrumentation.runOnMainSync {
-                views(activity.window.decorView).first { it.contentDescription?.toString() == "Все приложения и поиск" }.performClick()
+                views(activity.window.decorView).first { it.contentDescription?.toString() == "Главный экран" }.performAccessibilityAction(R.id.home_search, null)
             }
             val input = awaitView(activity) { it is android.widget.EditText && it.hint?.toString() == "Поиск приложений" }
             instrumentation.runOnMainSync { (input as android.widget.EditText).setText(label) }
@@ -94,13 +94,13 @@ class AppGesturesTest {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         val oldHide = activity.store.bool("hideIcons")
         try {
-            awaitView(activity) { it.contentDescription?.toString() == "Все приложения и поиск" }
+            awaitView(activity) { it.contentDescription?.toString() == "Главный экран" }
             instrumentation.runOnMainSync {
                 activity.store.set("hideIcons", hideIcons)
                 activity.showHome()
             }
             var label = ""
-            // The home footer appears before the asynchronously loaded catalog and favorites.
+            // The home surface appears before the asynchronously loaded catalog and favorites.
             awaitView(activity) {
                 val favorite = activity.store.favorites.firstNotNullOfOrNull(activity.catalog::find)
                 val loadedLabel = favorite?.let(activity.catalog::label)
