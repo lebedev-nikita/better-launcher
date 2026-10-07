@@ -107,17 +107,17 @@ class WidgetHomeLayoutTest {
                 instrumentation.runOnMainSync {
                     assertTrue((widget().parent as View).performAccessibilityAction(AccessibilityNodeInfo.ACTION_LONG_CLICK, null))
                 }
-                await { node("Переместить и изменить размер") != null }
-                assertTrue(node("Переместить и изменить размер")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
-                await { node("Правая граница виджета") != null }
+                await { node("Move and resize") != null }
+                assertTrue(node("Move and resize")!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+                await { node("Right edge of widget") != null }
                 instrumentation.runOnMainSync {
-                    val handle = descendants(activity.window.decorView).first { it.contentDescription == "Верхняя граница виджета" }
+                    val handle = descendants(activity.window.decorView).first { it.contentDescription == "Top edge of widget" }
                     val handleBounds = Rect().also { handle.getGlobalVisibleRect(it) }
                     val screen = descendants(activity.window.decorView).filterIsInstance<PageSwipeLayout>().single()
                     val screenBounds = Rect().also { screen.getGlobalVisibleRect(it) }
                     assertTrue("Top handle stays below system bars", handleBounds.top >= screenBounds.top + screen.paddingTop)
                 }
-                assertTrue(node("Правая граница виджета")!!.performAction(android.R.id.accessibilityActionSetProgress,
+                assertTrue(node("Right edge of widget")!!.performAction(android.R.id.accessibilityActionSetProgress,
                     Bundle().apply { putFloat(AccessibilityNodeInfo.ACTION_ARGUMENT_PROGRESS_VALUE, 1600f) }))
                 fun maximumWidth(): Int {
                     val info = manager.getAppWidgetInfo(id)

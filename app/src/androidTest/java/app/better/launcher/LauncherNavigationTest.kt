@@ -23,7 +23,7 @@ class LauncherNavigationTest {
         val activity = instrumentation.startActivitySync(Intent(instrumentation.targetContext, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         try {
-            bounds(activity, "Главный экран")
+            bounds(activity, "Home screen")
             val before = Rect()
             lateinit var rail: AlphabetRail
             instrumentation.runOnMainSync {
@@ -37,7 +37,7 @@ class LauncherNavigationTest {
                 assertTrue(rail.getGlobalVisibleRect(before))
             }
             instrumentation.runOnMainSync { rail.onSelect("C") }
-            bounds(activity, "Поиск приложений")
+            bounds(activity, "Search apps")
             instrumentation.waitForIdleSync()
             instrumentation.runOnMainSync {
                 val after = Rect()
@@ -45,7 +45,7 @@ class LauncherNavigationTest {
                 assertEquals("Opening apps must keep letters under the finger", before, after)
                 rail.onSelect("★")
             }
-            bounds(activity, "Главный экран")
+            bounds(activity, "Home screen")
             instrumentation.runOnMainSync {
                 val after = Rect()
                 assertTrue(rail.getGlobalVisibleRect(after))
@@ -59,23 +59,23 @@ class LauncherNavigationTest {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         try {
             instrumentation.waitForIdleSync()
-            bounds(activity, "Главный экран")
+            bounds(activity, "Home screen")
             openWidgets(activity)
-            assertVisible(activity, "Удерживайте пустое место, чтобы добавить виджет")
+            assertVisible(activity, "Touch and hold an empty area to add a widget")
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            assertVisible(activity, "Главный экран", "system Back")
+            assertVisible(activity, "Home screen", "system Back")
             openWidgets(activity)
-            assertVisible(activity, "Удерживайте пустое место, чтобы добавить виджет")
+            assertVisible(activity, "Touch and hold an empty area to add a widget")
             // Dismissing the provider picker keeps the widget page open.
             instrumentation.runOnMainSync {
-                val scroll = (find(activity.window.decorView, "Удерживайте пустое место, чтобы добавить виджет")!!.parent as View)
+                val scroll = (find(activity.window.decorView, "Touch and hold an empty area to add a widget")!!.parent as View)
                 assertTrue(scroll.performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_LONG_CLICK, null))
             }
-            bounds(activity, "Поиск виджетов", dialog = true)
+            bounds(activity, "Search widgets", dialog = true)
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            assertVisible(activity, "Удерживайте пустое место, чтобы добавить виджет")
+            assertVisible(activity, "Touch and hold an empty area to add a widget")
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            assertVisible(activity, "Главный экран", "system Back")
+            assertVisible(activity, "Home screen", "system Back")
             openWidgets(activity)
             instrumentation.runOnMainSync {
                 activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
@@ -90,7 +90,7 @@ class LauncherNavigationTest {
                     homeVisible = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
                         .filterIsInstance<MainActivity>().any {
                             val bounds = Rect()
-                            it.hasWindowFocus() && find(it.window.decorView, "Главный экран")?.getGlobalVisibleRect(bounds) == true && !bounds.isEmpty
+                            it.hasWindowFocus() && find(it.window.decorView, "Home screen")?.getGlobalVisibleRect(bounds) == true && !bounds.isEmpty
                         }
                 }
                 if (!homeVisible) SystemClock.sleep(50)
@@ -124,7 +124,7 @@ class LauncherNavigationTest {
     }
     private fun openWidgets(activity: MainActivity) {
         instrumentation.runOnMainSync {
-            assertTrue(find(activity.window.decorView, "Главный экран")!!.performAccessibilityAction(R.id.home_widgets, null))
+            assertTrue(find(activity.window.decorView, "Home screen")!!.performAccessibilityAction(R.id.home_widgets, null))
         }
         instrumentation.waitForIdleSync()
     }

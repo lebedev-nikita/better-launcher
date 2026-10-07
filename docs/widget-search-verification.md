@@ -1,31 +1,31 @@
-# Проверка поиска виджетов — 5 октября 2026
+# Widget-search verification — 5 October 2026
 
-Поле «Поиск виджетов» доступно при добавлении на главный экран и страницу виджетов. Все слова запроса сопоставляются с названием виджета или приложения без учёта регистра и диакритики. Очистка возвращает весь каталог; алфавит отражает результаты. Просмотр и поиск не выделяют AppWidget IDs.
+Search widgets available when adding to home/widget page. All query words match widget/app names case/diacritics insensitive. Clear restores catalog; alphabet reflects results. Browsing/search allocate no IDs.
 
-## Проверенный опубликованный APK
+## Verified published APK
 
-[0.2.0-rc.40](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.40), versionCode 49, тег на `c07c77c7a6a7bd50cdc034c2b718b7909c064fa1`. Поиск интегрирован в main до сборки этого кандидата; исходник WidgetPickerView совпадает с проверявшейся реализацией поиска. Пока выполнялись проверки, другие рабочие ветки также публиковали кандидаты. Более старый подготовленный здесь rc.38 отдельно не публиковался.
+[0.2.0-rc.40](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.40), code 49, tag `c07c77c7a6a7bd50cdc034c2b718b7909c064fa1`. Search integrated into main before candidate build; WidgetPickerView matches tested implementation. Concurrent branches published candidates during checks; older locally prepared rc.38 was not released separately.
 
-- Скачанный release APK: 2 457 952 байта, SHA-256 `9551954f93bf13d4eff14d361a7befb5d3fad394a423ddc024a8f995f947c327`; совпадает с опубликованным SHA256SUMS.txt и digest GitHub asset.
-- APK не debuggable, подпись v2 действительна и совместима с предыдущим выпуском. Release использует R8 и удаление неиспользуемых ресурсов.
-- Тег содержит коммит поиска и является предком origin/main.
+- Downloaded release APK: 2 457 952 bytes, SHA-256 `9551954f93bf13d4eff14d361a7befb5d3fad394a423ddc024a8f995f947c327`, matches published checksum/GitHub asset digest.
+- Not debuggable, valid v2/compatible signature, R8/resource shrinking.
+- Tag contains search commit/is ancestor of origin/main.
 
-## Сборка и проверки исходников
+## Source build/checks
 
-Для коммита `2b25977` после интеграции main: assembleDebug, assembleDebugAndroidTest, testDebugUnitTest и lintDebug успешно завершены. Все 15 unit-тестов прошли; lint — 0 ошибок, 27 прежних предупреждений, новых нет. Подготовленная здесь подписанная release-сборка с поиском также прошла assembleRelease и lintRelease; опубликованный rc.40 проверен отдельно по скачанному APK.
+Post-main commit `2b25977`: assembleDebug/assembleDebugAndroidTest/testDebugUnitTest/lintDebug passed. All 15 unit tests; lint 0 errors/27 previous warnings, no new warnings. Locally prepared signed search release also passed assembleRelease/lintRelease; published rc.40 independently checked from download.
 
 ## Android 12 / API 31
 
-Выделенный эмулятор BetterLauncher_WidgetSearch_API_31; явный serial `127.0.0.1:5661`, отдельный adb server на порту 5038.
+Dedicated BetterLauncher_WidgetSearch_API_31, explicit `127.0.0.1:5661`, separate adb server port 5038.
 
-- WidgetPickerTest и SystemTransliterationTest: 7/7 успешно. Проверены поиск до загрузки каталога, название виджета и приложения, регистр, кириллица, пустой результат, очистка, пробелы, выбор отфильтрованного провайдера, IME Done, превью и отсутствие выделенных widget IDs при просмотре.
-- На самом опубликованном подписанном rc.40 прошли все 11 проверок scripts/smoke-test.py из его тега, включая HOME/Back, поиск приложений, Camera, меню и алфавит; аварий Better Launcher нет.
-- На том же release APK проверены поиск clock, отсутствие совпадений, очистка, клавиатура, Back и HOME: портрет 1080×2400, узкий экран 945×2100/font scale 1.3 и landscape 2160×1080. Снимки проверены визуально. В landscape системная клавиатура использует полноэкранный ввод; Back возвращает к отфильтрованному списку.
-- Проверен левосторонний режим: поиск работает, алфавит выбора виджетов остаётся справа; исходный режим восстановлен.
-- Временные размер экрана, масштаб шрифта и показ экранной клавиатуры восстановлены. После instrumentation-тестов основной подписанный APK переустановлен и назначен HOME.
+- WidgetPickerTest/SystemTransliterationTest: 7/7. Covers pre-load search, widget/app names, case/Cyrillic, no results, clearing/spaces, filtered provider, IME Done/previews/no allocated browse IDs.
+- Published signed rc.40 passed all 11 tagged scripts/smoke-test.py checks including HOME/Back, app search, Camera, menus/alphabet; no Better Launcher crashes.
+- Same release checked clock search/no matches/clear/keyboard/Back/HOME in portrait 1080×2400, narrow 945×2100/font scale 1.3, landscape 2160×1080. Captures reviewed; landscape fullscreen keyboard Back returns filtered list.
+- Left-handed mode checked: search works, picker alphabet remains right; original mode restored.
+- Temporary size/font/onscreen-keyboard visibility restored. Main signed APK reinstalled/HOME assigned after instrumentation.
 
-## Ограничения
+## Limitations
 
-Полный connected-набор не прошёл: выполнение прервано после 19 из 31 сценария, были ошибки ожидания UI в меню, порядке избранного и навигации. Отдельный исправленный набор из 7 тестов прошёл полностью; это не результат полного connected-набора. Android 16 / API 36 не подтверждён в этой проверке: выделенный эмулятор не обеспечил устойчивый запуск из-за сбоев system_server/графики. Физический телефон и полный TalkBack-сеанс не проверены.
+Full connected failed: interrupted after 19/31 scenarios with menu/favorites-order/navigation UI waits. Corrected isolated 7-test set passed; not a full-suite result. API 36 unconfirmed: dedicated emulator unstable due to system_server/graphics failures. Physical phone/full TalkBack session untested.
 
-Локальные журналы и native screenshots находятся в .impeccable/review/widget-search/ и не включаются в Git. Исторический отчёт 0.1.0 в docs/verification.md остаётся без изменений.
+Local logs/native captures in `.impeccable/review/widget-search/`, outside Git. Historical 0.1.0 facts in docs/verification.md retained.

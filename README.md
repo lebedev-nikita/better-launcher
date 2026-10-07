@@ -1,133 +1,140 @@
 # Better Launcher
 
-Нативный Android-лаунчер на Kotlin для **Android 12+ (API 31)**. Направление проекта — воспроизвести интерфейс и сценарии Niagara под собственным именем Better Launcher. Главный экран работает с настоящими установленными приложениями и может быть назначен системным HOME-лаунчером.
+A native Kotlin home-screen launcher for **Android 12+ (API 31)**. The project follows Niagara's interface and workflows under the Better Launcher name, using original code and assets. The home screen displays real installed apps and can become Android's default HOME launcher.
 
-Стабильный релиз **0.2.0** реализует вертикальное избранное, алфавитную «волну» с крупными буквами только заполненных разделов, включая #, поиск, меню приложений и единый тёмно-синий стиль всех меню, уведомления, папки, один виджет на главном экране и отдельную страницу виджетов слева; при выборе виджета доступны текстовый поиск, превью и алфавит справа. Приложения, папки и работающие виджеты переставляются прямо на своих экранах через одну ручку перетаскивания, без отдельного окна порядка. Виджеты перемещаются за содержимое и редактируются четырьмя маркерами по краям с шагом 12 dp; каждое фактическое изменение размера сопровождается системным CLOCK_TICK на Android 12+. Буквенный индекс даёт одинаковый короткий тактильный отклик при смене раздела и отпускании пальца. Полный паритет Niagara и Niagara Pro ещё не достигнут; реализованные возможности и пробелы перечислены в [docs/features.md](docs/features.md).
+Stable release **0.3.0** adds complete English and Russian interface resources. It builds on 0.2.0's vertical favorites, populated A–Z/# alphabet with a wave gesture, search, app menus, notifications, folders, one home widget and a separate widget page to the left. All app-owned menus share a navy and pale blue style. Apps, folders and live widgets reorder in place through one drag handle. Widgets move by their content and resize through four edge handles on a 12 dp grid, with native CLOCK_TICK feedback for each applied size change. Widget selection offers search, provider previews and a result alphabet. Full Niagara/Niagara Pro parity has not been achieved; see [feature coverage](docs/features.md).
 
-[Репозиторий](https://github.com/better-launcher/better-launcher) · [Стабильный релиз 0.2.0 и APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0) · [Релиз-кандидат 0.2.0-rc.60](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0-rc.60). Репозиторий приватный: для скачивания нужен доступ к организации.
+[Repository](https://github.com/better-launcher/better-launcher) · [Stable release 0.3.0 and APK](https://github.com/better-launcher/better-launcher/releases/tag/v0.3.0) · [Previous stable release 0.2.0](https://github.com/better-launcher/better-launcher/releases/tag/v0.2.0). The repository is private; downloads require organization access.
 
-## Документация проекта
+## Project documentation
 
-| Документ | Когда читать |
+| Document | Read for |
 | --- | --- |
-| [docs/releases/0.2.0.md](docs/releases/0.2.0.md) | Минорный стабильный выпуск из main, состав и проверки |
-| [docs/releases/0.2.0-rc.60.md](docs/releases/0.2.0-rc.60.md) | Скрытие быстрых действий крестиком и их восстановление |
-| [docs/releases/0.2.0-rc.57.md](docs/releases/0.2.0-rc.57.md) | Главный экран без нижних кнопок и резерва под них |
-| [docs/releases/0.2.0-rc.56.md](docs/releases/0.2.0-rc.56.md) | Экран виджетов без панелей и добавление удержанием пустого места |
-| [docs/releases/0.2.0-rc.55.md](docs/releases/0.2.0-rc.55.md) | Исправление остаточного зазора при нулевом отступе |
-| [docs/releases/0.2.0-rc.54.md](docs/releases/0.2.0-rc.54.md) | Живой предпросмотр отступа в настройках |
-| [docs/releases/0.2.0-rc.53.md](docs/releases/0.2.0-rc.53.md) | Единый настраиваемый отступ между виджетами и перед избранным |
-| [docs/releases/0.2.0-rc.52.md](docs/releases/0.2.0-rc.52.md) | Единый фон настроек под системными панелями |
-| [docs/releases/0.2.0-rc.51.md](docs/releases/0.2.0-rc.51.md) | Поиск приложений на всю доступную ширину |
-| [docs/releases/0.2.0-rc.50.md](docs/releases/0.2.0-rc.50.md) | Раздельные меню, свайп к виджетам и проверка видимости клавиатуры |
-| [docs/releases/0.2.0-rc.49.md](docs/releases/0.2.0-rc.49.md) | Прозрачные строки перетаскивания виджетов |
-| [docs/releases/0.2.0-rc.48.md](docs/releases/0.2.0-rc.48.md) | Скрытые приложения сразу исключаются из алфавитного указателя |
-| [docs/releases/0.2.0-rc.47.md](docs/releases/0.2.0-rc.47.md) | Раздельные меню и стабильные жесты при обновлении каталога |
-| [docs/releases/0.2.0-rc.45.md](docs/releases/0.2.0-rc.45.md) | Выбор виджета с одним понятным полем поиска |
-| [docs/releases/0.2.0-rc.46.md](docs/releases/0.2.0-rc.46.md) | Смахиваемые всплывающие сообщения до трёх секунд |
-| [docs/widget-search-verification.md](docs/widget-search-verification.md) | Поиск виджетов: проверенный APK, сценарии и ограничения |
-| [docs/releases/0.2.0-rc.43.md](docs/releases/0.2.0-rc.43.md) | Раздельное удержание иконки/названия и свайп к виджетам |
-| [docs/releases/0.2.0-rc.42.md](docs/releases/0.2.0-rc.42.md) | Меню приложения без дублирующего запуска |
-| [docs/releases/0.2.0-rc.41.md](docs/releases/0.2.0-rc.41.md) | Плоский список действий в меню удержания |
-| [docs/releases/0.2.0-rc.40.md](docs/releases/0.2.0-rc.40.md) | Меню виджета без «О приложении» и «Добавить виджет» |
-| [docs/releases/0.2.0-rc.39.md](docs/releases/0.2.0-rc.39.md) | Поиск скрытых приложений и «Показывать снова» |
-| [docs/releases/0.2.0-rc.38.md](docs/releases/0.2.0-rc.38.md) | Текстовый поиск при добавлении виджета |
-| [docs/releases/0.2.0-rc.37.md](docs/releases/0.2.0-rc.37.md) | Скрытие всех пустых разделов индекса, включая # |
-| [docs/releases/0.2.0-rc.36.md](docs/releases/0.2.0-rc.36.md) | Прозрачный фон при перетаскивании избранного |
-| [docs/releases/0.2.0-rc.35.md](docs/releases/0.2.0-rc.35.md) | Главный экран без дублирующей кнопки порядка избранного |
-| [docs/releases/0.2.0-rc.34.md](docs/releases/0.2.0-rc.34.md) | Одна ручка перестановки рядом с названием избранного |
-| [docs/releases/0.2.0-rc.33.md](docs/releases/0.2.0-rc.33.md) | Упрощённое меню виджета и иконка перемещения |
-| [docs/releases/0.2.0-rc.32.md](docs/releases/0.2.0-rc.32.md) | Единый стиль всех меню по меню долгого удержания ярлыка |
-| [docs/releases/0.2.0-rc.31.md](docs/releases/0.2.0-rc.31.md) | Перестановка прямо на главном экране и странице виджетов |
-| [docs/releases/0.2.0-rc.30.md](docs/releases/0.2.0-rc.30.md) | Системный CLOCK_TICK при изменении размера виджета |
-| [docs/releases/0.2.0-rc.29.md](docs/releases/0.2.0-rc.29.md) | Главный экран сразу под статус-баром без пустого верхнего отступа |
-| [docs/releases/0.2.0-rc.28.md](docs/releases/0.2.0-rc.28.md) | Перестановка виджетов и прямой вход в порядок избранного |
-| [docs/releases/0.2.0-rc.27.md](docs/releases/0.2.0-rc.27.md) | Мягкий тактильный отклик размера виджета |
-| [docs/releases/0.2.0-rc.26.md](docs/releases/0.2.0-rc.26.md) | Главный виджет по центру и на всю ширину |
-| [docs/releases/0.2.0-rc.25.md](docs/releases/0.2.0-rc.25.md) | Виброотклик при изменении размера виджета |
-| [docs/releases/0.2.0-rc.24.md](docs/releases/0.2.0-rc.24.md) | Перетаскивание виджета и мелкая сетка 12 dp |
-| [docs/releases/0.2.0-rc.23.md](docs/releases/0.2.0-rc.23.md) | Вибрация при отпускании буквенного индекса |
-| [docs/releases/0.2.0-rc.22.md](docs/releases/0.2.0-rc.22.md) | Меню виджетов и редактирование четырёх границ |
-| [docs/releases/0.2.0-rc.21.md](docs/releases/0.2.0-rc.21.md) | Объединённый кандидат со всеми ранее невлитыми функциями |
-| [AGENTS.md](AGENTS.md) | Перед работой ИИ-агента: порядок действий, инварианты и выбор проверок |
-| [PRODUCT.md](PRODUCT.md) | Требования продукта, выбранная платформа и направление развития |
-| [DESIGN.md](DESIGN.md) | Изменения интерфейса, размеров, цветов, типографики и поведения при масштабировании |
-| [docs/home-surface.md](docs/home-surface.md) | Компоновка и основные взаимодействия главного экрана |
-| [docs/favorites-order-verification.md](docs/favorites-order-verification.md) | Проверки сортировки избранного и ограничения smoke-прогонов |
-| [docs/features.md](docs/features.md) | Текущее покрытие возможностей и оставшаяся работа |
-| [docs/releases/0.2.0-rc.7.md](docs/releases/0.2.0-rc.7.md) | Симметричные кнопки и оптимизированный release APK |
-| [docs/releases/0.1.8.md](docs/releases/0.1.8.md) | Исправление нижней границы алфавитного ползунка |
-| [docs/releases/0.2.0-rc.15.md](docs/releases/0.2.0-rc.15.md) | Редактор имени в том же меню и результаты проверок |
-| [docs/releases/0.2.0-rc.11.md](docs/releases/0.2.0-rc.11.md) | Исправление загрузки RemoteViews и проверки нового кандидата |
-| [docs/releases/0.2.0-rc.16.md](docs/releases/0.2.0-rc.16.md) | Сортировка избранного и проверки нового кандидата |
-| [docs/releases/0.1.9.md](docs/releases/0.1.9.md) | Превью виджетов, алфавит выбора и результаты проверки |
-| [docs/releases/0.2.0-rc.14.md](docs/releases/0.2.0-rc.14.md) | Релиз-кандидат выбора виджетов после rebase на main |
-| [docs/releases/0.1.7.md](docs/releases/0.1.7.md) | Уменьшенный release APK и результаты проверки |
-| [docs/verification-0.1.3.md](docs/verification-0.1.3.md) | Проверки латинского алфавита и транслитерации |
-| [docs/releases/0.1.3.md](docs/releases/0.1.3.md) | Латинский алфавит, транслитерация и установка |
-| [docs/verification.md](docs/verification.md) | Проверки версии 0.1.0 и границы подтверждённой совместимости |
-| [docs/app-navigation-verification.md](docs/app-navigation-verification.md) | Диагностика задержки списка и проверки оптимизации |
-| [docs/releases/0.2.0-rc.2.md](docs/releases/0.2.0-rc.2.md) | Симметричные нижние кнопки и предварительный выпуск |
-| [docs/releases/0.1.5.md](docs/releases/0.1.5.md) | Меню удержания по образцу Niagara |
-| [docs/app-menu-verification.md](docs/app-menu-verification.md) | Проверки меню и пакета 0.1.5 |
-| [docs/releases/0.1.4.md](docs/releases/0.1.4.md) | Регулировка затемнения обоев и проверки патча |
-| [docs/widgets-verification.md](docs/widgets-verification.md) | Проверки экрана виджетов |
-| [docs/verification-0.2.0-rc.1.md](docs/verification-0.2.0-rc.1.md) | Проверки итогового APK релиз-кандидата |
-| [docs/releases/0.2.0-rc.20.md](docs/releases/0.2.0-rc.20.md) | Меню удержания и размеры виджетов |
-| [docs/releases/0.2.0-rc.17.md](docs/releases/0.2.0-rc.17.md) | Компактный алфавит у нижней границы экрана |
-| [docs/releases/0.2.0-rc.19.md](docs/releases/0.2.0-rc.19.md) | Крупные буквы и только заполненные разделы алфавита |
-| [docs/releases/0.2.0-rc.1.md](docs/releases/0.2.0-rc.1.md) | Экран виджетов в минорном релиз-кандидате |
-| [docs/releases/0.1.2.md](docs/releases/0.1.2.md) | Патч плавности списка приложений и алфавита |
-| [docs/releases/0.1.1.md](docs/releases/0.1.1.md) | Изменения и проверки патч-релиза |
-| [docs/releases/0.1.0.md](docs/releases/0.1.0.md) | Состав первого выпуска и инструкция установки |
+| [AGENTS.md](AGENTS.md) | Working rules, invariants and required checks |
+| [PRODUCT.md](PRODUCT.md) | Product requirements and the selected platform/direction |
+| [DESIGN.md](DESIGN.md) | Native UI geometry, colors, typography and scaling |
+| [Home surface](docs/home-surface.md) | Home-screen layout and interactions |
+| [Feature coverage](docs/features.md) | Implemented functionality and remaining work |
+| [Languages](docs/localization.md) | English/Russian resources and regional formats |
+| [0.3.0 release notes](docs/releases/0.3.0.md) | This minor release and its verification |
 
-## Стек и окружение
+Historical release notes and verification reports:
 
-Проект состоит из одного Android-модуля `app`. Интерфейс создаётся программно из нативных Views; настройки используют Material 3. Основная логика находится в пакете `app.better.launcher`. Отдельного сервера, учётных записей и инфраструктуры развёртывания нет.
+| Document | Scope |
+| --- | --- |
+| [Release 0.2.0](docs/releases/0.2.0.md) | Historical release details and verification |
+| [Release 0.2.0-rc.60](docs/releases/0.2.0-rc.60.md) | Historical release details and verification |
+| [Release 0.2.0-rc.57](docs/releases/0.2.0-rc.57.md) | Historical release details and verification |
+| [Release 0.2.0-rc.56](docs/releases/0.2.0-rc.56.md) | Historical release details and verification |
+| [Release 0.2.0-rc.55](docs/releases/0.2.0-rc.55.md) | Historical release details and verification |
+| [Release 0.2.0-rc.54](docs/releases/0.2.0-rc.54.md) | Historical release details and verification |
+| [Release 0.2.0-rc.53](docs/releases/0.2.0-rc.53.md) | Historical release details and verification |
+| [Release 0.2.0-rc.52](docs/releases/0.2.0-rc.52.md) | Historical release details and verification |
+| [Release 0.2.0-rc.51](docs/releases/0.2.0-rc.51.md) | Historical release details and verification |
+| [Release 0.2.0-rc.50](docs/releases/0.2.0-rc.50.md) | Historical release details and verification |
+| [Release 0.2.0-rc.49](docs/releases/0.2.0-rc.49.md) | Historical release details and verification |
+| [Release 0.2.0-rc.48](docs/releases/0.2.0-rc.48.md) | Historical release details and verification |
+| [Release 0.2.0-rc.47](docs/releases/0.2.0-rc.47.md) | Historical release details and verification |
+| [Release 0.2.0-rc.45](docs/releases/0.2.0-rc.45.md) | Historical release details and verification |
+| [Release 0.2.0-rc.46](docs/releases/0.2.0-rc.46.md) | Historical release details and verification |
+| [Widget search verification](docs/widget-search-verification.md) | Historical release details and verification |
+| [Release 0.2.0-rc.43](docs/releases/0.2.0-rc.43.md) | Historical release details and verification |
+| [Release 0.2.0-rc.42](docs/releases/0.2.0-rc.42.md) | Historical release details and verification |
+| [Release 0.2.0-rc.41](docs/releases/0.2.0-rc.41.md) | Historical release details and verification |
+| [Release 0.2.0-rc.40](docs/releases/0.2.0-rc.40.md) | Historical release details and verification |
+| [Release 0.2.0-rc.39](docs/releases/0.2.0-rc.39.md) | Historical release details and verification |
+| [Release 0.2.0-rc.38](docs/releases/0.2.0-rc.38.md) | Historical release details and verification |
+| [Release 0.2.0-rc.37](docs/releases/0.2.0-rc.37.md) | Historical release details and verification |
+| [Release 0.2.0-rc.36](docs/releases/0.2.0-rc.36.md) | Historical release details and verification |
+| [Release 0.2.0-rc.35](docs/releases/0.2.0-rc.35.md) | Historical release details and verification |
+| [Release 0.2.0-rc.34](docs/releases/0.2.0-rc.34.md) | Historical release details and verification |
+| [Release 0.2.0-rc.33](docs/releases/0.2.0-rc.33.md) | Historical release details and verification |
+| [Release 0.2.0-rc.32](docs/releases/0.2.0-rc.32.md) | Historical release details and verification |
+| [Release 0.2.0-rc.31](docs/releases/0.2.0-rc.31.md) | Historical release details and verification |
+| [Release 0.2.0-rc.30](docs/releases/0.2.0-rc.30.md) | Historical release details and verification |
+| [Release 0.2.0-rc.29](docs/releases/0.2.0-rc.29.md) | Historical release details and verification |
+| [Release 0.2.0-rc.28](docs/releases/0.2.0-rc.28.md) | Historical release details and verification |
+| [Release 0.2.0-rc.27](docs/releases/0.2.0-rc.27.md) | Historical release details and verification |
+| [Release 0.2.0-rc.26](docs/releases/0.2.0-rc.26.md) | Historical release details and verification |
+| [Release 0.2.0-rc.25](docs/releases/0.2.0-rc.25.md) | Historical release details and verification |
+| [Release 0.2.0-rc.24](docs/releases/0.2.0-rc.24.md) | Historical release details and verification |
+| [Release 0.2.0-rc.23](docs/releases/0.2.0-rc.23.md) | Historical release details and verification |
+| [Release 0.2.0-rc.22](docs/releases/0.2.0-rc.22.md) | Historical release details and verification |
+| [Release 0.2.0-rc.21](docs/releases/0.2.0-rc.21.md) | Historical release details and verification |
+| [Favorites order verification](docs/favorites-order-verification.md) | Historical release details and verification |
+| [Release 0.2.0-rc.7](docs/releases/0.2.0-rc.7.md) | Historical release details and verification |
+| [Release 0.1.8](docs/releases/0.1.8.md) | Historical release details and verification |
+| [Release 0.2.0-rc.15](docs/releases/0.2.0-rc.15.md) | Historical release details and verification |
+| [Release 0.2.0-rc.11](docs/releases/0.2.0-rc.11.md) | Historical release details and verification |
+| [Release 0.2.0-rc.16](docs/releases/0.2.0-rc.16.md) | Historical release details and verification |
+| [Release 0.1.9](docs/releases/0.1.9.md) | Historical release details and verification |
+| [Release 0.2.0-rc.14](docs/releases/0.2.0-rc.14.md) | Historical release details and verification |
+| [Release 0.1.7](docs/releases/0.1.7.md) | Historical release details and verification |
+| [Verification 0.1.3](docs/verification-0.1.3.md) | Historical release details and verification |
+| [Release 0.1.3](docs/releases/0.1.3.md) | Historical release details and verification |
+| [Verification](docs/verification.md) | Historical release details and verification |
+| [App navigation verification](docs/app-navigation-verification.md) | Historical release details and verification |
+| [Release 0.2.0-rc.2](docs/releases/0.2.0-rc.2.md) | Historical release details and verification |
+| [Release 0.1.5](docs/releases/0.1.5.md) | Historical release details and verification |
+| [App menu verification](docs/app-menu-verification.md) | Historical release details and verification |
+| [Release 0.1.4](docs/releases/0.1.4.md) | Historical release details and verification |
+| [Widgets verification](docs/widgets-verification.md) | Historical release details and verification |
+| [Verification 0.2.0 rc.1](docs/verification-0.2.0-rc.1.md) | Historical release details and verification |
+| [Release 0.2.0-rc.20](docs/releases/0.2.0-rc.20.md) | Historical release details and verification |
+| [Release 0.2.0-rc.17](docs/releases/0.2.0-rc.17.md) | Historical release details and verification |
+| [Release 0.2.0-rc.19](docs/releases/0.2.0-rc.19.md) | Historical release details and verification |
+| [Release 0.2.0-rc.1](docs/releases/0.2.0-rc.1.md) | Historical release details and verification |
+| [Release 0.1.2](docs/releases/0.1.2.md) | Historical release details and verification |
+| [Release 0.1.1](docs/releases/0.1.1.md) | Historical release details and verification |
+| [Release 0.1.0](docs/releases/0.1.0.md) | Historical release details and verification |
+| [Shortcut icons verification](docs/shortcut-icons-verification.md) | Historical release details and verification |
+| [App menu motion verification](docs/app-menu-motion-verification.md) | Historical release details and verification |
+| [Release 0.2.0-rc.8](docs/releases/0.2.0-rc.8.md) | Historical release details and verification |
 
-| Параметр | Текущее значение | Источник |
+## Stack and environment
+
+The project has one Android module, `app`. Native Views are constructed in Kotlin; settings use Material 3. Application logic lives in `app.better.launcher`. There is no separate server, account system or deployment infrastructure.
+
+| Parameter | Value | Source |
 | --- | --- | --- |
-| Минимальная версия Android | API 31 / Android 12 | [app/build.gradle.kts](app/build.gradle.kts) |
-| Compile SDK / Target SDK | 36 / 36 | [app/build.gradle.kts](app/build.gradle.kts) |
-| Application ID / namespace | `app.better.launcher` | [app/build.gradle.kts](app/build.gradle.kts) |
-| Kotlin | 2.2.21 | [build.gradle.kts](build.gradle.kts) |
-| Android Gradle Plugin | 8.13.2 | [build.gradle.kts](build.gradle.kts) |
-| Gradle | 8.13, через wrapper | [gradle-wrapper.properties](gradle/wrapper/gradle-wrapper.properties) |
-| JVM target | 17; для сборки подходят JDK 17 и 21 | [app/build.gradle.kts](app/build.gradle.kts) |
-| Android ICU | Системная библиотека Android; Russian-Latin/BGN, без отдельного JAR в APK | [AppListRules.kt](app/src/main/java/app/better/launcher/AppListRules.kt) |
-| Material Components | 1.13.0 | [app/build.gradle.kts](app/build.gradle.kts) |
+| Minimum Android version | API 31 / Android 12 | [app Gradle](app/build.gradle.kts) |
+| Compile SDK / Target SDK | 36 / 36 | [app Gradle](app/build.gradle.kts) |
+| Application ID / namespace | `app.better.launcher` | [app Gradle](app/build.gradle.kts) |
+| Kotlin | 2.2.21 | [root Gradle](build.gradle.kts) |
+| Android Gradle Plugin | 8.13.2 | [root Gradle](build.gradle.kts) |
+| Gradle | 8.13 through the wrapper | [wrapper properties](gradle/wrapper/gradle-wrapper.properties) |
+| JVM target | 17; builds support JDK 17 or 21 | [app Gradle](app/build.gradle.kts) |
+| Android ICU | System Russian-Latin/BGN transliteration; no separate JAR | [AppListRules](app/src/main/java/app/better/launcher/AppListRules.kt) |
+| Material Components | 1.13.0 | [app Gradle](app/build.gradle.kts) |
 
-Нужны Android SDK Platform 36, Build Tools 35.0.0 и Platform Tools с `adb`. Для интеграционных проверок нужен телефон или Android Emulator; для UI-скрипта также Python 3. Android Studio можно использовать для открытия корня проекта, настройки Gradle JDK и установки SDK через SDK Manager. Версии инструментов задаются Gradle-файлами; при их обновлении обновляйте эту таблицу.
+Install Android SDK Platform 36, Build Tools 35.0.0 and Platform Tools with `adb`. Integration tests need a phone or emulator; UI scripts also need Python 3. Android Studio can open the repository root, select the Gradle JDK and install SDK components. Gradle files are authoritative; update this table when changing tool versions.
 
-## Получение кода и первая сборка
+## Get the code and build
 
-С авторизованным GitHub CLI:
+With an authenticated GitHub CLI:
 
 ```sh
 gh repo clone better-launcher/better-launcher
 cd better-launcher
 ```
 
-Создайте в корне `local.properties` с абсолютным путём к своему Android SDK. Android Studio также может создать этот файл:
+Create `local.properties` in the repository root with your SDK's absolute path, or let Android Studio create it:
 
 ```properties
 sdk.dir=/absolute/path/to/android-sdk
 ```
 
-Проверьте JDK и соберите APK:
-
 ```sh
 java -version
+python3 scripts/check-localization.py
 ./gradlew :app:assembleDebug
 ```
 
-Результат: `app/build/outputs/apk/debug/app-debug.apk`. Первый запуск Gradle загружает wrapper и зависимости. Для Windows используйте `gradlew.bat`; остальные примеры команд ниже рассчитаны на POSIX-оболочку.
+The APK is `app/build/outputs/apk/debug/app-debug.apk`. The first Gradle run downloads the wrapper and dependencies. On Windows use `gradlew.bat`; shell examples otherwise assume POSIX. `local.properties`, build directories and local APKs are ignored by Git. Keep SDK paths, signing keys, tokens and user backups outside tracked files.
 
-`local.properties`, каталоги сборки и локальные APK исключены из Git. Пути SDK, ключи подписи, токены и пользовательские резервные копии храните вне отслеживаемых файлов проекта.
+## Installation and use
 
-## Установка и использование
-
-Можно установить APK из релиза вручную либо через `adb`. Если подключено несколько устройств, указывайте serial явно:
+Install a release APK manually or use adb. Always specify a serial when multiple devices are attached:
 
 ```sh
 adb devices
@@ -135,146 +142,121 @@ adb -s emulator-5580 install -r app/build/outputs/apk/debug/app-debug.apk
 adb -s emulator-5580 shell am start -n app.better.launcher/.MainActivity
 ```
 
-`emulator-5580` — пример; замените его на serial своего устройства. После запуска откройте настройки Better Launcher → «Домашний экран» → выберите Better Launcher в системном диалоге Android. Для возврата к другому лаунчеру используйте системные настройки приложения по умолчанию для домашнего экрана.
+Replace `emulator-5580` with your device. Open Better Launcher settings → **Default home app**, then select Better Launcher in Android's dialog. To switch back, use Android's default home app settings.
 
-| Действие | Результат |
+| Action | Result |
 | --- | --- |
-| Нажать на приложение | Открыть приложение |
-| Удерживать название приложения | Избранное, название, скрытие с отменой, сведения, удаление |
-| Меню избранного приложения → «Изменить порядок» | Перетаскивание приложений и папок за ≡; стрелки для клавиатуры и accessibility |
-| Удерживать иконку приложения | Уведомления, быстрые действия и прикреплённые приложения |
-| Провести по алфавиту | Перейти к разделу списка всех приложений |
-| Нажать на звёздочку в алфавите | Вернуться к избранному |
-| Свайп вверх по пустому месту или клавиша Search | Поиск, включая скрытые приложения; Enter открывает первый результат |
-| Настройки → «Календарь» | Ближайшие события календаря |
-| Провести вправо на главном экране, в том числе по ярлыку | Экран виджетов слева |
-| Провести влево на экране виджетов | Вернуться на главный экран |
-| Настройки → «Виджеты» | Открыть экран виджетов без жеста |
-| Удерживать свободное место на главном экране | Настройки |
-| Удерживать свободное место на странице виджетов | Выбор нового виджета |
-| Смахнуть всплывающее сообщение в сторону | Закрыть сообщение без отмены действия |
+| Tap an app | Launch it |
+| Hold an app name | Manage favorites, rename, hide with undo, uninstall or open app info |
+| Favorite app menu → Reorder | Drag apps/folders using ≡, or use keyboard/accessibility actions |
+| Hold an app icon | Notifications, quick actions and attached apps |
+| Slide along the alphabet | Jump to an app-list section |
+| Tap the alphabet's star | Return to favorites |
+| Swipe up on empty space, or press Search | Search, including hidden apps; Enter launches the first result |
+| Settings → Calendar | Upcoming calendar events |
+| Swipe right on home, including an app row | Open the widget page to the left |
+| Swipe left on the widget page | Return home |
+| Settings → Widgets | Open widgets without a gesture |
+| Hold empty space on home | Settings |
+| Hold empty space on the widget page | Choose a widget |
+| Swipe a feedback message sideways | Dismiss it without undoing its action |
 
-Главный экран всегда использует системные обои Android. Пункт «Обои» в настройках сразу открывает системный выбор обоев; ползунок «Затемнение обоев» регулирует его от 0 до 100% с шагом 1%. Значение по умолчанию — 20%, настройка сохраняется сразу. На светлых обоях можно увеличить затемнение для читаемости текста. Прежний выбор встроенных обоев, в том числе из резервных копий формата 1, больше не влияет на фон.
+The launcher uses Android's system wallpaper. **Wallpaper** opens the system picker directly. **Wallpaper dimming** saves immediately, from 0–100% in 1% steps; the default is 20%. Increase it for readable text on bright wallpapers. Legacy built-in wallpaper preferences, including those in format-1 backups, no longer affect the background.
 
-Меню долгого удержания названия показывает значок и название приложения, контурные значки команд и переход в настройки Better Launcher под разделителем. Для переименования нажмите на название приложения в заголовке. Скрытые приложения доступны по непустому поисковому запросу, включая исходное название и псевдоним. Удержание скрытого результата сразу показывает «Показывать снова»: действие сохраняется без подтверждения и оставляет текущий запрос. Оно не добавляет приложение в избранное. Пустой список и алфавит не включают скрытые приложения. После скрытия последнего видимого приложения буква сразу исчезает из указателя, включая #; отмена скрытия и «Показывать снова» возвращают её. Команды управления ярлыком находятся в одном плоском списке без пункта «Дополнительно»: избранное, изменение порядка для избранного, «Скрыть приложение», «Удалить приложение», «О приложении». Настройки остаются под разделителем. Пункты «Уведомления и быстрые действия» и «Приложения во всплывающем меню» удалены из этого меню; удержание иконки открывает уведомления, shortcuts и прикреплённые приложения, а «Добавить приложения» внутри него меняет их состав. На небольшом экране или при крупном шрифте список прокручивается. Редактор названия открывается в том же меню; «Сохранить» выровнено справа, клавиатура не закрывает форму. Меню плавно поднимается снизу за 300 мс и закрывается за 180 мс; отключение системных анимаций учитывается. Меню закрывается кнопкой «Назад», нажатием снаружи или HOME.
+The app-name menu has the real app icon, a tappable title and one flat command list: favorites, reorder for favorites, hide, uninstall and app info. Better Launcher settings appear below a divider. Tapping the title opens renaming in the same sheet with a right-aligned Save button and IME-safe space. The menu enters in 300 ms and exits in 180 ms, respects disabled system animations, scrolls in short/large-font windows, and closes with Back, HOME or an outside tap. Notifications, shortcuts and attached apps belong to the icon menu; **Add apps** changes its attached apps. There is no redundant owner-app Open action.
 
-На главном экране нет отдельных часов и даты: время отображается в статус-баре Android. Нижние кнопки поиска, виджетов и настроек удалены вместе с резервом 66 dp: избранное занимает всю высоту между системными панелями. Поиск открывается свайпом вверх по пустому месту, виджеты — свайпом вправо, настройки — удержанием свободного места или из меню приложения. Клавиши Search и Menu/Shift+F10 открывают поиск и настройки. Экранный диктор предлагает именованные действия поиска, виджетов и настроек на главном экране. Временная нижняя строка «Готово» появляется только при перестановке избранного.
+A nonempty search finds hidden apps by original name or alias. Holding a hidden result offers **Show again**, which saves immediately, preserves the query and does not add the app to favorites. Hidden apps stay out of the unfiltered list and alphabet. Hiding the last visible app in a section removes its letter immediately, including #; undo and Show again restore it.
 
-Команда «Изменить порядок» в меню долгого удержания избранного приложения включает перестановку на месте: приложения и папки остаются в своём списке, ручка ≡ стоит справа в одной строке с названием, без отдельной строки кнопок и видимых стрелок. Перетаскивайте сами строки; у краёв области список прокручивается. При фокусе на ручке ↑/↓ меняют порядок с клавиатуры; экранный диктор предлагает именованные действия «Переместить вверх/вниз». Порядок сохраняется после отпускания, клавиши или accessibility-действия. Отмена жеста не меняет порядок. «Готово» в закреплённом footer и Back завершают режим; HOME возвращает обычный главный экран. Выбор приложений и создание папок остаются в настройках избранного.
+Home has no built-in clock/date or permanent bottom controls. Android's status bar supplies the time; favorites use the full height between system insets, without the former 66 dp footer reserve. Search and Menu/Shift+F10 open search and settings; named accessibility actions expose search, widgets and settings. A pinned Done footer appears only during favorite reordering. The ≡ handle shares the title line, with no separate button row or visible arrow controls. Dragging autoscrolls at edges; ↑/↓ and named accessibility actions also reorder. Release or keyboard/accessibility actions save the order; cancellation preserves it. Done/Back finish reordering and HOME restores ordinary home. App selection and folder creation remain in favorite settings.
 
-Тёмно-синий фон настроек заполняет весь экран, включая области под статус-баром и системной навигацией. Элементы остаются внутри безопасных системных отступов; при возврате на главный экран, в поиск или к виджетам снова видны системные обои. В настройках редактируются избранное, порядок и папки. На главном экране можно разместить один виджет; остальные находятся в вертикальном списке на отдельном экране слева. Страница занимает всю высоту между системными панелями, без заголовка, верхних кнопок и нижней кнопки домой. Добавляйте виджеты долгим нажатием на пустое место, в том числе между виджетами; главный — через «Виджет на главном экране» в настройках. При фокусе на свободной области Menu/Shift+F10 и accessibility-действие «Добавить виджет» открывают тот же выбор. При двух и более виджетах на левом экране «Изменить порядок» в меню удержания виджета включает перестановку прямо на странице с работающими виджетами. Перетаскивайте реальные виджеты за единственную ручку ≡: отпускание, клавиши ↑/↓ при фокусе на ручке и её accessibility-действия сохраняют порядок, отмена жеста сохраняет прежние позиции. Back завершает перестановку; HOME возвращает главный экран. Для одинаковых провайдеров доступные названия ручек получают порядковые номера на время режима. Главный виджет, привязки, размеры и отступы сохраняются. Над добавленными виджетами нет названий приложений и кнопок меню. Удерживайте сам виджет, чтобы изменить его ширину/высоту, открыть настройки провайдера (если есть), назначить виджет со страницы на главный экран или удалить. После «Переместить и изменить размер» перетаскивайте содержимое виджета для перемещения по двум осям, а верхнюю/нижнюю или боковые границы — для размера. Изменения привязаны к мелкой сетке 12 dp (ограничения провайдера имеют приоритет). Каждое новое значение ширины/высоты запрашивает системный CLOCK_TICK на Android 12+, в том числе с клавиатуры и через accessibility. Повтор значения внутри шага, движение без изменения размера, достигнутая граница, отпускание без нового размера и отмена не дают дополнительного отклика; системные настройки вибрации учитываются. Стрелки клавиатуры и именованные accessibility-действия доступны на области перемещения. Главный виджет имеет отдельную область на всю ширину с учётом системных insets: по умолчанию он центрирован с боковыми отступами около 36 dp (плюс padding провайдера) и начинается сразу под статус-баром без дополнительного верхнего отступа. Главный экран без виджета также начинается непосредственно под системными insets. Сохранённый отступ самого виджета остаётся доступным для пользовательского перемещения. Верхний маркер редактора сдвигается внутрь виджета рядом со статус-баром, сохраняя 48dp область нажатия. Боковыми маркерами его можно растянуть до всей доступной ширины, даже если край не совпадает с сеткой 12 dp; ограничения провайдера сохраняются. На отдельной странице остаются отступы 28 dp. Перемещение ограничено своей областью и местом над панелью редактора. Круговой стрелки на виджете нет. Размеры сохраняются сразу; «Готово», нажатие вне виджета, Back и HOME завершают редактирование. Пункт «Переместить и изменить размер» отмечен четырьмя стрелками; пункты «Сбросить размер и положение» и «На экран виджетов» удалены. На странице виджетов остаётся «На главный экран». Доступные стороны и границы определяет провайдер; ширина ограничена текущим окном. Обычные нажатия и прокрутка содержимого продолжают работать. Меню доступно также через accessibility-действие «Настроить виджет» и Menu/Shift+F10 при фокусе на виджете; новый главный виджет переносит прежний на левый экран. Системная привязка и внешний экран настройки провайдера сохраняются. При обновлении прежней стопки первый виджет остаётся на главном, остальные переходят налево.
+Settings use a full navy background behind both system bars, with controls inside safe insets. Returning home, to search or to widgets reveals the wallpaper again. Home supports one widget; others form a live vertical list on the left page. The page has no title, top controls or home footer. Hold empty space, including gaps, to add a widget; Menu/Shift+F10 and an accessible Add widget action provide alternatives. Add the home widget through settings. With multiple page widgets, Reorder enters an in-place live drag mode with a single ≡ handle, keyboard/accessibility actions and automatic saving. Cancel keeps previous positions; Back ends reordering and HOME returns home. Duplicate providers receive numbered handle labels during this mode. Home binding, sizes and offsets are preserved.
 
-Все всплывающие сообщения, включая «Приложение скрыто» с кнопкой «Отменить», исчезают не позже чем через три секунды. Смахивание в любую сторону закрывает сообщение; короткий или отменённый жест возвращает его на место. Новое сообщение заменяет предыдущее. При открытом меню сообщение отображается поверх активного окна; перенос между окнами не продлевает срок. При фокусе доступны Escape/Delete и accessibility-действие закрытия.
+Widgets have no launcher-added app headings or persistent menu buttons. Hold the widget for Move and resize, provider settings when available, placement on home from the page, or removal. Move the content in two axes; resize through its top/bottom/side edges. Changes snap to 12 dp within provider constraints. Every applied width/height change requests CLOCK_TICK on Android 12+, including keyboard/accessibility input. Repeated values, limits, movement without resizing, release without a new size and cancellation add no tick. System haptic settings apply. The focused body supports arrows and named movement actions; edges support range actions.
 
-## Архитектура и жизненный цикл
+The home widget has a separate inset-safe-width region and starts immediately below the status bar, normally centered with approximately 36 dp side margins plus provider padding. Side handles can expand it to the exact available width even between grid points, subject to provider limits. The top handle moves inside the widget near the status bar to preserve its 48 dp target. The page keeps 28 dp margins. Movement is constrained to the widget's region and the area above the editor toolbar. Geometry saves immediately; Done, an outside tap, Back or HOME end editing. The menu uses a four-arrow Move and resize icon and omits Reset size and position and transfer from home to the widget page; page widgets retain Go to home screen. Provider taps/scrolling still work, and Menu/Shift+F10 plus Configure widget expose the same menu. Choosing a replacement home widget moves the previous one to the page. Existing widget stacks keep the first widget on home and place the rest on the left page.
 
-Исходники находятся в [app/src/main/java/app/better/launcher](app/src/main/java/app/better/launcher).
+Feedback messages last at most three seconds, including App hidden with Undo. Swipe either way to dismiss; short/cancelled gestures restore the message. A new message replaces the previous one. Messages appear over the active dialog window; moving between windows does not extend their lifetime. Escape/Delete and an accessibility dismiss action are available when focused.
 
-| Файл | Ответственность |
+## Architecture and lifecycle
+
+Sources are in [app/src/main/java/app/better/launcher](app/src/main/java/app/better/launcher).
+
+| Module | Responsibility |
 | --- | --- |
-| [MainActivity.kt](app/src/main/java/app/better/launcher/MainActivity.kt) | Главный экран, экран виджетов, список приложений, настройки, диалоги, разрешения, календарь и MediaSession; координация фоновых задач |
-| [TransientMessageView.kt](app/src/main/java/app/better/launcher/TransientMessageView.kt) | Смахивание сообщений, таймер до трёх секунд, отмена жеста, закрытие с клавиатуры/accessibility и очистка при отсоединении |
-| [AppCatalog.kt](app/src/main/java/app/better/launcher/AppCatalog.kt) | Каталог через LauncherApps по доступным профилям, реальные значки, запуск, shortcuts, первичное избранное |
-| [AppSearchIndex.kt](app/src/main/java/app/better/launcher/AppSearchIndex.kt) | Подготовленные названия и порядок каталога; фильтрация без повторной сортировки |
-| [AppListAdapter.kt](app/src/main/java/app/better/launcher/AppListAdapter.kt) | Видимые строки списка приложений, переиспользование Views и позиции алфавитных разделов |
-| [AppListRules.kt](app/src/main/java/app/better/launcher/AppListRules.kt) | Правила поиска, нормализации и избранного; алфавитные разделы через системную Android ICU |
-| [LauncherStore.kt](app/src/main/java/app/better/launcher/LauncherStore.kt) | SharedPreferences, папки, aliases, скрытые приложения, JSON-экспорт и проверяемый импорт |
-| [PageSwipeLayout.kt](app/src/main/java/app/better/launcher/PageSwipeLayout.kt) | Свайпы между главным экраном и виджетами без перехвата жестов приложений, виджетов и системного Back |
-| [LauncherViews.kt](app/src/main/java/app/better/launcher/LauncherViews.kt) | Затемнение системных обоев, GlyphView, AlphabetRail, вспомогательные функции размеров и фона |
-| [LauncherNotificationService.kt](app/src/main/java/app/better/launcher/LauncherNotificationService.kt) | NotificationListenerService и общий NotificationHub в памяти |
-| [WidgetResizeOverlay.kt](app/src/main/java/app/better/launcher/WidgetResizeOverlay.kt) | Редактор четырёх границ поверх настоящего виджета, клавиатура/accessibility, выход и отмена жеста |
-| [WidgetResizeGeometry.kt](app/src/main/java/app/better/launcher/WidgetResizeGeometry.kt) | Чистые правила изменения ширины/высоты и верхнего отступа в пределах провайдера/окна |
-| [WidgetTouchFrame.kt](app/src/main/java/app/better/launcher/WidgetTouchFrame.kt) | Удержание поверх содержимого виджета с отменой по движению, без перехвата обычных нажатий |
-| [WidgetHostContext.kt](app/src/main/java/app/better/launcher/WidgetHostContext.kt) | Android-контекст для сторонних RemoteViews без подмены Views через AppCompat/Material |
-| [InlineOrderEditor.kt](app/src/main/java/app/better/launcher/InlineOrderEditor.kt) | Перестановка реальных строк и виджетов на месте, предпросмотр drag, прокрутка у края и доступные действия ручки |
-| [WidgetController.kt](app/src/main/java/app/better/launcher/WidgetController.kt) | AppWidgetHost, привязка, настройка, размещение, размеры, меню удержания и удаление виджетов |
-| [WeatherRepository.kt](app/src/main/java/app/better/launcher/WeatherRepository.kt) | Поиск города и текущая погода через Open-Meteo |
+| MainActivity | Screens, sheets, permissions, calendar, MediaSession and background-task coordination |
+| AppCatalog | LauncherApps across profiles, real icons, launch, shortcuts and initial favorites |
+| AppSearchIndex / AppListRules | Prepared search/order, normalization and system ICU alphabet sections |
+| AppListAdapter | Recycled visible app rows and section positions |
+| LauncherStore | Preferences, folders, aliases, hidden apps/shortcuts and validated JSON backup |
+| LauncherViews / PageSwipeLayout | Wallpaper dimming, glyphs, alphabet and page gestures |
+| LauncherNotificationService | NotificationListenerService and in-memory NotificationHub |
+| WidgetController / WidgetHostContext | Hosting, binding/configuration, placement, geometry and external RemoteViews context |
+| WidgetPickerView | Background provider catalog, previews and filtered recycled rows |
+| WidgetTouchFrame / WidgetResizeOverlay / WidgetResizeGeometry | Long press, native edge editor and pure geometry rules |
+| InlineOrderEditor | In-place row/widget dragging, edge autoscroll and accessible handles |
+| WidgetSpacingPreview | Stable schematic preview of saved spacing |
+| TransientMessageView | Swipe dismissal, timeout, keyboard/accessibility and detachment cleanup |
+| WeatherRepository | Open-Meteo city search and current weather |
+| CalendarEventFormatting | Locale-aware dates and the user's 12/24-hour format |
 
-Тема и цветовые роли заданы в [styles.xml](app/src/main/res/values/styles.xml), компоненты и разрешения — в [AndroidManifest.xml](app/src/main/AndroidManifest.xml). [Иконка приложения](app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml) адаптивная. `.impeccable/design.json` содержит вспомогательное представление дизайн-системы; его HTML/CSS-примеры иллюстрируют нативные компоненты, а Android-интерфейс определяется Kotlin и ресурсами.
+[styles.xml](app/src/main/res/values/styles.xml) defines themes/color roles; [AndroidManifest.xml](app/src/main/AndroidManifest.xml) declares components and permissions. The [app icon](app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml) is adaptive. `.impeccable/design.json` is a design-system sidecar; its HTML/CSS examples illustrate native components and are not the current Android implementation.
 
-`MainActivity` имеет `singleTask`. Новый HOME-intent закрывает диалог и клавиатуру и возвращает главный экран. Каталог обновляется по callbacks LauncherApps и при возобновлении Activity. Загрузка каталога, правил транслитерации Android ICU, календаря, погоды и файлов выполняется в executor; изменения Views возвращаются через main-thread Handler. Каталог заранее подготавливает индекс поиска в фоновой загрузке; переименование, скрытие и импорт настроек обновляют индекс при следующем обращении. Список приложений использует `ListView`: создаются только видимые строки, а переход по алфавиту выбирает позицию раздела без измерения всего каталога. Движение внутри одной буквы обновляет волну без повторных команд навигации. Отложенный запрос клавиатуры отменяется при выходе из поиска или выборе буквы. Подписки, таймер и executor освобождаются в соответствующих lifecycle callbacks.
+MainActivity is singleTask. A new HOME intent dismisses dialogs/IME and returns home. LauncherApps callbacks and Activity resume refresh the catalog. Catalog/ICU preparation, calendar, weather and file reads run in executors; a main-thread Handler updates Views. Search prepares its index during catalog loading and refreshes after rename, hide or import. ListView creates only visible rows; alphabet jumps use prepared positions instead of measuring the entire catalog. Moving within one letter animates the wave without repeated navigation. Leaving search or selecting a letter cancels a pending keyboard request. Lifecycle callbacks release subscriptions, timers and executors.
 
-Содержимое виджетов и их превью загружается через отдельный framework-контекст с текущей конфигурацией окна. Это сохраняет стандартные Views и команды RemoteViews стороннего провайдера, не наследуя фабрику AppCompat/Material из настроек лаунчера. Уже добавленные widget IDs сохраняются при обновлении.
+Widget content/previews inflate through a framework context with the current window configuration, without AppCompat/Material replacing provider Views. This avoids incompatible constructor/layout inflation in external widgets. Host IDs and pending bind/configuration state survive cancellation and recreation. Notification updates preserve home scroll and defer rebuilding during an active gesture or open menu; closing the menu applies pending updates.
 
-AppWidgetHost слушает обновления между `onStart` и `onStop`. Обновление уведомлений при открытом диалоге откладывает перестроение главного экрана до закрытия диалога, сохраняя прокрутку. Эти сценарии важны при изменениях навигации и фонового обновления.
+## Storage and integrations
 
-Алфавит содержит ★, только непустые латинские разделы A–Z и заключительный «#» для перехода в конец списка. Кириллические названия группируются по первой латинской букве транслитерации Android ICU Russian-Latin/BGN: Яндекс → Yandeks → Y, Банк → Bank → B. Цифры, символы и начальные буквы без латинской транслитерации (например, Ь и Ъ) относятся к «#». Ряд прижат к нижней части экрана с отступом 24 dp над местом нижней панели; шаг букв — 22 dp при обычном масштабе шрифта, растёт с системным шрифтом и уменьшается при нехватке высоты. Положение сохраняется при переходе между избранным и списком приложений; system/IME insets и край жеста «Назад» учитываются.
+Settings use the private `launcher` SharedPreferences file. AppEntry IDs are `<Android-profile-serial>:<ComponentName>`; package names alone cannot distinguish profiles or multiple launcher activities.
 
-## Хранение данных и интеграции
-
-Настройки находятся в приватном SharedPreferences-файле `launcher`. `AppEntry.id` имеет формат `<serial Android-профиля>:<ComponentName>`: один package name не идентифицирует приложение между профилями или несколькими launcher activities.
-
-| Данные | Представление в LauncherStore |
+| Data | LauncherStore representation |
 | --- | --- |
-| Избранное | Упорядоченный список app/folder IDs в `favorites` |
-| Скрытые приложения | Набор IDs в `hidden` |
-| Названия | Ключи `alias:<app ID>` |
-| Папки | Ключи `folder:<UUID>`, JSON с `name` и `apps` |
-| Прикреплённые приложения | Ключи `popup:<app ID>` |
-| Виджеты | Локальные IDs в `widgets`, единственный главный — `homeWidgetId`; незавершённая привязка — `pendingWidgetId` и `pendingWidgetDestination`; `widgetSizes` — локальная JSON-карта ID → ширина/высота/отступ сверху/горизонтальное смещение в dp |
-| Оформление и погода | Типизированные параметры, выбранный город и его координаты; `wallpaperDimming` — целое число 0–100 |
+| Favorites | Ordered app/folder IDs in `favorites` |
+| Hidden apps | ID set in `hidden` |
+| Names | `alias:<app ID>` |
+| Folders | `folder:<UUID>` JSON with `name` and `apps` |
+| Attached apps | `popup:<app ID>` |
+| Hidden shortcuts | Shortcut ID lists scoped to the profiled AppEntry ID |
+| Widgets | Local `widgets`, `homeWidgetId`, `pendingWidgetId`, `pendingWidgetDestination`; `widgetSizes` maps IDs to width/height/top/horizontal offset in dp |
+| Appearance/weather | Typed preferences, selected city and coordinates; integer `wallpaperDimming` from 0–100 |
 
-Прежний boolean `dimWallpaper` принимается при импорте: `true` соответствует 20%, `false` — 0%; явный `wallpaperDimming` имеет приоритет. Некорректные типы и значения процента вне 0–100 отклоняются до изменения настроек.
+Import accepts legacy `dimWallpaper`: true maps to 20%, false to 0%; explicit wallpaperDimming takes precedence. Wrong types/out-of-range values are rejected before writes. Exports have `version: 1` and `preferences`; this is the backup format version, independent of the app version. Legacy `clock24` and `smallClock` from 0.1.0 backups remain accepted but no longer affect the UI. Import validates all allowed keys, types and nested JSON before changing data. Invalid files leave previous settings intact; reads are limited to 1,000,000 characters. Export excludes device-local widget IDs/geometry, home selection and pending binding; import preserves those device values. Earlier backups remain compatible. Android backup is disabled in the manifest and [extraction rules](app/src/main/res/xml/data_extraction_rules.xml); manual backup uses Android's file picker.
 
-Экспорт содержит `version: 1` и объект `preferences`. Это **версия формата резервной копии**, независимая от версии приложения. Старые параметры `clock24` и `smallClock` по-прежнему принимаются при импорте резервных копий 0.1.0, но больше не влияют на интерфейс. Импорт полностью проверяет допустимые ключи, типы и вложенный JSON до изменения настроек; повреждённый файл должен оставить предыдущие данные целыми. Лимит чтения — 1 000 000 символов. Экспорт исключает локальные IDs, их размеры, выбор главного виджета и незавершённую привязку; импорт сохраняет эти данные устройства. Резервные копии прежней версии остаются совместимыми. Системное резервное копирование отключено в manifest и [data_extraction_rules.xml](app/src/main/res/xml/data_extraction_rules.xml); пользовательский экспорт/импорт работает через системный выбор файла.
+Widget spacing is 0–32 dp in 1 dp steps, default 8 dp, with immediate saving and a stable live preview. Integer `widgetSpacing` belongs to backup version 1; old files without it use 8 dp. Invalid types/ranges are rejected without changing widget IDs or geometry.
 
-| Интеграция | Доступ и поведение |
+Quick actions display publisher-provided LauncherApps icons, including conversation avatars when supplied. Background loading preserves publisher colors and work-profile badges; an arrow is the stable fallback without shifting text. No contact permission is needed. Each trailing cross hides only that shortcut in Better Launcher and leaves the menu open. Undo hiding restores the most recently hidden action in that sheet; Show hidden actions restores all for the app. Saved IDs include the profiled AppEntry identity, so renaming a shortcut does not restore it. Format-1 backups include this preference; older files show all actions and malformed ID lists are rejected before writes.
+
+| Integration | Access and behavior |
 | --- | --- |
-| HOME | ROLE_HOME выбирается пользователем в системном диалоге |
-| Уведомления | Отдельный доступ к NotificationListenerService в настройках Android; фильтрация по package и UserHandle |
-| Музыка | Активные MediaSession доступны через включённый доступ к уведомлениям |
-| Календарь | READ_CALENDAR запрашивается при открытии событий; до 12 событий за ближайшие 7 дней |
-| Виджеты | Системное разрешение привязки и настройка конкретного провайдера |
-| Удаление приложения | REQUEST_DELETE_PACKAGES открывает системное подтверждение удаления |
-| Погода | INTERNET; пользователь выбирает город, геолокация не запрашивается |
+| HOME | The user chooses ROLE_HOME in Android's dialog |
+| Notifications | Separate Android notification-listener access; package and UserHandle filtering |
+| Music | Active MediaSessions through notification access |
+| Calendar | READ_CALENDAR requested when events are opened; up to 12 events over seven days |
+| Widgets | Android binding permission and provider configuration |
+| Uninstall | REQUEST_DELETE_PACKAGES opens Android's confirmation |
+| Weather | INTERNET; manually selected city, no location access |
 
-Содержимое уведомлений находится только в NotificationHub в памяти, не сохраняется и не передаётся по сети. События календаря читаются на устройстве. Сеть в текущем приложении используется для запросов города и прогноза на `geocoding-api.open-meteo.com` и `api.open-meteo.com`. Погодные запросы имеют connect/read timeouts по 8 секунд; прогноз обновляется с интервалом 30 минут или по явному запросу. Для работы с Open-Meteo в текущей реализации API-ключ не нужен.
+Notification contents stay only in NotificationHub memory and are neither persisted nor sent over the network. Calendar events are read locally. Network traffic is for city/forecast requests to `geocoding-api.open-meteo.com` and `api.open-meteo.com`. Both connect/read timeouts are eight seconds; weather refreshes every 30 minutes or explicitly. No Open-Meteo API key is required.
 
-Закреплённое поле «Поиск виджетов» фильтрует список сразу по названию виджета и приложения, без учёта регистра и диакритики. Каждое слово запроса должно встретиться в названии виджета или приложения; пустой запрос возвращает полный список. Отдельные заголовок и кнопка закрытия убраны: поле выделено тональным фоном и лупой, очистка появляется внутри поля только при введённом запросе. Back и нажатие вне панели закрывают выбор. Алфавит соответствует результатам, отсутствие совпадений предлагает изменить или очистить поиск. Клавиатура появляется по нажатию на поле; «Готово» скрывает её без выбора виджета. Поиск доступен и для главного экрана, и для страницы виджетов. Выбор виджета показывает название, приложение и статичное превью провайдера: `previewLayout` имеет приоритет, затем используется `previewImage`. Если оба недоступны, строка явно сообщает «Превью недоступно». Нажатие на строку запускает прежнюю системную привязку/конфигурацию. Алфавит справа использует тот же контроль, что список приложений, включая кириллическую транслитерацию, заключительный «#», клавиатуру и accessibility; звёздочка возвращает к началу списка. Каталог и ресурсы превью загружаются в фоне, строки переиспользуются, закрытие отменяет загрузки. Для списка виджетов не выделяются widget IDs. За превью отвечает [WidgetPickerView](app/src/main/java/app/better/launcher/WidgetPickerView.kt), за размещение — [WidgetController](app/src/main/java/app/better/launcher/WidgetController.kt).
+Widget search immediately matches every query word against widget/app names, ignoring case/diacritics; an empty query returns all providers. One tonal field with a magnifier replaces redundant title/Close controls; its clear action appears only for a nonempty query. Back/outside tap dismiss the picker. The result alphabet updates with filtering, empty results suggest changing/clearing the query, and IME Done hides the keyboard without selecting a widget. The picker is shared by home/page widgets. Provider previewLayout takes precedence over previewImage, otherwise Preview unavailable is shown. Previews are inert and browsing allocates no widget IDs. Choosing a row continues binding/configuration. Background catalog/preview work is cancelled on dismissal, rows are recycled, and the right alphabet supports Cyrillic transliteration, final #, star-to-start, keyboard and accessibility.
 
-
-Отступ между виджетами и перед избранным регулируется в «Настройки» → «Внешний вид» → «Отступ между виджетами»: 0–32 dp с шагом 1 dp, по умолчанию 8 dp. Изменения сохраняются сразу. Целочисленный `widgetSpacing` входит в backup версии 1; старые файлы без этого ключа используют 8 dp. Некорректный тип или диапазон отклоняется до записи; локальные widget IDs и геометрия сохраняются.
-
-Быстрые действия в меню иконки показывают значки, предоставленные приложением через Android LauncherApps: например, аватарки бесед Telegram, если они входят в shortcut. Значки загружаются в фоне, сохраняют исходные цвета и отметку рабочего профиля. Пока значок загружается или недоступен, остаётся стрелка; положение текста не меняется. Дополнительные разрешения и доступ к контактам не требуются. Крестик справа от каждого быстрого действия скрывает только этот shortcut в Better Launcher, оставляя меню открытым. «Отменить скрытие» возвращает последнее действие в текущем меню; «Показать скрытые действия» возвращает все скрытые shortcuts этого приложения. Скрытие сохраняется по ID ярлыка и `AppEntry.id` (с профилем), поэтому переименование ярлыка не возвращает его автоматически. Настройка входит в backup версии 1; старые backup без неё показывают все действия. Повреждённые списки ID отклоняются до записи.
-
-## Проверки
-
-Для изменений Kotlin, ресурсов или конфигурации Android выполняйте:
+## Verification
 
 ```sh
+python3 scripts/check-localization.py
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+./gradlew :app:assembleDebugAndroidTest
 ```
 
-| Проверка | Покрытие и отчёт |
-| --- | --- |
-| [AppListRulesTest](app/src/test/java/app/better/launcher/AppListRulesTest.kt) | Нормализация латиницы/кириллицы, поиск, порядок разделов и перемещение избранного; `app/build/reports/tests/testDebugUnitTest/index.html` |
-| [LauncherIntegrationTest](app/src/androidTest/java/app/better/launcher/LauncherIntegrationTest.kt) | Сохранение, папки, backup, атомарный отказ импорта, реальный каталог и aliases/hidden; `app/build/reports/androidTests/connected/debug/index.html` |
-| [SystemTransliterationTest](app/src/androidTest/java/app/better/launcher/SystemTransliterationTest.kt) | Системные правила Russian-Latin/BGN, Яндекс/Y, Й, порядок разделов и поиск по aliases |
-| [AppSearchIndexTest](app/src/test/java/app/better/launcher/AppSearchIndexTest.kt) | Подготовленный поиск по aliases/исходным названиям и отсутствие повторного чтения названий |
-| [AppNavigationTest](app/src/androidTest/java/app/better/launcher/AppNavigationTest.kt) | Непустые разделы, компактный алфавит с доступным нижним разделом, свободным краем Back и управлением с клавиатуры; отсутствие повторных переходов внутри буквы, ограничение создаваемых строк, переиспользование и переход к последнему выбранному разделу |
-| [AlphabetHapticTest](app/src/androidTest/java/app/better/launcher/AlphabetHapticTest.kt) | Один CLOCK_TICK при отпускании активного жеста, обе стороны индекса, повторное касание, заключительный # и отмена |
-| [WidgetPickerTest](app/src/androidTest/java/app/better/launcher/WidgetPickerTest.kt) | Превью layout/image, отсутствие и повреждение превью, алфавит, поиск по виджету/приложению, очистка, пустой результат, выбор отфильтрованного провайдера и отсутствие привязки при просмотре |
-| [AppGesturesTest](app/src/androidTest/java/app/better/launcher/AppGesturesTest.kt) | Отдельные меню иконки/названия, свайпы к виджетам без случайного запуска, скрытые иконки и обновление экрана во время удержания |
-| [LauncherNavigationTest](app/src/androidTest/java/app/better/launcher/LauncherNavigationTest.kt) | Кнопки экрана виджетов, отмена выбора, Back и HOME; стабильное положение алфавита между избранным и списком приложений |
-| [WidgetResizeGeometryTest](app/src/test/java/app/better/launcher/WidgetResizeGeometryTest.kt) | Четыре границы, центрирование ширины, верхний отступ и ограничения окна/провайдера |
-| [WidgetHomeLayoutTest](app/src/androidTest/java/app/better/launcher/WidgetHomeLayoutTest.kt) | Отдельная область главного виджета, центрирование, верхний отступ, полная ширина и сохранение для обеих сторон алфавита |
-| [WidgetResizeHapticTest](app/src/androidTest/java/app/better/launcher/WidgetResizeHapticTest.kt) | CLOCK_TICK (Android 12+) на изменении размеров четырёх границ, повтор значения, пределы, отмена, отпускание, клавиатура/accessibility и тихое перемещение |
-| [TransientMessageTest](app/src/androidTest/java/app/better/launcher/TransientMessageTest.kt) | Срок до трёх секунд, включая удержание, свайпы в обе стороны и от кнопки отмены, короткие/отменённые жесты, замена, клавиатура/accessibility и отмена скрытия |
-| [ShortcutIconTest](app/src/androidTest/java/app/better/launcher/ShortcutIconTest.kt) | Значки bitmap/resource настоящих Android shortcuts, стрелка без значка, выравнивание и открытие быстрого действия; [отчёт](docs/shortcut-icons-verification.md) |
-| Android lint | `app/build/reports/lint-results-debug.html` |
-| [smoke-test.py](scripts/smoke-test.py) | Отсутствие встроенных часов и даты, UI-сценарии, включая экран виджетов, через adb и отсутствие аварий процесса лаунчера |
+See [AGENTS.md](AGENTS.md#checks-by-change-type) for the checks required by each change. Unit tests cover search/order, hidden-app search and widget geometry. Device tests cover persistence/import integrity, real catalog/profile identities, lifecycle, gestures, menus, widget previews/hosting/reordering/resizing, alphabet bounds/haptics, spacing and messages. LocalizationTest covers English/Russian/fallback resources, plurals, provider labels, regional formats and actual Activity language switching. The source tests and [historical reports](docs/verification.md) record exact coverage and limitations.
 
-### Интеграционные тесты
-
-Запускайте на выделенном тестовом устройстве. Gradle устанавливает тестируемый APK и test APK, а по завершении удаляет их; для продолжения UI-проверок установите основной APK заново. Тесты временно заменяют SharedPreferences и восстанавливают их в `finally`, но выделенный эмулятор всё равно нужен из-за установки/удаления приложений.
+Run connected tests only on a dedicated device with an explicit serial:
 
 ```sh
-./gradlew :app:connectedDebugAndroidTest
+ANDROID_SERIAL=emulator-5580 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-### Проверка интерфейса
-
-Используйте эмулятор Google APIs с английским системным языком, установленными Camera и Phone, исходным избранным и алфавитом справа. На одном устройстве запускайте один UI-скрипт за раз. Лог AndroidRuntime проверяется целиком; старую аварию сначала разберите, затем начните отдельный запуск с очищенным логом.
+Connected tests uninstall the application. Reinstall it and assign HOME before subsequent UI checks. The smoke script expects English app/system labels with Camera/Phone installed, initial favorites and the right alphabet. Run one script per device, clear old crash logs after investigating them, and restore temporary display/font/orientation changes.
 
 ```sh
 adb -s emulator-5580 install -r app/build/outputs/apk/debug/app-debug.apk
@@ -283,76 +265,55 @@ adb -s emulator-5580 logcat -c
 python3 scripts/smoke-test.py --serial emulator-5580
 ```
 
-Команда назначения HOME выше предназначена для тестового эмулятора. Проверочный свайп между страницами начинается на строке Phone, вне системного Back; нижних кнопок на главном экране быть не должно. Поиск и настройки в smoke открываются клавишами Search и Menu, жесты пустого места проверяет HomeSurfaceTest. В коротком окне скрипт скрывает IME через Back перед проверкой кнопки сохранения имени. Скрипт проверяет отсутствие встроенных часов/даты, настройки/Back, поиск, запуск Camera/HOME, свайп вправо к виджетам, раздельное удержание иконки и названия, алфавит и переходы на экран виджетов; он не проверяет полный набор интеграций. Для UI-изменений отдельно проверяйте портрет, узкий экран с font scale 1.3, горизонтальную ориентацию, клавиатуру и системный Back. Снимки текущей проверки храните в локальной `.impeccable/review/`.
-
-Проверки плавного меню и переименования в 0.2.0-rc.8 записаны в [отчёте](docs/app-menu-motion-verification.md) и [release notes](docs/releases/0.2.0-rc.8.md). Результаты проверок 0.1.9 записаны в [release notes](docs/releases/0.1.9.md). Результаты проверок 0.1.8 записаны в [release notes](docs/releases/0.1.8.md). Результаты проверок 0.1.7 записаны в [release notes](docs/releases/0.1.7.md). Результаты проверок 0.1.5 записаны в [проверке меню](docs/app-menu-verification.md) и [release notes](docs/releases/0.1.5.md). Результаты проверок 0.1.4 записаны в [release notes](docs/releases/0.1.4.md). Результаты проверок 0.1.3 записаны в [отчёте](docs/verification-0.1.3.md). Результаты текущей проверки экрана виджетов записаны в [отчёте](docs/widgets-verification.md). Результаты проверок 0.1.2 записаны в [проверке плавности](docs/app-navigation-verification.md) и [release notes](docs/releases/0.1.2.md). Результаты проверок 0.1.1 записаны в [release notes](docs/releases/0.1.1.md).
-
-Для 0.1.0 подтверждены 3 unit-теста, 3 интеграционных теста, UI-сценарии на Android 12 и Android 16 и отдельные сценарии уведомлений/виджета Clock на Android 16. Lint того выпуска: 0 ошибок, 35 предупреждений. Проверки физических устройств, Android 13–15, рабочих профилей, TalkBack и остальных провайдеров ещё не завершены. Полный список границ — в [отчёте](docs/verification.md).
+For main UI changes, verify Android 12 and the current target Android version in portrait, at narrow width/font scale 1.3, and in landscape. Confirm actual screenshot dimensions; a requested rotation that remains portrait does not count as landscape. Keep visual review separate from automated checks, and record untested physical/OEM/profile/permission scenarios explicitly.
 
 ### GitHub CI
 
-[Android CI](.github/workflows/android-ci.yml) выполняется на GitHub-hosted runners; компьютер разработчика для этих запусков не нужен. Используются JDK 17, Gradle Wrapper проекта и явно устанавливаемые SDK Platform 36 / Build Tools 35.0.0. Actions закреплены по commit SHA; Gradle cache ускоряет повторные сборки. Новое обновление PR отменяет предыдущий запуск того же PR.
+[Android CI](.github/workflows/android-ci.yml) runs build/unit/lint/resource checks on pushes/PRs to main. Push/PR device coverage is API 36 instrumentation; scheduled and manual runs cover API 31/36 instrumentation plus portrait, narrow/font 1.3 and landscape smoke. Manual runs on main are the release check. The schedule is 04:23 Asia/Tbilisi, away from the busy UTC hour boundary.
 
-| Запуск | Проверки |
+[scripts/ci-device-tests.sh](scripts/ci-device-tests.sh) is for disposable emulators: it installs the app, assigns HOME, runs connected tests, reinstalls afterwards, and clears app data for initial smoke favorites/right alphabet. It restores size, font scale and rotation. Do not use it on an emulator containing wanted data.
+
+Checks run on ubuntu-24.04. Unused .NET/CodeQL/NDK files are removed for disk space; the Gradle daemon stops after APK builds. Android Emulator is pinned to stable 36.3.10/build 14472402. Google APIs Pixel 7/x86_64 images use 3 GB RAM (`ram-size: 3072`, with actual guest MemTotal checked). API 31 uses 720×1600/280 dpi; API 36 uses 360×800/140 dpi to preserve logical dimensions while reducing software-rendering load. Backend is swiftshader_indirect with Vulkan disabled. Connected tests use a separate 1 GB JVM heap. The script waits 60 seconds for first-boot services, verifies launcher focus, rejects system ANRs and captures bootstrap diagnostics.
+
+Android 16 stability on standard GitHub-hosted runners is not yet confirmed: System UI ANRs have occurred before app tests. Checks remain mandatory and fail on these infrastructure errors. An experiment with Intel macOS/four guest CPUs/a 15-minute boot timeout also ended in a system ANR and was not kept. One successful run does not prove that instability is resolved.
+
+Gesture tests inject through UiAutomation because wallpaper windows have another UID; bounded long-press waits observe menu readiness. Rename cancellation waits for IME visibility and animation completion rather than assuming a fixed delay. Preview tests locate currently visible provider rows because asynchronous loading can recycle Views. Seven-day artifacts include debug APK, unit/connected/lint HTML/XML, smoke output, logcat, UI hierarchies and screenshots; early system logcat includes boot timeouts and failure diagnostics. CI does not publish releases or use release signing keys. Recommended merge checks are Build, unit tests and lint and Device tests (API 36). The current private-repository plan does not permit branch protection, so merge decisions must account for results manually. CI does not replace physical-device, TalkBack, work-profile, visual or physical-haptic checks.
+
+### Troubleshooting
+
+| Symptom | Check |
 | --- | --- |
-| PR в `main` и push в `main` | Debug APK, все unit-тесты, lint; после успешных базовых проверок — все `connectedDebugAndroidTest` на Android 16 / API 36 |
-| Ежедневно в 00:23 UTC (04:23 Asia/Tbilisi) | Базовые проверки и connected-тесты на API 31 и API 36; затем smoke в портрете, на узком экране с font scale 1.3 и в landscape на каждом эмуляторе |
-| Actions → Android CI → Run workflow | Тот же полный набор; запускайте на `main` перед выпуском |
-
-[ci-device-tests.sh](scripts/ci-device-tests.sh) работает только на выделенном одноразовом эмуляторе с явным serial. Google APIs / Pixel 7 / x86_64 запускается с английской локалью и включёнными анимациями. Скрипт устанавливает APK и назначает HOME перед connected-тестами, затем переустанавливает APK после их удаления. Перед каждым smoke очищаются настройки Better Launcher для исходного избранного и правого алфавита; после сценариев восстанавливаются размер, font scale и ориентация. Не запускайте этот скрипт на пользовательском эмуляторе с нужными данными.
-
-Базовые проверки и оба эмулятора выполняются на `ubuntu-24.04`. На runner освобождается место от неиспользуемых .NET, CodeQL и NDK; после сборки останавливается Gradle daemon. Версия Android Emulator закреплена на 36.3.10 stable (build 14472402). Оба эмулятора используют 3 GB RAM (целое `ram-size: 3072`, без суффикса; скрипт проверяет фактический `MemTotal` внутри Android). API 31 использует 720×1600 при 280 dpi, API 36 — 360×800 при 140 dpi: логические размеры Pixel 7 сохраняются, нагрузка программного рендеринга уменьшается. Backend — `swiftshader_indirect` с отключённым Vulkan. Connected-тесты запускаются с отдельным JVM heap 1 GB. Скрипт даёт службам первого запуска 60 секунд, затем проверяет фокус лаунчера, отклоняет системный ANR и сохраняет диагностику загрузки до начала тестов.
-
-**Ограничение API 36:** стабильность запуска Android 16 на стандартных GitHub-hosted runners пока не подтверждена. Зафиксированы ANR System UI до запуска тестов приложения; проверка остаётся обязательной и завершается ошибкой при таком сбое. Пробный переход на Intel macOS с четырьмя гостевыми CPU и увеличением лимита загрузки до 15 минут также закончился системным ANR и не оставлен в рабочем CI. Успешный отдельный прогон не означает, что инфраструктурная нестабильность устранена.
-
-Тесты жестов вводят касания через `UiAutomation`, поскольку Android также передаёт их системным обоям с другим UID; долгое удержание продолжается до появления меню с ограниченным временем ожидания. Проверка отмены переименования через Back ожидает появление и скрытие IME вместе с завершением анимации: insets сообщают целевую видимость ещё до её окончания. Фиксированная задержка не определяет готовность клавиатуры. Проверки превью каждый раз находят видимую строку нужного провайдера: асинхронная загрузка и изменение размеров могут переиспользовать ранее найденный View.
-
-В артефактах запуска на 7 дней сохраняются debug APK, HTML/XML-отчёты unit/connected-тестов и lint, вывод smoke, logcat, UI hierarchy и скриншоты. Системный logcat записывается с запуска эмулятора, включая таймаут загрузки; после загрузки диагностика устройства снимается до завершения emulator action, включая падение тестов. Debug APK — только для проверки; CI не публикует релизы и не использует ключи release-подписи.
-
-Рекомендуемые обязательные проверки перед слиянием: `Build, unit tests and lint` и `Device tests (API 36)`. На текущем тарифе приватного репозитория GitHub не позволяет включить branch protection; до смены тарифа результаты нужно учитывать при слиянии самостоятельно. CI не заменяет визуальную оценку, физические устройства, TalkBack, рабочие профили и реальный тактильный отклик.
-
-### Если что-то не работает
-
-| Симптом | Что проверить |
-| --- | --- |
-| SDK location not found / отсутствующая платформа | `local.properties`, Platform 36 и Build Tools в SDK Manager |
-| Ошибка версии Java | `java -version`, Gradle JDK в Android Studio; JDK 17 или 21 |
-| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | Сертификаты двух APK различаются; соберите обновление тем же ключом. Удаление приложения сбрасывает его данные, поэтому сначала экспортируйте настройки |
-| HOME открывает другой лаунчер | Системное приложение по умолчанию для домашнего экрана; на тестовом эмуляторе — команда назначения HOME выше |
-| Нет уведомлений или управления музыкой | Включён ли доступ к уведомлениям, есть ли активное уведомление/MediaSession |
-| Нет погоды или событий | Выбран ли город, доступен ли интернет; выдан ли READ_CALENDAR и есть ли события в интервале 7 дней |
-| UI-скрипт не находит Camera/Phone | Язык и состав эмулятора, начальное избранное, сторона алфавита, установка APK после connected-тестов |
-
-Для диагностики процесса:
+| SDK location/platform missing | local.properties, Platform 36 and Build Tools in SDK Manager |
+| Java version error | java -version, Android Studio Gradle JDK; use 17 or 21 |
+| INSTALL_FAILED_UPDATE_INCOMPATIBLE | Sign the update with the same key; uninstalling clears data, so export settings first |
+| HOME opens another launcher | Android's default home app; assign HOME explicitly on test devices |
+| No notifications/music controls | Notification access and an active notification/MediaSession |
+| No weather/events | Selected city/internet; calendar permission and events within seven days |
+| Smoke cannot find Camera/Phone | Emulator language/apps, initial favorites, alphabet side and reinstall after connected tests |
 
 ```sh
 adb -s emulator-5580 logcat -d -s AndroidRuntime:E
 ```
 
-## Git и выпуски
+## Git and releases
 
-Основная ветка — `main`, основной remote — `origin` (`https://github.com/better-launcher/better-launcher.git`). В исходной рабочей копии также есть `personal`, указывающий на стартовый репозиторий; он не является целью публикации Better Launcher. Перед коммитом и пушем сверяйте ветку, remote и состав изменений.
+The primary branch is main and primary remote is origin (`https://github.com/better-launcher/better-launcher.git`). The optional personal remote points to the starter repository and is not the publication target. Check branch, remotes and staged contents before commits/pushes.
 
-Версия Android задаётся `versionName` и возрастающим `versionCode` в `app/build.gradle.kts`. Стабильный выпуск 0.2.0 соответствует `v0.2.0`. В GitHub Release публикуются `better-launcher-0.2.0-release.apk` и `SHA256SUMS.txt`. Debug APK используются только локально. Release включает R8 и удаление неиспользуемых ресурсов; manifest должен иметь `debuggable=false`.
+VersionName and increasing versionCode are defined in app/build.gradle.kts. Release 0.3.0 uses tag v0.3.0 and assets `better-launcher-0.3.0-release.apk`/`SHA256SUMS.txt`. Release builds enable R8/resource shrinking and must not be debuggable; debug APKs are only for verification.
 
-Подпись настраивается через `BETTER_LAUNCHER_SIGNING_PROPERTIES`: абсолютный путь к приватному Java properties-файлу вне Git. Поля: `storeFile`, `storePassword`, `keyAlias`, `keyPassword`. `storeFile` задаёт абсолютный путь к keystore. Файл свойств и keystore храните с доступом только владельцу; значения паролей не выводите в логи. Без этих данных release-сборка не подписывается и не проходит проверку подписи Gradle.
+Set BETTER_LAUNCHER_SIGNING_PROPERTIES to an absolute private Java properties file outside Git, containing storeFile, storePassword, keyAlias and keyPassword. StoreFile is an absolute keystore path. Keep both files owner-only and never print passwords. Without signing data, release signing validation fails. Updates retain the earlier Android Debug certificate for compatibility; this is a signed optimized release APK, but a separate production certificate/store distribution is not configured.
 
-Для совместимости обновлений 0.2.0 использует прежний сертификат первых APK. Это подписанная release-сборка; прежний сертификат Android Debug пока сохранён. Переход на отдельный production-сертификат и выпуск в магазине не настроены.
-
-Для нового выпуска обновите версию, выполните базовые проверки, connected-тесты системной транслитерации и проверьте подписанный release APK на устройстве. Сравните размер и содержимое с предыдущим APK. Подготовьте `docs/releases/X.Y.Z.md`, указав фактические результаты и ограничения.
-
-Перед публикацией релиз-кандидата выполните обязательный порядок из [AGENTS.md](AGENTS.md#документация-и-завершение): влейте рабочую ветку в `main`, запушьте `main` в `origin/main`, затем собирайте APK и ставьте тег на опубликованном коммите. Используйте путь к своему properties-файлу:
+Update the version, run required checks/system transliteration and verify the signed APK on devices. Compare size/content with the previous release and record actual results/limitations in docs/releases/X.Y.Z.md. Merge the work into main, push origin/main, then build from its clean published commit and tag it. Follow [AGENTS.md](AGENTS.md#documentation-and-completion):
 
 ```sh
-# После вливания рабочей ветки и коммита версии/release notes, в чистой main:
+# In clean main after merging the working branch and committing version/release notes:
 git push origin main
 export BETTER_LAUNCHER_SIGNING_PROPERTIES=/absolute/private/path/release-signing.properties
 ./gradlew :app:assembleRelease :app:lintRelease
 mkdir -p artifacts
 cp app/build/outputs/apk/release/app-release.apk artifacts/better-launcher-X.Y.Z-release.apk
 (cd artifacts && shasum -a 256 better-launcher-X.Y.Z-release.apk > SHA256SUMS.txt)
-# Перед тегом: apksigner verify, aapt dump badging/xmltree, установка и UI-проверка.
-# Для кандидата рабочая ветка уже влита в main и main запушена до сборки APK.
+# Verify with apksigner/aapt, install, and check the final UI before tagging.
 git tag -a vX.Y.Z -m "Better Launcher X.Y.Z"
 git push origin vX.Y.Z
 git fetch origin
@@ -362,8 +323,6 @@ gh release create vX.Y.Z artifacts/better-launcher-X.Y.Z-release.apk artifacts/S
   --notes-file docs/releases/X.Y.Z.md --verify-tag
 ```
 
-Проверьте соответствие удалённого commit/tag локальному исходнику, скачайте опубликованные APK и SHA-256 и сравните их с локальными файлами. Выпуски 0.1.0–0.1.5 сохраняются как история; для обновлений публикуйте новый release APK.
+Verify the remote commit/tag, download published assets and compare them with local files. Historical releases, including 0.1.0–0.1.5, remain records of their own builds; source changes do not replace their assets. Candidates use -rc.N in version/tag and `--prerelease --latest=false` to keep the stable release latest.
 
-Для релиз-кандидата используйте суффикс `-rc.N` в версии и теге, а к `gh release create` добавьте `--prerelease --latest=false`, чтобы сохранить стабильный выпуск последним.
-
-Интерфейс опирается на [официальное описание Niagara](https://niagaralauncher.com/) и [описание всплывающих меню](https://help.niagaralauncher.app/article/115-pop-ups). Код лаунчера и пиктограммы созданы для Better Launcher; фон главного экрана берётся из системных обоев Android. Отдельный файл LICENSE для проекта пока не добавлен.
+The interface follows [Niagara's official description](https://niagaralauncher.com/) and [pop-up documentation](https://help.niagaralauncher.app/article/115-pop-ups). Better Launcher code/icons are original; the home background is Android's wallpaper. A separate project LICENSE file has not yet been added.

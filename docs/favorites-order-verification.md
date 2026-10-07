@@ -1,36 +1,36 @@
-# Проверка порядка избранного
+# Favorites-order verification
 
-Дата: 2026-10-04. Проверен рабочий код редактора; новый выпуск не публиковался.
+Date: 2026-10-04. Working editor code checked; no new release published.
 
-Редактор открывается из меню избранного приложения → «Изменить порядок», настроек → «Избранные приложения» и редактирования папки. Приложения и папки перемещаются за ≡ либо стрелками. Порядок сохраняется сразу, окно остаётся открытым. Недоступные app/profile IDs сохраняются в списке настроек.
+Editor opens from favorite-app menu → Change order, Settings → Favorite apps and folder editing. Drag apps/folders by ≡ or use arrows. Order saves immediately; window stays open. Unavailable app/profile IDs remain saved.
 
-## Автоматические проверки
+## Automated checks
 
-| Проверка | Результат |
+| Check | Result |
 | --- | --- |
-| `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` | Успех; 5 unit-тестов, lint: 0 ошибок, 27 предупреждений. Новых предупреждений от редактора нет |
-| `:app:assembleDebugAndroidTest` | Успех, включая окончательные изменения тестового ввода |
-| `:app:connectedDebugAndroidTest`, Android 12 / API 31 | 19 из 20 прошли, включая FavoritesOrderTest. WidgetPickerTest превысил ожидание загрузки image preview; его отдельный повтор прошёл (1/1). Общий прогон не считается полностью успешным |
-| FavoritesOrderTest, Android 16 / API 36 | Прошёл (1/1): настоящий drag, стрелки, папка, сохранность недоступного ID, порядок на HOME, пересоздание Activity, export/import, Back и HOME |
+| `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` | Passed; 5 unit tests, lint 0 errors/27 warnings, no new editor warnings |
+| `:app:assembleDebugAndroidTest` | Passed, including final test-input changes |
+| `:app:connectedDebugAndroidTest`, Android 12 / API 31 | 19/20 passed including FavoritesOrderTest. WidgetPickerTest image-preview timeout; isolated retry passed 1/1. Full run not entirely successful |
+| FavoritesOrderTest, Android 16 / API 36 | Passed 1/1: real drag, arrows, folder/unavailable ID, HOME order, Activity recreation, export/import, Back/HOME |
 
-[FavoritesOrderTest](../app/src/androidTest/java/app/better/launcher/FavoritesOrderTest.kt) вводит touch-события через UiAutomation и проверяет сохранённый список, не только положение строк. Unit-тест дополнительно проверяет перемещение на несколько позиций с папкой и различными serial профилей. В полном Android 12 прогоне проверена предыдущая версия тестового ввода с тем же production-кодом; поздний повтор окончательного теста остановился на системном ANR `com.android.systemui`.
+[FavoritesOrderTest](../app/src/androidTest/java/app/better/launcher/FavoritesOrderTest.kt) injects touch via UiAutomation/checks saved list, not only row positions. Unit test covers multi-position move with folder/different profile serials. Full Android 12 used earlier input version with same production code; late final-test retry stopped on `com.android.systemui` ANR.
 
-## Интерфейс
+## UI
 
-На выделенных read-only эмуляторах `emulator-5680` (Android 12) и `emulator-5682` (Android 16) просмотрены реальные снимки редактора:
+Real editor captures reviewed on dedicated read-only `emulator-5680` (12)/`emulator-5682` (16).
 
-| Конфигурация | Android 12 | Android 16 |
+| Configuration | Android 12 | Android 16 |
 | --- | --- | --- |
-| Портрет, 1080×2400, font scale 1 | Drag, стрелки, сохранение, закреплённые нижние действия и Back прошли | Функциональный тест прошёл; оформление просмотрено |
-| Узкий экран, 945×2100, font scale 1.3 | Те же действия прошли; текст и кнопки доступны | Оформление просмотрено; отдельный функциональный прогон в этой конфигурации не завершён |
-| Landscape, 2400×1080, font scale 1 | Те же действия прошли; кнопки в строке и нижние действия доступны | Оформление просмотрено; отдельный функциональный прогон в этой конфигурации не выполнялся |
+| Portrait 1080×2400, font scale 1 | Drag/arrows/save/fixed lower actions/Back passed | Functional test passed; appearance reviewed |
+| Narrow 945×2100, font scale 1.3 | Same actions passed; text/buttons accessible | Appearance reviewed; separate functional run unfinished |
+| Landscape 2400×1080, font scale 1 | Same actions passed; inline buttons/lower actions accessible | Appearance reviewed; separate functional run not performed |
 
-Локальные снимки находятся в игнорируемом `.impeccable/review/favorites-emulator-{5680,5682}-{portrait,narrow,landscape}.png`. После проверки размер, font scale и ориентация восстановлены, тестовые экземпляры эмуляторов остановлены.
+Ignored local captures `.impeccable/review/favorites-emulator-{5680,5682}-{portrait,narrow,landscape}.png`. Size/font/orientation restored; test emulators stopped.
 
-## Ограничения
+## Limitations
 
-`scripts/smoke-test.py` полностью прошёл на Android 12 в портрете и на узком экране со шрифтом 1.3. В landscape сценарий остановился на проверке запуска Camera: активным оставался Better Launcher. Причина этого сбоя не установлена. Проверка самого редактора в landscape прошла отдельно.
+Full Android 12 `scripts/smoke-test.py` passed portrait/narrow font 1.3. Landscape stopped at Camera launch: Better Launcher remained active, cause unresolved. Separate landscape editor check passed.
 
-На Android 16 общий smoke-прогон остановился: `uiautomator` не получил свежее дерево интерфейса (`null root node`), хотя интерфейс отображался на снимках. В отдельных запусках эмуляторов наблюдались системные ANR. Полный smoke-прогон Android 16 не подтверждён.
+Android 16 full smoke stopped: UI Automator lacked fresh hierarchy (`null root node`) although captures showed UI. Some emulator runs had system ANRs. Full Android 16 smoke unconfirmed.
 
-Физические устройства, настоящий рабочий профиль, TalkBack, клавиатурная навигация и левосторонний режим отдельно не проверены. Стрелки имеют доступные названия и стандартную фокусировку; сохранность профильных IDs подтверждена тестовыми данными.
+Physical devices/real work profile/TalkBack/keyboard/left-handed mode unverified. Arrows have accessible labels/standard focus; profile-ID integrity confirmed using fixtures.

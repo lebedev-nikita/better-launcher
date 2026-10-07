@@ -57,7 +57,7 @@ fun widgetResizeOverlay(
         tag = PageSwipeLayout.BLOCK_SWIPE
         addView(dragSurface, LayoutParams(1, 1))
         toolbar.addView(sizeLabel, LinearLayout.LayoutParams(0, -2, 1f))
-        toolbar.addView(activity.text("Готово", 16f, foregroundColor).apply {
+        toolbar.addView(activity.text(activity.getString(R.string.done), 16f, foregroundColor).apply {
             minHeight = context.dp(48); gravity = Gravity.CENTER
             setPadding(context.dp(16), context.dp(8), context.dp(16), context.dp(8))
             background = touchBackground(); isFocusable = true; setOnClickListener { onFinish() }
@@ -98,7 +98,7 @@ fun widgetResizeOverlay(
     private fun updateLabel(size: WidgetSize) {
         sizeLabel.text = activity.getString(if (handles.isEmpty()) R.string.widget_fixed_size else R.string.widget_edit_size,
             size.width, size.height, WidgetResizeGeometry.GRID_DP)
-        dragSurface.stateDescription = "По горизонтали ${size.offsetX} dp, по вертикали ${size.top} dp"
+        dragSurface.stateDescription = activity.getString(R.string.widget_position, size.offsetX, size.top)
         handles.forEach { (edge, handle) -> handle.stateDescription = activity.getString(R.string.widget_dimension_value,
             if (edge == WidgetEdge.LEFT || edge == WidgetEdge.RIGHT) size.width else size.height) }
     }
@@ -170,13 +170,13 @@ fun widgetResizeOverlay(
         private var active = false
         private var moved = false
         private val actions = listOf(
-            Triple(R.id.widget_move_left, "Переместить влево", -WidgetResizeGeometry.GRID_DP to 0),
-            Triple(R.id.widget_move_right, "Переместить вправо", WidgetResizeGeometry.GRID_DP to 0),
-            Triple(R.id.widget_move_up, "Переместить вверх", 0 to -WidgetResizeGeometry.GRID_DP),
-            Triple(R.id.widget_move_down, "Переместить вниз", 0 to WidgetResizeGeometry.GRID_DP)
+            Triple(R.id.widget_move_left, activity.getString(R.string.move_left), -WidgetResizeGeometry.GRID_DP to 0),
+            Triple(R.id.widget_move_right, activity.getString(R.string.move_right), WidgetResizeGeometry.GRID_DP to 0),
+            Triple(R.id.widget_move_up, activity.getString(R.string.move_up), 0 to -WidgetResizeGeometry.GRID_DP),
+            Triple(R.id.widget_move_down, activity.getString(R.string.move_down), 0 to WidgetResizeGeometry.GRID_DP)
         )
         init {
-            contentDescription = "Переместить виджет"
+            contentDescription = activity.getString(R.string.move_widget)
             isFocusableInTouchMode = true; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         }
         override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -232,10 +232,10 @@ fun widgetResizeOverlay(
         private var dragging = false
         init {
             contentDescription = when (edge) {
-                WidgetEdge.TOP -> "Верхняя граница виджета"
-                WidgetEdge.BOTTOM -> "Нижняя граница виджета"
-                WidgetEdge.LEFT -> "Левая граница виджета"
-                WidgetEdge.RIGHT -> "Правая граница виджета"
+                WidgetEdge.TOP -> activity.getString(R.string.widget_edge_top)
+                WidgetEdge.BOTTOM -> activity.getString(R.string.widget_edge_bottom)
+                WidgetEdge.LEFT -> activity.getString(R.string.widget_edge_left)
+                WidgetEdge.RIGHT -> activity.getString(R.string.widget_edge_right)
             }
             isFocusable = true; importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
             background = InsetDrawable(RippleDrawable(ColorStateList.valueOf(0x28BCD7F3), rounded(surface, context.dp(18).toFloat()), null), context.dp(6))

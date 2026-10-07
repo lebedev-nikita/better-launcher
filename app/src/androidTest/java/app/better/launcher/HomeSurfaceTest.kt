@@ -59,19 +59,21 @@ class HomeSurfaceTest {
                 activity.store.set("leftHanded", InstrumentationRegistry.getArguments().getString("homeLeft") == "true")
                 MainActivity::class.java.getDeclaredMethod("applyAppearance").apply { isAccessible = true }.invoke(activity)
                 activity.showHome()
+                activity.window.insetsController?.hide(android.view.WindowInsets.Type.ime())
             }
             val bounds = Rect()
             lateinit var home: PageSwipeLayout
             await {
                 home = views(activity.window.decorView).filterIsInstance<PageSwipeLayout>().single()
-                home.contentDescription == "Главный экран" && home.hasWindowFocus() &&
+                home.contentDescription == "Home screen" && home.hasWindowFocus() &&
+                    home.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.ime()) == false &&
                     views(home).filterIsInstance<ScrollView>().single().getGlobalVisibleRect(bounds)
             }
             instrumentation.runOnMainSync {
                 val scroll = views(home).filterIsInstance<ScrollView>().single()
                 assertEquals("Favorites gain the entire footer area", home.height - home.paddingTop - home.paddingBottom, scroll.height)
                 assertEquals(scroll.height, scroll.getChildAt(0).height)
-                assertFalse(views(home).any { it.contentDescription in listOf("Все приложения и поиск", "Экран виджетов", "Настройки лаунчера") })
+                assertFalse(views(home).any { it.contentDescription in listOf("All apps and search", "Widget page", "Launcher settings") })
                 val railBounds = Rect()
                 val rail = views(activity.window.decorView).filterIsInstance<AlphabetRail>().single()
                 assertEquals(activity.store.bool("leftHanded"), rail.leftHanded)
@@ -91,27 +93,36 @@ class HomeSurfaceTest {
             val x = bounds.exactCenterX()
             val y = (bounds.bottom - activity.dp(28)).toFloat()
             swipe(x, y, x, y - activity.dp(100), 150)
-            await { views(home).filterIsInstance<EditText>().any { it.hint == "Поиск приложений" } }
-            instrumentation.runOnMainSync { activity.showHome() }
-            await { home.contentDescription == "Главный экран" && activity.hasWindowFocus() }
-            swipe(x, y, x, y, 850)
-            await { home.accessibilityPaneTitle == "Настройки" }
+            await { views(home).filterIsInstance<EditText>().any { it.hint == "Search apps" } }
+            // Internal screen reconstruction does not dismiss IME; wait for its actual hidden state.
+            instrumentation.runOnMainSync {
+                activity.window.insetsController?.hide(android.view.WindowInsets.Type.ime())
+                activity.showHome()
+            }
+            await {
+                home.contentDescription == "Home screen" && activity.hasWindowFocus() &&
+                    home.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.ime()) == false &&
+                    views(home).filterIsInstance<ScrollView>().single().getGlobalVisibleRect(bounds)
+            }
+            swipe(bounds.exactCenterX(), (bounds.bottom - activity.dp(28)).toFloat(),
+                bounds.exactCenterX(), (bounds.bottom - activity.dp(28)).toFloat(), 850)
+            await { home.accessibilityPaneTitle == "Settings" }
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            await { home.contentDescription == "Главный экран" }
+            await { home.contentDescription == "Home screen" }
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_SEARCH)
-            await { views(home).filterIsInstance<EditText>().any { it.hint == "Поиск приложений" } }
+            await { views(home).filterIsInstance<EditText>().any { it.hint == "Search apps" } }
             instrumentation.runOnMainSync { activity.showHome() }
             await { activity.hasWindowFocus() }
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_MENU)
-            await { home.accessibilityPaneTitle == "Настройки" }
+            await { home.accessibilityPaneTitle == "Settings" }
             instrumentation.runOnMainSync { activity.showHome(); assertTrue(home.performAccessibilityAction(R.id.home_widgets, null)) }
-            await { home.accessibilityPaneTitle == "Виджеты" }
+            await { home.accessibilityPaneTitle == "Widgets" }
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            await { home.contentDescription == "Главный экран" }
+            await { home.contentDescription == "Home screen" }
             instrumentation.runOnMainSync { assertTrue(home.performAccessibilityAction(R.id.home_settings, null)) }
-            await { home.accessibilityPaneTitle == "Настройки" }
+            await { home.accessibilityPaneTitle == "Settings" }
             instrumentation.runOnMainSync { activity.showHome(); assertTrue(home.performAccessibilityAction(R.id.home_search, null)) }
-            await { views(home).filterIsInstance<EditText>().any { it.hint == "Поиск приложений" } }
+            await { views(home).filterIsInstance<EditText>().any { it.hint == "Search apps" } }
         } finally {
             instrumentation.runOnMainSync { activity.store.import(previous); activity.finish() }
         }

@@ -88,8 +88,8 @@ class WidgetPageTest {
                 val location = IntArray(2).also(first::getLocationOnScreen)
                 assertEquals("First widget starts at the safe top", bounds.top, location[1])
                 assertEquals(0, content.paddingTop); assertEquals(0, content.paddingBottom)
-                assertFalse(views(page).any { it is TextView && it.text.toString() == "Виджеты" ||
-                    it.contentDescription?.toString() in listOf("На главный экран", "Добавить виджет", "Изменить порядок виджетов") })
+                assertFalse(views(page).any { it is TextView && it.text.toString() == "Widgets" ||
+                    it.contentDescription?.toString() in listOf("Go to home screen", "Add widget", "Reorder widgets") })
             }
             InstrumentationRegistry.getArguments().getString("pageCapture")?.let { name ->
                 SystemClock.sleep(500)
@@ -105,14 +105,14 @@ class WidgetPageTest {
             instrumentation.runOnMainSync { views(content).filterIsInstance<AppWidgetHostView>().first().getGlobalVisibleRect(firstBounds) }
             for (y in listOf(bounds.bottom - activity.dp(24), firstBounds.bottom + activity.dp(4))) {
                 touch(bounds.exactCenterX(), y.toFloat()) { await { dialog(activity)?.isShowing == true } }
-                await { dialog(activity)?.window?.decorView?.let { root -> views(root).any { it is TextView && it.hint == "Поиск виджетов" } } == true }
+                await { dialog(activity)?.window?.decorView?.let { root -> views(root).any { it is TextView && it.hint == "Search widgets" } } == true }
                 assertEquals("Browsing allocates no widget", ids, store.widgets)
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                 await { dialog(activity) == null && activity.hasWindowFocus() }
             }
             // Provider holds keep their management menu, rather than opening the picker.
             touch(firstBounds.exactCenterX(), firstBounds.exactCenterY()) { await { dialog(activity)?.isShowing == true } }
-            await { dialog(activity)?.window?.decorView?.let { root -> views(root).any { it.contentDescription == "Удалить виджет" } } == true }
+            await { dialog(activity)?.window?.decorView?.let { root -> views(root).any { it.contentDescription == "Remove widget" } } == true }
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             await { dialog(activity) == null && activity.hasWindowFocus() }
             instrumentation.runOnMainSync { store.widgets = emptyList(); activity.showWidgets() }

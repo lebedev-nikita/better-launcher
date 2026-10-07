@@ -1,46 +1,46 @@
-# Проверка плавности списка приложений
+# App-list smoothness verification
 
-Дата: 2026-10-04. Исправление входит в патч 0.1.2.
+Date: 2026-10-04. Fix included in patch 0.1.2.
 
-## Причина и исправление
+## Cause and fix
 
-Открытие списка из «Все приложения» и из алфавита синхронно создавало и затем измеряло строки всего каталога в `ScrollView`. `AppCatalog.visible()` каждый раз заново нормализовал названия, читал настройки и сортировал приложения. Движение пальца внутри одной буквы повторно запрашивало переход, скрытие клавиатуры и отложенную прокрутку.
+Opening All apps/alphabet synchronously created/measured the entire catalog in a `ScrollView`. `AppCatalog.visible()` repeatedly normalized names, read settings/sorted apps. Moving within one letter repeated navigation, keyboard hiding/deferred scrolling.
 
-Результаты теперь отображаются в нативном `ListView` с переиспользованием строк и независимыми типами заголовков/приложений. Названия, поисковые строки и порядок готовятся при фоновой загрузке каталога. Изменение aliases, скрытых приложений или импорт настроек инвалидируют индекс. Алфавит продолжает рисовать волну на каждом движении, но навигация вызывается только при смене буквы или новом касании. Переход выбирает позицию раздела непосредственно; отложенное открытие клавиатуры отменяется при переходе по буквам и выходе с экрана.
+Results now use native `ListView` with row reuse/separate heading/app types. Names/search strings/order prepared during background catalog loading. Alias/hidden/import changes invalidate index. Alphabet draws its wave on every move but navigates only on letter change/new touch. Section navigation selects position directly; deferred keyboard opening canceled on letter navigation/screen exit.
 
-## Воспроизведение и измерение
+## Reproduction and measurement
 
-На выделенном `BetterLauncher_Smooth_API_31` (Android 12, Pixel 7, 1080×2400, 420 dpi) установлен отдельный временный APK с 300 launcher activity aliases. Основной APK содержит только настоящие установленные приложения; fixture и измерительный тест не входят в релиз.
+Dedicated `BetterLauncher_Smooth_API_31` (Android 12, Pixel 7, 1080×2400, 420 dpi) installed temporary APK with 300 launcher activity aliases. Main APK contains only real installed apps; fixture/measurement test excluded from release.
 
-Временный instrumentation-тест дожидался загрузки каталога, десять раз возвращался домой и вызывал реальный обработчик выбора C. Время измерялось через `SystemClock.elapsedRealtimeNanos()` на main thread; между проходами выполнялся `waitForIdleSync()`. Считались все Views в окне после layout. Сравнение проведено с APK опубликованного 0.1.0 и исправленным APK.
+Temporary instrumentation waited for catalog, returned home/called real C-selection handler ten times. Main-thread time measured with `SystemClock.elapsedRealtimeNanos()`, `waitForIdleSync()` between passes; all window Views counted after layout. Compared published 0.1.0/fixed APK.
 
-| Метрика | 0.1.0 | Исправление |
+| Metric | 0.1.0 | Fix |
 | --- | ---: | ---: |
-| Приложений в каталоге | 318 | 317 |
-| Views в окне после перехода/layout | 1317 | 69 |
-| Медиана работы обработчика открытия, 10 проходов | 1220.8 ms | 45.6 ms |
-| Медиана отдельного повторного `visible()`, 10 проходов | 591.4 ms | 0.15 ms |
+| Catalog apps | 318 | 317 |
+| Window Views after navigation/layout | 1317 | 69 |
+| Median opening-handler time, 10 passes | 1220.8 ms | 45.6 ms |
+| Median separate repeated `visible()`, 10 passes | 591.4 ms | 0.15 ms |
 
-Времена включают создание экрана и подготовку данных, но не всю задержку от касания до показа кадра. На хосте одновременно выполнялись другие Android-проверки, поэтому абсолютные значения и ускорение нельзя переносить на физический телефон. Снижение количества Views и отсутствие повторной сортировки проверяются независимо от нагрузки хоста. После измерения fixture удалён, временный тест и диагностические логи удалены из исходников.
+Times include screen creation/data preparation, not full touch-to-frame latency. Concurrent host Android checks mean absolute times/speedup cannot be transferred to physical phones. View reduction/no repeated sort verified independently of host load. Fixture/temporary test/diagnostic logs removed afterward.
 
-## Регрессионные проверки
+## Regression checks
 
-- `AppSearchIndexTest`: поиск по aliases и исходным названиям, латинице/кириллице, порядок разделов; повторные запросы не перечитывают названия тысячи приложений.
-- `AppNavigationTest`: движение внутри одной буквы не повторяет навигацию, новое касание той же буквы работает; для тысячи элементов создаются только строки viewport, Views переиспользуются и последний выбранный раздел побеждает предыдущие запросы.
-- `LauncherIntegrationTest`: подготовленный индекс обновляется после переименования, скрытия, восстановления и удаления alias; прежние проверки backup и настоящего каталога сохранены.
+- `AppSearchIndexTest`: alias/original-name, Latin/Cyrillic search, section order; repeated queries do not reread thousands of names.
+- `AppNavigationTest`: same-letter movement does not repeat navigation, new same-letter touch works; thousand-item list creates only viewport rows/reuses Views; last selected section overrides earlier requests.
+- `LauncherIntegrationTest`: prepared index updates after rename/hide/restore/alias removal; existing backup/real-catalog checks retained.
 
-Тест алфавита запущен на опубликованном 0.1.0 и воспроизвёл дефект: ожидаемые `[A, B]` заменялись на `[A, A, A, B]`. На исправленной версии тест проходит. В режиме клавиатуры `ListView` выбирает первое доступное приложение после некликабельного заголовка; регрессионная проверка учитывает это штатное поведение.
+Alphabet test reproduced defect on published 0.1.0: expected `[A, B]`, actual `[A, A, A, B]`. Fixed version passes. Keyboard ListView selects first available app after nonclickable heading; regression respects standard behavior.
 
-## Итоговые проверки
+## Final checks
 
-- `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` — успешно; 5 unit-тестов, 0 ошибок lint, 27 существующих предупреждений, новых предупреждений нет.
-- `:app:connectedDebugAndroidTest` — 5 тестов проходят на Android 12 и Android 16, на выделенном serial `emulator-5574` с последовательным запуском двух AVD.
-- Итоговый APK 0.1.2 повторно установлен после connected-тестов и назначен HOME. Все сценарии актуального `scripts/smoke-test.py` проходят на Android 12 и Android 16.
-- На обоих Android проверены портрет 1080×2400, узкий экран 945×2100 с font scale 1.3 и горизонтальная компоновка 2400×1080: поиск Camera, сброс запроса алфавитом, возврат HOME и отмена отложенного IME. Алфавит слева отдельно проверен на Android 12.
-- В landscape Android 12 стандартная клавиатура использует полноэкранный редактор. Проверены ввод запроса, закрытие IME и последующая навигация по буквам; это штатное поведение клавиатуры сохраняется.
-- Снимки проверены визуально: строки сохраняют размеры и возможность прокрутки при крупном шрифте; поиск и алфавит доступны в проверенных компоновках. Проверка касается плавности и этих сценариев, а не полного аудита доступности.
-- Runtime crashes Better Launcher после сценариев отсутствуют. Подпись APK v2 проверена и совпадает с 0.1.0 и 0.1.1; package versionName 0.1.2, versionCode 3, minSdk 31, targetSdk 36.
+- `:app:assembleDebug`, `:app:testDebugUnitTest`, `:app:lintDebug` passed; 5 unit tests, lint 0 errors/27 existing warnings, no new warnings.
+- `:app:connectedDebugAndroidTest`: 5 passed on Android 12/16, dedicated serial `emulator-5574` with sequential AVDs.
+- Final 0.1.2 reinstalled/HOME assigned after connected; all current `scripts/smoke-test.py` scenarios pass on both.
+- Both checked portrait 1080×2400, narrow 945×2100/font scale 1.3 and horizontal 2400×1080: Camera search, alphabet query reset, HOME/deferred-IME cancellation. Left alphabet independently checked Android 12.
+- Android 12 landscape keyboard uses fullscreen editor. Query entry, IME close/subsequent letter navigation checked; standard keyboard behavior preserved.
+- Captures visually reviewed: row sizing/scrolling with large font, accessible search/alphabet in tested layouts. Verification covers smoothness/scenarios, not full accessibility audit.
+- No Better Launcher runtime crashes after scenarios. v2 signing verified/matches 0.1.0/0.1.1; versionName 0.1.2, versionCode 3, minSdk 31, targetSdk 36.
 
-Скриншоты и локальные отчёты сохраняются в `.impeccable/review/smooth-api31*` и `.impeccable/review/smooth-api36*` и не включаются в Git. Размер экрана, масштаб шрифта, ориентация и сторона алфавита восстанавливаются после сценариев.
+Local captures/reports in `.impeccable/review/smooth-api31*`/`.impeccable/review/smooth-api36*`, outside Git. Size/font/orientation/alphabet side restored.
 
-Проверка на физическом телефоне, рабочих профилях и полная проверка TalkBack не выполнены. Полный паритет Niagara не заявляется.
+Physical phone/work profiles/full TalkBack unverified. Full Niagara parity is not claimed.

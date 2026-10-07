@@ -10,7 +10,7 @@ data class WidgetSize(val width: Int, val height: Int, val top: Int = 0, val off
 
 data class AppFolder(val id: String, val name: String, val apps: List<String>)
 
-class LauncherStore(context: Context) {
+class LauncherStore(private val context: Context) {
     val prefs = context.getSharedPreferences("launcher", Context.MODE_PRIVATE)
     private fun array(key: String): List<String> = runCatching {
         val json = JSONArray(prefs.getString(key, "[]"))
@@ -105,9 +105,9 @@ class LauncherStore(context: Context) {
         return json.put("preferences", values).toString(2)
     }
     fun import(text: String) {
-        require(text.length <= 1_000_000) { "Файл слишком большой" }
+        require(text.length <= 1_000_000) { context.getString(R.string.file_too_large) }
         val json = JSONObject(text)
-        require(json.getInt("version") == 1) { "Неподдерживаемая версия резервной копии" }
+        require(json.getInt("version") == 1) { context.getString(R.string.backup_version_error) }
         val values = json.getJSONObject("preferences")
         // Validate completely before mutating persisted state.
         val accepted = mutableMapOf<String, Any>()
@@ -123,7 +123,7 @@ class LauncherStore(context: Context) {
                 key == "hidden" && value is JSONArray -> accepted[key] = List(value.length()) { value.getString(it) }.toSet()
                 key in booleanKeys && value is Boolean -> accepted[key] = value
                 (key in stringKeys || key.startsWith("alias:") || key.startsWith("folder:") || key.startsWith("popup:") || key.startsWith("hiddenShortcuts:")) && value is String -> accepted[key] = value
-                else -> error("Повреждённая резервная копия")
+                else -> error(context.getString(R.string.backup_corrupt))
             }
         }
         (accepted["favorites"] as? String)?.let { value ->

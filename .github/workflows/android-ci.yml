@@ -42,6 +42,8 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - name: Install Android SDK components
         run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0' 'platform-tools'
+      - name: Check English and Russian resources
+        run: python3 scripts/check-localization.py
       - name: Build and check
         run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --continue --stacktrace
       - name: Upload reports and debug APK

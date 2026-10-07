@@ -68,7 +68,7 @@ class WidgetTouchFrame(context: Context) : FrameLayout(context) {
 
     override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
         super.onInitializeAccessibilityNodeInfo(info)
-        info.addAction(AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.ACTION_LONG_CLICK, "Настроить виджет"))
+        info.addAction(AccessibilityNodeInfo.AccessibilityAction(AccessibilityNodeInfo.ACTION_LONG_CLICK, context.getString(R.string.configure_widget)))
     }
 
     override fun onWindowFocusChanged(hasWindowFocus: Boolean) {

@@ -52,8 +52,8 @@ class InlineOrderEditor(
             addView(View(activity), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(this)
         }
-        val handle = activity.iconButton(Glyph.REORDER, "Перетащить $label") {
-            activity.message("Перетащите за ≡. С клавиатуры — ↑ и ↓")
+        val handle = activity.iconButton(Glyph.REORDER, activity.getString(R.string.drag_named_item, label)) {
+            activity.message(activity.getString(R.string.drag_hint))
         }
         val item = Item(id, label, row, handle)
         controls.addView(handle)
@@ -69,8 +69,8 @@ class InlineOrderEditor(
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfo) {
                 super.onInitializeAccessibilityNodeInfo(host, info)
                 val index = items.indexOf(item)
-                if (index > 0) info.addAction(AccessibilityNodeInfo.AccessibilityAction(R.id.reorder_up, "Переместить $label вверх"))
-                if (index in 0 until items.lastIndex) info.addAction(AccessibilityNodeInfo.AccessibilityAction(R.id.reorder_down, "Переместить $label вниз"))
+                if (index > 0) info.addAction(AccessibilityNodeInfo.AccessibilityAction(R.id.reorder_up, activity.getString(R.string.move_named_up, label)))
+                if (index in 0 until items.lastIndex) info.addAction(AccessibilityNodeInfo.AccessibilityAction(R.id.reorder_down, activity.getString(R.string.move_named_down, label)))
             }
             override fun performAccessibilityAction(host: View, action: Int, arguments: Bundle?): Boolean = when (action) {
                 R.id.reorder_up -> move(item, items.indexOf(item) - 1)
@@ -153,7 +153,7 @@ class InlineOrderEditor(
 
     private fun updateControls() {
         items.forEachIndexed { index, item ->
-            item.handle.stateDescription = "${index + 1} из ${items.size}"
+            item.handle.stateDescription = activity.getString(R.string.item_position, index + 1, items.size)
         }
     }
 }

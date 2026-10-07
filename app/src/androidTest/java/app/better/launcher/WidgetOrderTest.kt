@@ -56,27 +56,27 @@ class WidgetOrderTest {
                 scenario.onActivity { activity ->
                     descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().first().performLongClick()
                 }
-                click("Изменить порядок")
+                click("Reorder")
                 // Adding by holding free space also works while ordering is active.
                 scenario.onActivity { activity ->
                     val scroll = descendants(activity.window.decorView).filterIsInstance<android.widget.ScrollView>().single()
                     assertTrue(scroll.getChildAt(0).performLongClick())
                 }
-                node("Поиск виджетов")
+                node("Search widgets")
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                 val label = manager.getAppWidgetInfo(ids[0]).loadLabel(context.packageManager)
                 val first = "$label · 1"
                 val second = "$label · 2"
-                assertFalse(node("Перетащить $first").actionList.any { it.id == R.id.reorder_up })
-                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow, "Переместить $first вниз"))
+                assertFalse(node("Drag $first").actionList.any { it.id == R.id.reorder_up })
+                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow, "Move $first down"))
                 var originalViews = emptyList<AppWidgetHostView>()
                 // The actual hosted views stay on the page during ordering.
                 scenario.onActivity { activity ->
                     originalViews = descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>()
                     assertEquals(listOf(ids[0], ids[2], ids[3]), originalViews.map { it.appWidgetId })
                 }
-                val from = Rect().also { node("Перетащить $first").getBoundsInScreen(it) }
-                val to = Rect().also { node("Перетащить $second").getBoundsInScreen(it) }
+                val from = Rect().also { node("Drag $first").getBoundsInScreen(it) }
+                val to = Rect().also { node("Drag $second").getBoundsInScreen(it) }
                 val providerBackgrounds = originalViews.associateWith { it.getChildAt(0).background }
                 fun checkTransparentDrag() {
                     if (InstrumentationRegistry.getArguments().getString("dragCapture") == "true") instrumentation.uiAutomation.takeScreenshot()?.let { bitmap ->
@@ -109,13 +109,13 @@ class WidgetOrderTest {
                 drag(from.centerX().toFloat(), from.centerY().toFloat(), to.bottom.toFloat(), onHeld = ::checkTransparentDrag)
                 val dragged = listOf(ids[1], ids[2], ids[0], ids[3])
                 await { store.widgets == dragged }
-                assertTrue(node("Перетащить $first").performAction(R.id.reorder_up))
+                assertTrue(node("Drag $first").performAction(R.id.reorder_up))
                 await { store.pageWidgets == listOf(ids[0], ids[2], ids[3]) }
                 // Scroll to the last real widget, whose controls may be below the viewport.
                 scenario.onActivity { activity ->
                     descendants(activity.window.decorView).filterIsInstance<android.widget.ScrollView>().single().fullScroll(View.FOCUS_DOWN)
                 }
-                assertTrue(node("Перетащить $label · 3").performAction(R.id.reorder_up))
+                assertTrue(node("Drag $label · 3").performAction(R.id.reorder_up))
                 val pageOrder = listOf(ids[0], ids[3], ids[2])
                 await { store.pageWidgets == pageOrder }
                 scenario.onActivity { activity ->
@@ -126,7 +126,7 @@ class WidgetOrderTest {
                 sizes.forEach { (id, size) -> assertEquals(size, store.widgetSize(id)) }
                 assertTrue(ids.all { manager.getAppWidgetInfo(it) != null })
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-                await { find(instrumentation.uiAutomation.rootInActiveWindow, "Перетащить $first") == null }
+                await { find(instrumentation.uiAutomation.rootInActiveWindow, "Drag $first") == null }
                 scenario.onActivity { activity ->
                     assertEquals(pageOrder, descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>().map { it.appWidgetId })
                 }
@@ -159,14 +159,14 @@ class WidgetOrderTest {
                 scenario.onActivity { activity ->
                     descendants(activity.window.decorView).filterIsInstance<WidgetTouchFrame>().first().performLongClick()
                 }
-                click("Изменить порядок")
-                node("Перетащить $label · 1")
+                click("Reorder")
+                node("Drag $label · 1")
                 scenario.onActivity { activity ->
                     activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
                         .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
-                node("Главный экран")
-                await { find(instrumentation.uiAutomation.rootInActiveWindow, "Перетащить $label · 1") == null }
+                node("Home screen")
+                await { find(instrumentation.uiAutomation.rootInActiveWindow, "Drag $label · 1") == null }
                 assertEquals(pageOrder, store.pageWidgets)
                 scenario.onActivity { activity ->
                     assertEquals(listOf(ids[1]), descendants(activity.window.decorView).filterIsInstance<AppWidgetHostView>().map { it.appWidgetId })
@@ -175,7 +175,7 @@ class WidgetOrderTest {
                     activity.showWidgets()
                 }
                 instrumentation.waitForIdleSync()
-                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow, "Изменить порядок виджетов"))
+                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow, "Reorder widgets"))
             }
         } finally {
             ids.forEach(host::deleteAppWidgetId)

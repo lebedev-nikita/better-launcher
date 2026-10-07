@@ -27,7 +27,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
     fun start() { runCatching { host.startListening() } }
     fun stop() { finishResize(false); host.stopListening() }
     fun add(toHome: Boolean = false) {
-        activity.sheet(if (toHome) "Виджет на главном экране" else "Добавить виджет", scrollContent = false, showHeader = false) { body, dialog ->
+        activity.sheet(if (toHome) activity.getString(R.string.home_widget) else activity.getString(R.string.add_widget), scrollContent = false, showHeader = false) { body, dialog ->
             body.addView(WidgetPickerView(activity).apply { onChoose = { provider -> dialog.dismiss(); bind(provider, toHome) } },
                 LinearLayout.LayoutParams(-1, 0, 1f))
         }
@@ -109,7 +109,7 @@ class WidgetController(private val activity: MainActivity, private val store: La
         // The shared setting owns vertical gaps; keep only the framework side insets.
         view.setPadding(view.paddingLeft, 0, view.paddingRight, 0)
         val frame = WidgetTouchFrame(activity).apply {
-            contentDescription = "Виджет ${info.loadLabel(activity.packageManager)}"
+            contentDescription = activity.getString(R.string.named_widget, info.loadLabel(activity.packageManager))
             setOnLongClickListener { showControls(id, info, home, this, view); true }
         }
         frame.addView(view, FrameLayout.LayoutParams(-1, defaultHeight(info), Gravity.CENTER_HORIZONTAL))
@@ -172,23 +172,23 @@ class WidgetController(private val activity: MainActivity, private val store: La
         val icon = runCatching { info.loadIcon(activity, activity.resources.displayMetrics.densityDpi) }.getOrNull()
         activity.managementSheet(info.loadLabel(activity.packageManager), icon) { body, dialog ->
             fun command(glyph: Glyph, label: String, action: () -> Unit) = activity.managementAction(body, dialog, glyph, label, action)
-            if (!home && store.pageWidgets.size > 1) command(Glyph.REORDER, "Изменить порядок") { editOrder() }
-            command(Glyph.MOVE, "Переместить и изменить размер") { resize(id, info, frame, view) }
-            if (info.configure != null) command(Glyph.EDIT, "Настройки виджета") {
+            if (!home && store.pageWidgets.size > 1) command(Glyph.REORDER, activity.getString(R.string.reorder)) { editOrder() }
+            command(Glyph.MOVE, activity.getString(R.string.move_resize)) { resize(id, info, frame, view) }
+            if (info.configure != null) command(Glyph.EDIT, activity.getString(R.string.widget_settings)) {
                 runCatching { host.startAppWidgetConfigureActivityForResult(activity, id, 0, RECONFIGURE, null) }
-                    .onFailure { activity.message("Приложение не смогло открыть настройки виджета") }
+                    .onFailure { activity.message(activity.getString(R.string.widget_settings_error)) }
             }
-            if (!home) command(Glyph.STAR, "На главный экран") {
+            if (!home) command(Glyph.STAR, activity.getString(R.string.back_home)) {
                 store.homeWidgetId = id; showDestination(home)
             }
-            command(Glyph.DELETE, "Удалить виджет") {
+            command(Glyph.DELETE, activity.getString(R.string.delete_widget)) {
                 host.deleteAppWidgetId(id); store.widgets = store.widgets - id; showDestination(home)
             }
             body.addView(activity.gap(16))
             body.addView(View(activity).apply { setBackgroundColor(activity.getColor(R.color.app_menu_foreground)) },
                 LinearLayout.LayoutParams(-1, activity.dp(1)).apply { marginStart = activity.dp(8); marginEnd = activity.dp(8) })
             body.addView(activity.gap(8))
-            command(Glyph.SETTINGS, "Настройки Better Launcher") { activity.showSettings() }
+            command(Glyph.SETTINGS, activity.getString(R.string.better_launcher_settings)) { activity.showSettings() }
         }
     }
 

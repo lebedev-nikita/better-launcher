@@ -19,28 +19,28 @@ class AppGesturesTest {
 
     @Test fun iconAndNameHoldsOpenDifferentMenusAndRowSwipesOpenWidgets() {
         withApp { activity, label ->
-            val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий" }
+            val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: touch and hold for notifications and quick actions" }
             hold(icon, activity)
-            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Добавить приложения" }
+            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Add apps" }
             dismiss(activity)
             val name = awaitView(activity) { it is TextView && it.text.toString() == label }
             hold(name, activity)
-            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "О приложении" }
+            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "App info" }
             dismiss(activity)
             // A leftward gesture no longer opens the app popup or launches the app.
             swipe(name, -1)
-            awaitView(activity) { it.contentDescription?.toString() == "Главный экран" }
+            awaitView(activity) { it.contentDescription?.toString() == "Home screen" }
             instrumentation.runOnMainSync { assertNull(dialog(activity)) }
             // Both the name and icon must allow the parent page gesture.
             for (onIcon in listOf(false, true)) {
                 val target = awaitView(activity) {
-                    if (onIcon) it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий"
+                    if (onIcon) it.contentDescription?.toString() == "$label: touch and hold for notifications and quick actions"
                     else it is TextView && it.text.toString() == label
                 }
                 swipe(target, 1)
-                awaitView(activity) { it is TextView && it.text.toString() == "Удерживайте пустое место, чтобы добавить виджет" }
+                awaitView(activity) { it is TextView && it.text.toString() == "Touch and hold an empty area to add a widget" }
                 instrumentation.sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
-                awaitView(activity) { it.contentDescription?.toString() == "Главный экран" }
+                awaitView(activity) { it.contentDescription?.toString() == "Home screen" }
             }
         }
     }
@@ -50,40 +50,40 @@ class AppGesturesTest {
             val name = awaitView(activity) { it is TextView && it.text.toString() == label }
             instrumentation.runOnMainSync {
                 val info = name.createAccessibilityNodeInfo()
-                val popup = info.actionList.first { it.label?.toString() == "Уведомления и быстрые действия" }
+                val popup = info.actionList.first { it.label?.toString() == "Notifications and quick actions" }
                 assertTrue(name.performAccessibilityAction(popup.id, null))
             }
-            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Добавить приложения" }
+            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Add apps" }
             dismiss(activity)
             instrumentation.runOnMainSync { assertTrue(name.performAccessibilityAction(AccessibilityNodeInfo.ACTION_LONG_CLICK, null)) }
-            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "О приложении" }
+            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "App info" }
         }
     }
 
     @Test fun appListRowSwipeOpensWidgets() {
         withApp { activity, label ->
             instrumentation.runOnMainSync {
-                views(activity.window.decorView).first { it.contentDescription?.toString() == "Главный экран" }.performAccessibilityAction(R.id.home_search, null)
+                views(activity.window.decorView).first { it.contentDescription?.toString() == "Home screen" }.performAccessibilityAction(R.id.home_search, null)
             }
-            val input = awaitView(activity) { it is android.widget.EditText && it.hint?.toString() == "Поиск приложений" }
+            val input = awaitView(activity) { it is android.widget.EditText && it.hint?.toString() == "Search apps" }
             instrumentation.runOnMainSync { (input as android.widget.EditText).setText(label) }
             val name = awaitView(activity) { it is TextView && it !is android.widget.EditText && it.text.toString() == label }
             swipe(name, 1)
-            awaitView(activity) { it is TextView && it.text.toString() == "Удерживайте пустое место, чтобы добавить виджет" }
+            awaitView(activity) { it is TextView && it.text.toString() == "Touch and hold an empty area to add a widget" }
             instrumentation.runOnMainSync { assertNull(dialog(activity)) }
         }
     }
 
     @Test fun homeRefreshDuringIconHoldKeepsQuickActions() {
         withApp { activity, label ->
-            val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: удерживайте для уведомлений и быстрых действий" }
+            val icon = awaitView(activity) { it.contentDescription?.toString() == "$label: touch and hold for notifications and quick actions" }
             gesture(icon, 0, 850, activity) {
                 instrumentation.runOnMainSync {
                     MainActivity::class.java.getDeclaredMethod("refreshHomePreservingScroll")
                         .apply { isAccessible = true }.invoke(activity)
                 }
             }
-            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Добавить приложения" }
+            awaitView(activity, dialog = true) { it.contentDescription?.toString() == "Add apps" }
         }
     }
 
@@ -94,7 +94,7 @@ class AppGesturesTest {
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
         val oldHide = activity.store.bool("hideIcons")
         try {
-            awaitView(activity) { it.contentDescription?.toString() == "Главный экран" }
+            awaitView(activity) { it.contentDescription?.toString() == "Home screen" }
             instrumentation.runOnMainSync {
                 activity.store.set("hideIcons", hideIcons)
                 activity.showHome()

@@ -1,53 +1,53 @@
-# Работа с Better Launcher
+# Working on Better Launcher
 
-Эти инструкции действуют для всего репозитория. Явная задача пользователя определяет объём работы и имеет приоритет над локальными рекомендациями.
+These instructions apply throughout the repository. The user's explicit task defines the scope and takes precedence over local recommendations.
 
-## Начало работы
+## Getting started
 
-1. Проверь `git status --short`, текущую ветку и `git remote -v`. Сохраняй чужие незакоммиченные изменения и работай с remote, соответствующим задаче. Основной репозиторий — `better-launcher/better-launcher`; `personal`, если он есть, указывает на стартовый репозиторий.
-2. Прочитай [PRODUCT.md](PRODUCT.md) для требований и [docs/features.md](docs/features.md) для текущего покрытия. Android 12+ и направление Niagara выбраны пользователем; используй собственный код и assets под именем Better Launcher.
-3. Найди затронутую ответственность и прочитай соответствующий исходник. Выбор материала:
+1. Check `git status --short`, the current branch and `git remote -v`. Preserve other people's uncommitted changes and use the remote appropriate to the task. The primary repository is `better-launcher/better-launcher`; `personal`, when present, points to the starter repository.
+2. Read [PRODUCT.md](PRODUCT.md) for requirements and [docs/features.md](docs/features.md) for current coverage. The user chose Android 12+ and the Niagara direction; use original code and assets under the Better Launcher name.
+3. Identify the affected responsibility and read its source. Choose the relevant material:
 
-| Изменение | Что читать |
+| Change | Read |
 | --- | --- |
-| Сборка или зависимости | Разделы окружения/сборки в [README.md](README.md), корневой и app Gradle-файлы, wrapper properties |
-| Интерфейс или жесты | [DESIGN.md](DESIGN.md), [docs/home-surface.md](docs/home-surface.md), MainActivity, LauncherViews, styles.xml |
-| Сохранение или backup | Раздел хранения в [README.md](README.md), LauncherStore, LauncherIntegrationTest |
-| Каталог, поиск или профили | AppCatalog, AppListRules, оба файла тестов |
-| Системная интеграция | AndroidManifest.xml и её модуль: LauncherNotificationService, WidgetController, WeatherRepository либо календарь/MediaSession в MainActivity |
-| Проверка или выпуск | Разделы проверок/выпусков в [README.md](README.md), [docs/verification.md](docs/verification.md), соответствующие release notes |
+| Build or dependencies | Environment/build sections in [README.md](README.md), root and app Gradle files, wrapper properties |
+| Interface or gestures | [DESIGN.md](DESIGN.md), [docs/home-surface.md](docs/home-surface.md), MainActivity, LauncherViews, styles.xml |
+| Persistence or backup | Storage section in [README.md](README.md), LauncherStore, LauncherIntegrationTest |
+| Catalog, search or profiles | AppCatalog, AppListRules, both test files |
+| System integration | AndroidManifest.xml and the relevant module: LauncherNotificationService, WidgetController, WeatherRepository, or calendar/MediaSession code in MainActivity |
+| Verification or release | Verification/release sections in [README.md](README.md), [docs/verification.md](docs/verification.md), relevant release notes |
 
-Версии инструментов и Android-параметры сверяй с Gradle-файлами; они являются источником истины. Не считай локальные build outputs, старые скриншоты или HTML/CSS-примеры в `.impeccable/design.json` текущей реализацией Android UI.
+Check tool versions and Android parameters against the Gradle files, which are the source of truth. Local build outputs, old screenshots and HTML/CSS examples in `.impeccable/design.json` do not represent the current Android UI implementation.
 
-## Инварианты реализации
+## Implementation invariants
 
-- Продолжай текущую архитектуру: Kotlin, нативные Views, Material 3 и один модуль `app`. MainActivity координирует экраны; каталог, хранение, виджеты и сеть имеют отдельные ответственности. Новую чистую логику размещай так, чтобы её можно было проверить без Activity.
-- Сохраняй `AppEntry.id` с serial профиля и ComponentName. Уведомления сопоставляй одновременно по package и UserHandle; запуск и shortcuts выполняй в профиле приложения.
-- Содержимое главного экрана получай из установленных приложений и системных данных. Демонстрационные уведомления, погоду и события используй только в тестовом окружении.
-- Содержимое уведомлений оставляй в памяти NotificationHub. Новые разрешения запрашивай при включении соответствующей функции; сеть и файловое чтение выполняй вне main thread. Секреты, ключи подписи, SDK-пути и пользовательские данные держи вне Git.
-- При добавлении настроек обновляй допустимые ключи и проверку типов в LauncherStore.import. Сохраняй проверку всего backup до записи, совместимость формата и локальные widget IDs; формат backup имеет свою версию. Проверяй, что некорректный импорт оставляет прежние настройки целыми.
-- Сохраняй AppWidgetHost ID и обработку незавершённой привязки, отказа и конфигурации. Подписки, callbacks, таймеры и executor связывай с lifecycle; HOME-intent должен возвращать главный экран. При обновлении уведомлений учитывай открытый диалог и сохранение прокрутки.
-- Все меню Better Launcher оформляй в стиле всплывающего меню долгого удержания ярлыка: тёмно-синяя нижняя панель, светло-голубые подписи и контурные значки, скруглённые верхние углы, растущие строки действий и одинаковая анимация. Используй общие компоненты меню; параметры и эталон описаны в [DESIGN.md](DESIGN.md). Системные меню Android и содержимое сторонних виджетов оформляет их владелец.
-- В UI используй dp/sp, растущие текстовые строки, system/IME insets, отдельное место footer и доступные действия клавиатуры/accessibility. Алфавит оставляет место системному Back; проверяй крупный шрифт и левосторонний режим. Размеры, контраст и цветовые роли сверяй с DESIGN.md.
+- Continue the current architecture: Kotlin, native Views, Material 3 and one `app` module. MainActivity coordinates screens; catalog, storage, widgets and networking have separate responsibilities. Place new pure logic where it can be tested without an Activity.
+- Preserve `AppEntry.id` with the profile serial and ComponentName. Match notifications by both package and UserHandle; launch apps and shortcuts in their application profile.
+- Populate the home screen from installed apps and system data. Use demonstration notifications, weather and events only in the test environment.
+- Keep notification contents in NotificationHub memory. Request new permissions when the corresponding feature is enabled; run network and file reads off the main thread. Keep secrets, signing keys, SDK paths and user data outside Git.
+- When adding settings, update the allowed keys and type validation in LauncherStore.import. Preserve validation of the complete backup before writing, format compatibility and local widget IDs; the backup format has its own version. Verify that an invalid import leaves previous settings intact.
+- Preserve the AppWidgetHost ID and handling of incomplete binding, denial and configuration. Bind subscriptions, callbacks, timers and executors to the lifecycle; a HOME intent must return to the home screen. When updating notifications, account for an open dialog and preserve scroll position.
+- Style every Better Launcher menu like the app long-press menu: a navy bottom sheet, pale blue labels and outline icons, rounded top corners, text rows that can grow and consistent animation. Use shared menu components; parameters and the reference are in [DESIGN.md](DESIGN.md). Android system menus and third-party widget content are styled by their owners.
+- Use dp/sp, text rows that can grow, system/IME insets, separate footer space, and accessible keyboard actions. The alphabet must leave room for the system Back gesture; check large fonts and left-handed mode. Check dimensions, contrast and color roles against DESIGN.md.
 
-## Проверки по изменению
+## Checks by change type
 
-| Тип изменения | Необходимая проверка |
+| Change type | Required verification |
 | --- | --- |
-| Только документация | Рабочие ссылки/пути, соответствие команд конфигурации и `git diff --check`; сборку APK и эмулятор запускать не требуется |
-| Kotlin, ресурсы, manifest или Gradle | `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` |
-| Хранение, импорт или каталог | Базовые проверки выше и `./gradlew :app:connectedDebugAndroidTest` на выделенном устройстве; добавь проверку нового поведения или регрессии |
-| UI, навигация или системная интеграция | Базовые проверки и сценарий на выделенном эмуляторе/телефоне; для основного UI — `scripts/smoke-test.py` по инструкции README, Android 12 и актуальная целевая версия, портрет, узкий экран/font scale 1.3 и landscape |
+| Documentation only | Working links/paths, commands consistent with configuration, and `git diff --check`; APK builds and emulators are not required |
+| Kotlin, resources, manifest or Gradle | `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` |
+| Storage, import or catalog | Basic checks above and `./gradlew :app:connectedDebugAndroidTest` on a dedicated device; add a behavior or regression check |
+| UI, navigation or system integration | Basic checks and a scenario on a dedicated emulator/phone; for the main UI, run `scripts/smoke-test.py` as described in README on Android 12 and the current target version, in portrait, at narrow width/font scale 1.3, and in landscape |
 
-Для тестов поведения проверяй пользовательский результат или сохранность данных. Для обратимых изменений оформления достаточно подходящей визуальной проверки. Отдельно сообщай о новых lint warnings; подтверждённый baseline 0.1.0 находится в docs/verification.md, а не служит основанием подавлять новые предупреждения.
+Behavior tests must verify user-visible results or data integrity. Reversible styling changes need appropriate visual verification. Report new lint warnings separately; the confirmed 0.1.0 baseline in docs/verification.md is not a reason to suppress new warnings.
 
-Connected-тесты удаляют тестируемое приложение: затем переустанови основной APK и назначь HOME на тестовом эмуляторе. UI-скрипт требует английских Camera/Phone, исходного избранного и правого алфавита. Используй явный adb serial и один UI-скрипт на устройство; после временных изменений восстанови размер, font scale и ориентацию. Отсутствующая интеграция/устройство означает непроверенный сценарий, а не успешный тест.
+Connected tests uninstall the tested app: reinstall the main APK afterwards and assign it as HOME on the test emulator. The UI script requires English Camera/Phone labels, initial favorites and the alphabet on the right. Use an explicit adb serial and only one UI script per device; restore size, font scale and orientation after temporary changes. An unavailable integration/device means the scenario is unverified, not passed.
 
-## Документация и завершение
+## Documentation and completion
 
-1. Обнови документацию, которую изменённое поведение делает неверной: README для рабочих команд/архитектуры, docs/features.md для покрытия, DESIGN.md и sidecar для визуальных правил. Исторические release notes и отчёт 0.1.0 сохраняй как историю соответствующего выпуска.
-2. Проверь diff, результаты подходящих проверок и состав коммита. В отчёте укажи изменение, выполненные проверки и реальные ограничения; заявляй полный паритет Niagara только после реализации и проверки оставшихся функций.
-3. Коммит, push и публикацию выполняй в рамках задачи пользователя. Если явно запрошен `main`, коммить туда и используй обычный fast-forward push в основной remote. При расхождении с удалённой веткой сначала получи изменения и согласуй историю без force push.
-4. Перед публикацией любого релиз-кандидата обязательно влей рабочую ветку в `main` и запушь `main` в `origin/main` основного репозитория. Итоговый APK собирай из чистого коммита `main`, уже опубликованного в `origin/main`, и ставь тег на этот коммит. Непосредственно перед публикацией выполни `git fetch origin` и проверь `git merge-base --is-ancestor <коммит-тега> origin/main`; публикация разрешена только после успешной проверки.
-5. Публикуй только подписанные release-APK с R8 и удалением неиспользуемых ресурсов. Debug-сборки используй для локальных проверок и не прикрепляй к релизам. Перед публикацией проверь, что APK не debuggable, подпись совместима с предыдущим выпуском, а размер и состав APK не получили необъяснённого прироста.
-6. Для нового выпуска увеличь versionCode, обнови versionName, подготовь release notes, новый тег и проверенный APK с SHA-256 по README. Проверяй, что удалённый commit/tag и опубликованные assets соответствуют локальным файлам. Существующий релиз 0.1.0 не заменяется обычными изменениями исходников или документации.
+1. Update documentation made inaccurate by changed behavior: README for working commands/architecture, docs/features.md for coverage, DESIGN.md and its sidecar for visual rules. Preserve historical release notes and the 0.1.0 report as records of their respective releases.
+2. Review the diff, appropriate check results and commit contents. Report the change, completed checks and actual limitations; claim full Niagara parity only after implementing and verifying the remaining features.
+3. Commit, push and publish within the user's task. If `main` is explicitly requested, commit there and use a normal fast-forward push to the primary remote. If it diverges from the remote branch, fetch changes and reconcile history without a force push.
+4. Before publishing any release candidate, merge the working branch into `main` and push `main` to the primary repository's `origin/main`. Build the final APK from a clean `main` commit already published in `origin/main`, and tag that commit. Immediately before publication, run `git fetch origin` and verify `git merge-base --is-ancestor <tag-commit> origin/main`; publication is allowed only after this check succeeds.
+5. Publish only signed release APKs with R8 and unused-resource shrinking. Use debug builds for local verification and do not attach them to releases. Before publication, verify that the APK is not debuggable, its signature is compatible with the previous release, and its size/content have no unexplained growth.
+6. For a new release, increment versionCode, update versionName, and prepare release notes, a new tag and a verified APK with SHA-256 as described in README. Verify that the remote commit/tag and published assets match the local files. Ordinary source or documentation changes do not replace the existing 0.1.0 release.

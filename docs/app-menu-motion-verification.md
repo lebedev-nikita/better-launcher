@@ -1,42 +1,42 @@
-# Проверка меню 0.2.0-rc.8
+# Menu verification 0.2.0-rc.8
 
-Дата: 2026-10-04. Версия: 0.2.0-rc.8, versionCode 17, minSdk 31, targetSdk 36.
+Date: 2026-10-04. Version: 0.2.0-rc.8, versionCode 17, minSdk 31, targetSdk 36.
 
-## Изменение
+## Change
 
-Меню удержания поднимается снизу за 300 мс по кривой (0.16, 1, 0.3, 1) после расчёта системных отступов и высоты окна. Подъём выполняется property animator без изменения layout в каждом кадре. Затемнение и выход вниз за 180 мс управляются окном Android. Масштаб системных анимаций учитывается; при отключении анимаций меню появляется сразу.
+Hold menu rises over 300 ms on curve (0.16, 1, 0.3, 1) after calculating system insets/window height. Property animator performs entry without per-frame layout changes. Android window controls dimming/180 ms downward exit. System animation scale respected; disabled animations show menu immediately.
 
-Нажатие на название приложения открывает существующий диалог переименования. Название имеет ripple, клавиатурный фокус, доступную подпись и минимальную высоту касания 48 dp. Пункт переименования удалён из «Дополнительно»; прикреплённые приложения и скрытие сохранены.
+App-name tap opens existing rename dialog. Heading has ripple, keyboard focus, accessible label/minimum 48 dp touch height. Rename removed from More; attached apps/hiding remain.
 
-## Сборка
+## Build
 
-- `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:lintRelease` — успешно на итоговом коде.
-- Unit-тесты: 4, ошибок нет.
-- Debug и release lint: 0 ошибок, 27 предупреждений; новых предупреждений от этого изменения нет. Состав: UseKtx 16, DrawAllocation 2, ClickableViewAccessibility 2, OldTargetApi 1, UnusedAttribute 1, AndroidGradlePluginVersion 1, GradleDependency 1, ObsoleteSdkInt 1, MonochromeLauncherIcon 1, ViewConstructor 1.
-- Release APK: 2 425 352 байта, R8 и удаление неиспользуемых ресурсов включены, manifest не debuggable. По сравнению с release 0.1.7 прирост 10 325 байт включает текущие превью виджетов и ресурсы анимации; отдельной ICU-библиотеки в APK нет.
-- `apksigner verify` — подпись v2 действительна. SHA-256 сертификата: `7618fbcfaeec605563e1f7b8200be66d60c923c268cbeebdbbbc98b54fd71b5b`, совместим с предыдущими APK. Прежний сертификат Android Debug сохранён для обновления, сама сборка release.
-- SHA-256 APK: `39e8d4c83780a7ede45a88a6b8f7324807fc7a23c3b3d8decc0ed3cf706f46a2`.
+- `:app:assembleDebug :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:lintRelease` passed final code.
+- 4 unit tests, no errors.
+- Debug/release lint: 0 errors, 27 warnings, no new warnings from change. Breakdown: UseKtx 16, DrawAllocation 2, ClickableViewAccessibility 2, OldTargetApi 1, UnusedAttribute 1, AndroidGradlePluginVersion 1, GradleDependency 1, ObsoleteSdkInt 1, MonochromeLauncherIcon 1, ViewConstructor 1.
+- Release APK: 2 425 352 bytes, R8/resource shrinking enabled, not debuggable. +10 325 bytes versus release 0.1.7 includes current widget previews/animation resources; no separate ICU library.
+- `apksigner verify`: valid v2 signature. Certificate SHA-256: `7618fbcfaeec605563e1f7b8200be66d60c923c268cbeebdbbbc98b54fd71b5b`, compatible with previous APKs. Original Android Debug certificate retained for updates; build itself release.
+- APK SHA-256: `39e8d4c83780a7ede45a88a6b8f7324807fc7a23c3b3d8decc0ed3cf706f46a2`.
 
-## Проверки устройства
+## Device checks
 
 ### Android 12 / API 31
 
-Выделенный `BetterLauncher_MenuMotion_RC3_API_31`, serial `emulator-5656`, Google APIs arm64-v8a. Итоговый полный прогон `:app:connectedDebugAndroidTest`: 19 тестов PASSED, включая AppMenuTest с требованием видимости заголовка, сохранением alias, отменой по HOME и восстановлением исходного названия пустым вводом. Предыдущие попытки с программной графикой прерывались на системных сбоях Android и отсутствии фокуса HOME; успешный прогон выполнен после перезапуска с аппаратной графикой и явного назначения HOME.
+Dedicated `BetterLauncher_MenuMotion_RC3_API_31`, serial `emulator-5656`, Google APIs arm64-v8a. Final full `:app:connectedDebugAndroidTest`: 19 PASSED, including AppMenuTest requiring visible heading, alias save, HOME cancellation/empty-name restoration. Previous software-rendering attempts stopped on Android system failures/missing HOME focus; successful run followed hardware-renderer restart/explicit HOME assignment.
 
-Подписанный release APK прошёл полный `scripts/smoke-test.py`: экран виджетов, настройки/Back, поиск Camera, запуск Camera/HOME, свайп pop-up, удержание и дополнительные действия, заголовок переименования/HOME и последний раздел алфавита. Аварий Better Launcher в этом прогоне нет.
+Signed release APK passed full `scripts/smoke-test.py`: widgets, Settings/Back, Camera search/launch/HOME, swipe popup, hold/additional actions, rename heading/HOME/final alphabet section. No Better Launcher crashes.
 
-Меню отдельно проверено в портрете 720×1600 / 280 dpi (411 dp ширины), на узком экране 560×1245 / font scale 1.3 (320 dp ширины), в landscape 1600×720 и с отключёнными window/transition/animator-анимациями. В каждом режиме подтверждены видимый заголовок, переход в переименование, HOME без сохранения, отсутствие старого пункта, раскрытие дополнительных действий, прокрутка к настройкам и возврат Back. Снимки проверены непосредственно из Android. Дополнительно прошли активация заголовка через Tab/Enter и сценарий меню при алфавите слева; сторона алфавита затем восстановлена. Запись открытия/закрытия на масштабе 1 подтверждает последовательный подъём с замедлением и уход вниз, без первого кадра в конечной позиции и обратного скачка от системных отступов. Частота кадров физического телефона не измерялась.
+Menu separately checked in portrait 720×1600/280 dpi (411 dp width), narrow 560×1245/font scale 1.3 (320 dp), landscape 1600×720 and disabled window/transition/animator animations. Each confirmed visible heading, rename/HOME without save, absent old action, expansion, scroll to Settings/Back. Native captures reviewed. Tab/Enter heading activation/left-alphabet menu also passed; side restored. Scale-1 opening/closing recording confirms sequential decelerating rise/downward exit, without first-frame final position/reverse inset jump. Physical-phone frame rate not measured.
 
 ### Android 16 / API 36
 
-Выделенный `BetterLauncher_MenuMotion_RC3_API_36`, serial `emulator-5658`, Google APIs arm64-v8a. Подписанный release APK отдельно прошёл сценарии меню в портрете 720×1600 / 280 dpi, landscape 1600×720 и при отключённых системных анимациях: нажатие на видимый заголовок, диалог переименования/HOME, дополнительные действия без пункта переименования, прокрутка, настройки и Back. Запись с восстановленным масштабом анимаций 1 показывает подъём панели и последовательный выход вниз; плавность на физическом телефоне отдельно не измерялась.
+Dedicated `BetterLauncher_MenuMotion_RC3_API_36`, serial `emulator-5658`, Google APIs arm64-v8a. Signed release APK passed isolated menu scenarios in portrait 720×1600/280 dpi, landscape 1600×720 and disabled animations: visible heading tap, rename/HOME, additional actions without Rename, scroll, Settings/Back. Recording with restored animation scale 1 shows rise/sequential downward exit; physical-phone smoothness not measured.
 
-Полный smoke и узкий экран не подтверждены: возникали ANR System UI, код 137 и null root в UI Automator. Повторный smoke прошёл виджеты, настройки/Back, поиск, запуск Camera/HOME, но остановился на ожидании «Открыть Phone» после горизонтального свайпа. На узком экране после изменения конфигурации не удалось подтвердить открытие меню по удержанию. Эти попытки не считаются успешными.
+Full smoke/narrow screen unconfirmed: System UI ANRs, exit 137/UI Automator null roots. Retry passed widgets, Settings/Back, search, Camera launch/HOME, then waited unsuccessfully for Open Phone after horizontal swipe. Narrow configuration change did not confirm hold-menu opening. These are not successful attempts.
 
-## Условия UI-проверки
+## UI-test conditions
 
-Эмуляторы, serial и устанавливаемая версия изолированы от других рабочих задач. После connected-тестов release APK установлен заново и назначен HOME. Системные диалоги ошибок временно скрыты на тестовых устройствах после подтверждённых сбоев com.android.phone/System UI; проверка logcat на аварии Better Launcher сохранена. Вспомогательный локальный скрипт исправлен для свежего дерева UI и ненулевых видимых границ перед нажатием. В конце `dumpsys package` на обоих serial подтвердил versionCode 17 / versionName 0.2.0-rc.8. Временное скрытие системных диалогов отменено; wm overrides, font scale, ориентация, анимации и сторона алфавита восстановлены после сценариев.
+Emulators/serials/installed version isolated from other tasks. Release APK reinstalled/HOME assigned after connected tests. System error dialogs temporarily hidden on test devices after confirmed com.android.phone/System UI failures; Better Launcher crash logcat checks retained. Local helper corrected for fresh UI tree/nonzero visible bounds before tapping. Final `dumpsys package` confirmed code 17/name 0.2.0-rc.8 on both. Error-dialog hiding reverted; wm overrides/font/orientation/animations/alphabet side restored.
 
-## Границы
+## Boundaries
 
-Физический телефон, полный TalkBack и рабочие профили не проверены. Точное совпадение движения Niagara не подтверждено: пользователь предоставил статические скриншоты. Полный паритет Niagara не заявляется. Локальные логи, снимки и записи находятся в `.impeccable/review/` и не входят в Git.
+Physical phone, full TalkBack/work profiles unverified. Exact Niagara motion unconfirmed: reference was static screenshots. Full parity not claimed. Local logs/captures/recordings in `.impeccable/review/`, outside Git.

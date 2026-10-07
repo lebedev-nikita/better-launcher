@@ -33,7 +33,7 @@ class ShortcutIconTest {
         val manager = context.getSystemService(ShortcutManager::class.java)
         val component = ComponentName(context, MainActivity::class.java)
         val serial = context.getSystemService(UserManager::class.java).getSerialNumberForUser(Process.myUserHandle())
-        val app = AppEntry("$serial:${component.flattenToString()}", component, Process.myUserHandle(), "Быстрые действия",
+        val app = AppEntry("$serial:${component.flattenToString()}", component, Process.myUserHandle(), "Quick actions",
             context.getDrawable(R.mipmap.ic_launcher)!!)
         val store = LauncherStore(context)
         val previous = store.hiddenShortcuts(app.id)
@@ -44,7 +44,7 @@ class ShortcutIconTest {
             .setIntent(Intent(context, MainActivity::class.java).setAction(Intent.ACTION_VIEW).putExtra("hidden-shortcut-test", id)).build()
         try {
             store.setHiddenShortcuts(app.id, emptySet())
-            assertTrue(manager.addDynamicShortcuts(listOf(shortcut(ids[0], "Подписки", 0), shortcut(ids[1], "Shorts", 1), shortcut(ids[2], "Поиск", 2))))
+            assertTrue(manager.addDynamicShortcuts(listOf(shortcut(ids[0], "Subscriptions", 0), shortcut(ids[1], "Shorts", 1), shortcut(ids[2], "Search", 2))))
             val launchIntent = Intent(context, MainActivity::class.java).setAction(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_LAUNCHER).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             ActivityScenario.launch<MainActivity>(launchIntent).use { scenario ->
@@ -60,11 +60,11 @@ class ShortcutIconTest {
                     await { dialog.window!!.decorView.hasWindowFocus() }
                 }
                 fun action(label: String): View = descendants(dialog.window!!.decorView).single { it.contentDescription == label }
-                fun hide(label: String) { instrumentation.runOnMainSync { action("Скрыть быстрое действие «$label»").performClick() } }
+                fun hide(label: String) { instrumentation.runOnMainSync { action("Hide quick action “$label”").performClick() } }
                 open()
                 await { action("Shorts").isShown && action("Shorts").width > 0 }
                 instrumentation.runOnMainSync {
-                    val cross = action("Скрыть быстрое действие «Shorts»")
+                    val cross = action("Hide quick action “Shorts”")
                     assertTrue(cross.isFocusable)
                     assertTrue(cross.width >= activity.dp(48) && cross.height >= activity.dp(48))
                 }
@@ -75,17 +75,17 @@ class ShortcutIconTest {
                 assertTrue(dialog.isShowing)
                 assertNull(activity.intent.getStringExtra("hidden-shortcut-test"))
                 assertEquals(setOf(ids[1]), LauncherStore(context).hiddenShortcuts(app.id))
-                instrumentation.runOnMainSync { action("Отменить скрытие «Shorts»").performClick() }
+                instrumentation.runOnMainSync { action("Undo hiding “Shorts”").performClick() }
                 await { action("Shorts").isShown }
                 assertTrue(store.hiddenShortcuts(app.id).isEmpty())
                 // Enter keyboard mode before requesting focus on a native button.
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_TAB)
-                instrumentation.runOnMainSync { assertTrue(action("Скрыть быстрое действие «Поиск»").requestFocus()) }
+                instrumentation.runOnMainSync { assertTrue(action("Hide quick action “Search”").requestFocus()) }
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER)
-                await { !action("Поиск").isShown }
+                await { !action("Search").isShown }
                 assertTrue(dialog.isShowing)
                 assertNull(activity.intent.getStringExtra("hidden-shortcut-test"))
-                assertTrue(manager.updateShortcuts(listOf(shortcut(ids[2], "Найти видео", 2))))
+                assertTrue(manager.updateShortcuts(listOf(shortcut(ids[2], "Find videos", 2))))
                 // Close the sheet before recreating the HOME activity, then reopen it from saved state.
                 instrumentation.runOnMainSync { dialog.dismiss() }
                 await { activity.hasWindowFocus() }
@@ -94,24 +94,24 @@ class ShortcutIconTest {
                 await { activity.hasWindowFocus() }
                 open()
                 instrumentation.runOnMainSync {
-                    assertFalse("A renamed shortcut must remain hidden by ID", action("Найти видео").isShown)
-                    assertTrue(action("Подписки").isShown)
+                    assertFalse("A renamed shortcut must remain hidden by ID", action("Find videos").isShown)
+                    assertTrue(action("Subscriptions").isShown)
                     assertTrue(action("Shorts").isShown)
                 }
-                hide("Shorts"); hide("Подписки")
-                await { descendants(dialog.window!!.decorView).filterIsInstance<TextView>().any { it.isShown && it.text == "Все быстрые действия скрыты." } }
+                hide("Shorts"); hide("Subscriptions")
+                await { descendants(dialog.window!!.decorView).filterIsInstance<TextView>().any { it.isShown && it.text == "All quick actions are hidden." } }
                 assertTrue(dialog.isShowing)
                 assertTrue(manager.dynamicShortcuts.filter { it.id in ids }.all { it.isEnabled })
                 assertEquals(ids.toSet(), store.hiddenShortcuts(app.id))
-                instrumentation.runOnMainSync { action("Показать скрытые действия").performClick() }
-                await { listOf("Подписки", "Shorts", "Найти видео").all { action(it).isShown } }
+                instrumentation.runOnMainSync { action("Show hidden actions").performClick() }
+                await { listOf("Subscriptions", "Shorts", "Find videos").all { action(it).isShown } }
                 assertTrue(store.hiddenShortcuts(app.id).isEmpty())
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                 await { !dialog.isShowing }
                 open()
                 instrumentation.runOnMainSync {
-                    assertFalse(action("Показать скрытые действия").isShown)
-                    action("Подписки").performClick()
+                    assertFalse(action("Show hidden actions").isShown)
+                    action("Subscriptions").performClick()
                 }
                 await { activity.intent.getStringExtra("hidden-shortcut-test") == ids[0] }
                 assertFalse(dialog.isShowing)
@@ -155,9 +155,9 @@ class ShortcutIconTest {
                     .putExtra("shortcut-icon-test", id))
                 .apply { if (icon != null) setIcon(icon) }.build()
             assertTrue(manager.addDynamicShortcuts(listOf(
-                shortcut(ids[0], "Беседа с аватаркой", 0, Icon.createWithBitmap(bitmap)),
-                shortcut(ids[1], "Новая беседа", 1, Icon.createWithResource(context, R.mipmap.ic_launcher)),
-                shortcut(ids[2], "Беседа без аватарки", 2))))
+                shortcut(ids[0], "Chat with avatar", 0, Icon.createWithBitmap(bitmap)),
+                shortcut(ids[1], "New chat", 1, Icon.createWithResource(context, R.mipmap.ic_launcher)),
+                shortcut(ids[2], "Chat without avatar", 2))))
             assertNull(activity.catalog.shortcutIcon(shortcut("missing-icon-test", "Unavailable", 3)))
             val app = AppEntry("shortcut-test", component, Process.myUserHandle(), "Shortcut icon tests",
                 context.getDrawable(R.mipmap.ic_launcher)!!)
@@ -169,8 +169,8 @@ class ShortcutIconTest {
             }
             fun row(label: String): LinearLayout = descendants(dialog!!.window!!.decorView)
                 .filterIsInstance<LinearLayout>().single { it.contentDescription == label }
-            await { row("Беседа с аватаркой").getChildAt(0) is ImageView && row("Новая беседа").getChildAt(0) is ImageView &&
-                row("Беседа с аватаркой").getChildAt(0).width > 0 }
+            await { row("Chat with avatar").getChildAt(0) is ImageView && row("New chat").getChildAt(0) is ImageView &&
+                row("Chat with avatar").getChildAt(0).width > 0 }
             instrumentation.waitForIdleSync()
             // Capture the settled sheet, after its 300ms arrival animation.
             SystemClock.sleep(500)
@@ -179,8 +179,8 @@ class ShortcutIconTest {
                 capture.recycle()
             }
             instrumentation.runOnMainSync {
-                val avatar = row("Беседа с аватаркой")
-                val fallback = row("Беседа без аватарки")
+                val avatar = row("Chat with avatar")
+                val fallback = row("Chat without avatar")
                 val icon = avatar.getChildAt(0) as ImageView
                 assertNotNull(icon.drawable)
                 assertNull("Publisher colors must be preserved", icon.imageTintList)

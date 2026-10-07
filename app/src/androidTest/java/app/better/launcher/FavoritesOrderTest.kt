@@ -38,15 +38,15 @@ class FavoritesOrderTest {
                 val firstLabel = store.alias(apps[0].id) ?: apps[0].originalLabel
                 val secondLabel = store.alias(apps[1].id) ?: apps[1].originalLabel
                 assertNull("Home must not duplicate the menu's reorder action", find(instrumentation.uiAutomation.rootInActiveWindow) {
-                    it.text?.toString() == "Изменить порядок избранного"
+                    it.text?.toString() == "Reorder favorites"
                 })
                 openEditor(firstLabel)
-                node("Готово")
+                node("Done")
                 node(firstLabel)
-                assertFalse(node("Перетащить $firstLabel").actionList.any { it.id == R.id.reorder_up })
-                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Переместить $firstLabel вниз" })
-                val from = Rect().also { node("Перетащить $firstLabel").getBoundsInScreen(it) }
-                val to = Rect().also { node("Перетащить $secondLabel").getBoundsInScreen(it) }
+                assertFalse(node("Drag $firstLabel").actionList.any { it.id == R.id.reorder_up })
+                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Move $firstLabel down" })
+                val from = Rect().also { node("Drag $firstLabel").getBoundsInScreen(it) }
+                val to = Rect().also { node("Drag $secondLabel").getBoundsInScreen(it) }
                 val nameBounds = Rect().also { node(firstLabel).getBoundsInScreen(it) }
                 assertTrue("Handle must share the title line, including wrapped names", kotlin.math.abs(from.centerY() - nameBounds.centerY()) <= 2)
                 val beforeCancel = store.favorites
@@ -58,19 +58,19 @@ class FavoritesOrderTest {
                 try { await { store.favorites == dragged } } catch (failure: IllegalStateException) {
                     throw AssertionError("Dragged order: expected $dragged, actual ${store.favorites}", failure)
                 }
-                await { node("Перетащить $firstLabel").actionList.any { it.id == R.id.reorder_up } }
-                await { node("Перетащить $firstLabel").performAction(AccessibilityNodeInfo.ACTION_FOCUS) }
+                await { node("Drag $firstLabel").actionList.any { it.id == R.id.reorder_up } }
+                await { node("Drag $firstLabel").performAction(AccessibilityNodeInfo.ACTION_FOCUS) }
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_UP)
                 await { store.favorites == listOf(missing, apps[0].id, apps[1].id, folder, apps[2].id) }
                 // The same editor stays open, with accessible controls and the folder intact.
-                node("Перетащить $firstLabel")
-                node("Перетащить Test folder")
-                assertTrue(node("Перетащить Test folder").performAction(R.id.reorder_up))
+                node("Drag $firstLabel")
+                node("Drag Test folder")
+                assertTrue(node("Drag Test folder").performAction(R.id.reorder_up))
                 val reordered = listOf(missing, apps[0].id, folder, apps[1].id, apps[2].id)
                 await { store.favorites == reordered }
                 instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-                await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Перетащить $firstLabel" } == null }
-                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow) { it.text?.toString() == "Изменить порядок избранного" })
+                await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription?.toString() == "Drag $firstLabel" } == null }
+                assertNull(find(instrumentation.uiAutomation.rootInActiveWindow) { it.text?.toString() == "Reorder favorites" })
                 // Back rebuilds the rows; accessibility bounds settle after the next layout.
                 await {
                     val folderBounds = Rect().also { node("Test folder").getBoundsInScreen(it) }
@@ -86,7 +86,7 @@ class FavoritesOrderTest {
                 home(scenario)
                 openEditor(firstLabel)
                 home(scenario)
-                await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Перетащить $firstLabel" } == null }
+                await { find(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Drag $firstLabel" } == null }
                 assertEquals(reordered, store.favorites)
             }
         } finally { store.import(original) }
@@ -98,7 +98,7 @@ class FavoritesOrderTest {
                 .setClass(activity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
         instrumentation.waitForIdleSync()
-        node("Главный экран")
+        node("Home screen")
     }
 
     private fun openEditor(label: String) {
@@ -109,8 +109,8 @@ class FavoritesOrderTest {
             while (!row.isLongClickable) row = row.parent ?: error("Missing app row")
             row.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
         }
-        await { node("Изменить порядок").performAction(AccessibilityNodeInfo.ACTION_CLICK) }
-        node("Перетащить $label")
+        await { node("Reorder").performAction(AccessibilityNodeInfo.ACTION_CLICK) }
+        node("Drag $label")
     }
 
     private fun drag(x: Float, fromY: Float, toY: Float, cancel: Boolean = false) {

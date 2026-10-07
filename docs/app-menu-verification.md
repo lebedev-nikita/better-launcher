@@ -1,26 +1,25 @@
-# Проверка меню приложения 0.1.5
+# App-menu verification 0.1.5
 
-Дата: 2026-10-04. Меню удержания обновлено по двум предоставленным скриншотам. Использованы собственные Canvas-пиктограммы и настоящие значки установленных приложений.
+Date: 2026-10-04. Hold menu updated from two supplied screenshots, using original Canvas icons and real installed-app icons.
 
-## Изменение
+## Change
 
-Добавлены тёмно-синяя поверхность, светло-голубые подписи и иконки, заголовок со значком приложения, раскрываемый раздел «Дополнительно» и отделённый переход в настройки Better Launcher. Основные команды доступны без раскрытия; переименование, прикреплённые приложения и скрытие сохранены внутри дополнительного раздела. Строки растут с текстом; высота меню пересчитывается при раскрытии и ограничивается 85% экрана. Прокрутка оставляет доступ к последней команде. Insets учитывают системные панели и вырезы. Раскрытие сообщает своё состояние accessibility; команды доступны с клавиатуры.
+Navy surface, light-blue labels/icons, app-icon heading, expandable More and separate Better Launcher Settings entry. Primary commands immediately available; rename, attached apps and hiding under More. Rows grow with text; height recalculates on expansion, limited to 85% of screen. Scrolling reaches the final command. Insets respect bars/cutouts. Expansion announces accessibility state; keyboard actions available.
 
-## Сборка и пакет
+## Build and package
 
-- `./gradlew --max-workers=2 :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` — успешно, 9 unit-тестов без ошибок.
-- Lint: 0 ошибок, 27 предупреждений. Сравнение с XML-отчётом исходного 0.1.2 по ID и тексту предупреждений не выявило новых.
-- Контраст `#BCD7F3` на `#031629` — 12.30:1.
-- APK: versionName 0.1.5, versionCode 7, minSdk 31, targetSdk 36. `apksigner verify` подтверждает подпись v2; сертификат совпадает с APK опубликованных 0.1.2 и 0.1.3. Обновление поверх 0.1.2 установлено на выделенных эмуляторах до окончательного изменения оформления системной панели.
-- Перед итоговой сборкой включены изменения `origin/main` до `37cf924`: сохранены экран виджетов, транслитерация алфавита, регулировка затемнения обоев и актуальная версия теста навигации. Все четыре Gradle-проверки повторно прошли после последнего объединения; versionCode увеличен до 7.
+- `./gradlew --max-workers=2 :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` passed, 9 unit tests/no errors.
+- Lint: 0 errors, 27 warnings; ID/text comparison with original 0.1.2 XML found no new warnings.
+- Contrast `#BCD7F3` on `#031629`: 12.30:1.
+- APK: versionName 0.1.5, versionCode 7, minSdk 31, targetSdk 36. `apksigner verify` confirms v2 signing/certificate matching published 0.1.2/0.1.3. Upgrade over 0.1.2 installed on dedicated emulators before final system-bar styling change.
+- Final build includes `origin/main` through `37cf924`: widget screen, alphabet transliteration, dimming/current navigation test retained. All four Gradle checks rerun successfully after final merge; versionCode raised to 7.
 
-## Проверки на устройстве
+## Device checks
 
-- `ANDROID_SERIAL=emulator-5584 ./gradlew --max-workers=2 :app:connectedDebugAndroidTest` — 11 тестов без ошибок на выделенном `BetterLauncher_AppMenu_API_31`, Android 12, Google APIs arm64-v8a, Pixel 7. После проверки основной APK переустановлен и назначен HOME.
+- `ANDROID_SERIAL=emulator-5584 ./gradlew --max-workers=2 :app:connectedDebugAndroidTest`: 11 tests/no errors on dedicated `BetterLauncher_AppMenu_API_31`, Android 12, Google APIs arm64-v8a, Pixel 7. Main APK reinstalled/HOME assigned afterward.
+- Before final alphabet/dimming changes, final menu appearance checked on Android 12: full `scripts/smoke-test.py`, portrait 1080×2400, narrow 840×1867/font scale 1.3, landscape 2400×1080. Each expanded actions, scrolled to hide/Settings, opened Settings/returned Back. Merges did not change menu code. Final 0.1.5 APK reran full Android 12 smoke: widgets, Settings/Back, search, Camera launch/HOME, swipe popup, hold/More, alphabet; no Better Launcher crashes. Size/scale/orientation/animations restored.
+- Dedicated Android 16 `BetterLauncher_AppMenu_API_36` (`emulator-5582`) incomplete: system-process restarts, UI Automator exit 137, then System UI isn't responding ANR. Retry with 4 GB RAM/hardware graphics did not resolve. No successful Android 16 UI run claimed.
 
-- До включения последних изменений алфавита и затемнения, итоговое оформление меню проверено на Android 12: полный `scripts/smoke-test.py`, портрет 1080×2400, узкий экран 840×1867 при font scale 1.3 и landscape 2400×1080. В каждом режиме раскрыты дополнительные действия, прокруткой достигнуты скрытие и настройки, выполнен переход в настройки и возврат через Back. Эти объединения не меняли код меню. Окончательный APK 0.1.5 повторно прошёл полный `scripts/smoke-test.py` на Android 12: навигация виджетов, настройки/Back, поиск, запуск Camera/HOME, свайп pop-up, удержание и раскрытие «Дополнительно», алфавит; аварий Better Launcher в этом прогоне нет. Размер, масштаб, ориентация и анимации восстановлены.
-- Android 16 на выделенном `BetterLauncher_AppMenu_API_36` (`emulator-5582`) не удалось проверить полностью: Android перезапускал системный процесс, UI Automator завершался с кодом 137, затем появлялся ANR «System UI isn’t responding». Повторный запуск с 4 GB RAM и аппаратной графикой не устранил сбои. Успешный UI-прогон на Android 16 не заявляется.
+## Boundaries
 
-## Границы
-
-Снимки и отчёты сохраняются локально в `.impeccable/review/` и не входят в Git. Цвет меню фиксирован по образцу, без адаптации к другим обоям. Физический телефон, полный TalkBack, рабочие профили и отсутствующие функции Niagara отдельно не проверены.
+Local screenshots/reports in `.impeccable/review/`, outside Git. Fixed reference menu color, no wallpaper adaptation. Physical phone, full TalkBack, work profiles/missing Niagara features not independently checked.

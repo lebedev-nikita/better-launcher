@@ -1,39 +1,39 @@
-# Проверка Better Launcher 0.1.3
+# Better Launcher 0.1.3 verification
 
-Дата: 2026-10-04. Android 12+; versionName 0.1.3, versionCode 4, minSdk 31, targetSdk 36.
+Date: 2026-10-04. Android 12+; versionName 0.1.3, versionCode 4, minSdk 31, targetSdk 36.
 
-## Реализация
+## Implementation
 
-Ряд содержит ★, A–Z и заключительный «#». Группировка использует ICU4J 78.3, правила Russian-Latin/BGN и полное название приложения: Яндекс → Yandeks → Y, Йога → Yoga → Y, Банк → Bank → B, Видео → Video → V. Первая латинская буква определяет раздел; цифры, символы, Ь и Ъ относятся к «#». NFC сохраняет составные кириллические буквы, в том числе Й. Латинские диакритические знаки удаляются при определении раздела.
+Rail contains ★, A–Z/final #. ICU4J 78.3 Russian-Latin/BGN groups full names: Яндекс → Yandeks → Y, Йога → Yoga → Y, Банк → Bank → B, Видео → Video → V. First Latin letter determines section; numbers/symbols/Ь/Ъ go to #. NFC preserves compound Cyrillic including Й; Latin diacritics removed for grouping.
 
-Правила ICU загружаются в фоновой загрузке каталога, результаты кириллической транслитерации кешируются. Доступ к изменяемому Transliterator синхронизирован. Подготовленный индекс поиска и переиспользование строк из 0.1.2 сохранены. Ряд учитывает боковые системные отступы, в коротком окне показывает доступные латинские группы и всегда завершается «#».
+ICU rules load in background catalog loading; Cyrillic results cached, mutable Transliterator access synchronized. 0.1.2 prepared search/row reuse retained. Rail respects side system insets; short windows show available Latin groups/end with #.
 
-## Автоматические проверки
+## Automated checks
 
-- `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` — успешно.
-- 9 unit-тестов: исходный поиск и избранное, транслитерация (включая Яндекс/Y), составной Й, порядок «#», короткий/пустой ряд, подготовленный индекс поиска без повторного чтения названий.
-- Lint: 0 ошибок, 27 существующих предупреждений. Новых предупреждений по id и сообщению относительно baseline нет. Исторические 35 предупреждений 0.1.0 сохранены в отдельном отчёте.
-- `ANDROID_SERIAL=emulator-5602 ./gradlew :app:connectedDebugAndroidTest` — 6 тестов прошли до объединения с экраном виджетов на Android 12 (API 31), AVD BetterLauncher_LatinRail_API_31. Проверены настоящие приложения/aliases, смешанные B/Б и V/В, Яндекс/Y, числа в последнем разделе, скрытие/обновление индекса, backup и сохранность данных, навигация и переиспользование строк.
+- `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` passed.
+- 9 unit tests: original search/favorites, transliteration including Яндекс/Y, compound Й, # order, short/empty rail, prepared search without repeated name reads.
+- Lint: 0 errors, 27 existing warnings; no new ID/message versus baseline. Historical 0.1.0's 35 retained separately.
+- `ANDROID_SERIAL=emulator-5602 ./gradlew :app:connectedDebugAndroidTest`: 6 passed before widget-screen merge on Android 12/API 31, BetterLauncher_LatinRail_API_31. Real apps/aliases, mixed B/Б/V/В, Яндекс/Y, final numbers, hide/index refresh, backup/integrity/navigation/row reuse.
 
-## Тестовая среда
+## Test environment
 
-На хосте одновременно работали несколько Android Emulator. Первые UI-прогоны прерывались зависанием UI Automator и перезапуском системного процесса Android 16 по watchdog до установки Better Launcher. Это не успешные UI-проверки. Перед этим на Android 12 прошли отсутствие часов/даты, настройки/Back и поиск; полный smoke-прогон тогда не завершился.
+Several host emulators ran concurrently. Early UI stopped on UI Automator freezes/Android 16 watchdog system restarts before app install; not successful checks. Android 12 previously passed no clock/date, Settings/Back/search; full smoke incomplete.
 
-Для последующей проверки выделенного Android 16 системный параметр `ro.hw_timeout_multiplier` установлен в 10 через root adb и перезапущен Android framework. [AOSP](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r4/core/java/android/os/Build.java) предусматривает этот множитель для медленных программных эмуляторов. Параметр не входит в APK. После перезапуска framework системные службы снова зависли до установки приложения; итоговый connected-прогон Android 16 и сценарии нового ряда на этом устройстве не выполнены. Увеличение таймаутов не привело к успешной проверке.
+For later dedicated Android 16, root adb set `ro.hw_timeout_multiplier` to 10/restarted framework. [AOSP](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-16.0.0_r4/core/java/android/os/Build.java) provides this for slow software emulators; not part of APK. Services froze again before installation; final Android 16 connected/new-rail scenarios not performed. Increased timeout did not produce successful verification.
 
-## Ограничения UI-проверки
+## UI limitations
 
-Полный `scripts/smoke-test.py` итогового APK, реальные касания Y/«#», узкий экран с font scale 1.3, landscape и левосторонний режим после последнего объединения не подтверждены. Результаты ранее опубликованных 0.1.2 и проверки экрана виджетов сохранены в своих исторических отчётах и не объявляются проверкой этого APK. На Android 12 интеграционный тест подтвердил Яндекс в Y, смешанные B/Б и V/В, число в последнем разделе и скрытие alias; исходник этой группировки после того прогона не изменялся.
+Final full smoke, real Y/# taps, narrow/font scale 1.3, landscape/left-handed after final merge unconfirmed. Previous 0.1.2/widget checks remain historical, not this APK's proof. Android 12 integration confirmed Яндекс/Y, mixed B/Б/V/В, final number/hide alias; grouping source unchanged afterward.
 
-Connected-тесты Android 12 удалили приложение; после них APK был переустановлен и назначен HOME на выделенном AVD. Экран, font scale, ориентация и пользовательские aliases в этих итоговых попытках не менялись. Выделенные AVD остановлены после неудачных UI-попыток.
+Android 12 connected uninstalled app; APK reinstalled/HOME assigned dedicated AVD. Display/font/orientation/aliases unchanged during final attempts. AVDs stopped after failed UI.
 
 ## APK
 
-APK подписан тем же отладочным сертификатом, что опубликованные 0.1.0 и 0.1.2; проверка `apksigner verify` подтверждает v2. Production-подпись не настроена.
+Same debug certificate as published 0.1.0/0.1.2; `apksigner verify` confirms v2. Production signing not configured.
 
-- Файл: `better-launcher-0.1.3-debug.apk`.
-- Размер: 28 943 432 байт; ICU4J увеличивает размер debug APK.
+- File: `better-launcher-0.1.3-debug.apk`.
+- Size: 28 943 432 bytes; ICU4J increases debug size.
 - SHA-256: `af29deece189babe226352b308635b33e290105b9e35f0625a0e50d30825dfcf`.
-- SHA-256 сертификата: `7618fbcfaeec605563e1f7b8200be66d60c923c268cbeebdbbbc98b54fd71b5b`.
+- Certificate SHA-256: `7618fbcfaeec605563e1f7b8200be66d60c923c268cbeebdbbbc98b54fd71b5b`.
 
-Физические устройства, рабочие профили, Private Space и полная проверка TalkBack не проверены. Правила транслитерации в этом патче рассчитаны на русский алфавит; другие кириллические алфавиты отдельно не проверены. Полный паритет Niagara не заявляется.
+Physical devices/work profiles/Private Space/full TalkBack untested. Transliteration designed for Russian; other Cyrillic alphabets untested separately. Full Niagara parity is not claimed.

@@ -51,11 +51,11 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
         adapter = this@WidgetPickerView.adapter
         setOnItemClickListener { _, _, position, _ -> onChoose(entries[position].provider) }
     }
-    private val status = activity.menuText("Загружаем виджеты…", 16f).apply {
+    private val status = activity.menuText(activity.getString(R.string.loading_widgets), 16f).apply {
         accessibilityLiveRegion = ACCESSIBILITY_LIVE_REGION_POLITE
     }
     private val search = EditText(activity).apply {
-        hint = "Поиск виджетов"
+        hint = activity.getString(R.string.search_widgets)
         setTextColor(activity.menuForeground); setHintTextColor(activity.menuForeground)
         textSize = 17f; background = null; isSingleLine = true; minHeight = activity.dp(56)
         setPadding(activity.dp(4), activity.dp(12), activity.dp(4), activity.dp(12))
@@ -74,10 +74,10 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
             } else false
         }
     }
-    private val clearSearch = activity.menuIconButton(Glyph.CLOSE, "Очистить поиск виджетов") { search.setText("") }
+    private val clearSearch = activity.menuIconButton(Glyph.CLOSE, activity.getString(R.string.clear_widget_search)) { search.setText("") }
         .apply { visibility = INVISIBLE }
     private val rail = AlphabetRail(activity, activity.menuForeground, activity.getColor(R.color.app_menu_container)).apply {
-        alphabetLabel = "Алфавит виджетов"
+        alphabetLabel = activity.getString(R.string.widget_alphabet)
         visibility = GONE
         onSelect = { letter ->
             val position = if (letter == "★") 0 else entries.indexOfFirst { it.section == letter }
@@ -148,10 +148,10 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
         entries = searchIndex?.matching(search.text.toString()).orEmpty()
         rows.forEach(Row::cancel)
         status.text = when {
-            loadFailed -> "Не удалось загрузить виджеты. Закройте список и попробуйте снова."
-            searchIndex == null -> "Загружаем виджеты…"
-            searchIndex?.apps?.isEmpty() == true -> "Нет доступных виджетов"
-            else -> "Виджеты не найдены. Измените или очистите поиск."
+            loadFailed -> activity.getString(R.string.widget_load_error)
+            searchIndex == null -> activity.getString(R.string.loading_widgets)
+            searchIndex?.apps?.isEmpty() == true -> activity.getString(R.string.no_widgets)
+            else -> activity.getString(R.string.no_matching_widgets)
         }
         status.visibility = if (entries.isEmpty()) VISIBLE else GONE
         rail.visibility = if (entries.isEmpty()) GONE else VISIBLE
@@ -193,7 +193,7 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
         private val label = activity.menuText("", 18f)
         private val app = activity.menuText("", 13f)
         private val preview = PreviewFrame(activity)
-        private val fallback = activity.menuText("Загружаем превью…", 13f).apply { gravity = Gravity.CENTER }
+        private val fallback = activity.menuText(activity.getString(R.string.loading_preview), 13f).apply { gravity = Gravity.CENTER }
         private var imageJob: Future<*>? = null
         private var layoutPreview: AppWidgetHostView? = null
         private var token = 0
@@ -219,9 +219,9 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
             cancel()
             val binding = token
             label.text = entry.label; app.text = entry.app
-            contentDescription = "Добавить виджет ${entry.label}, ${entry.app}"
+            contentDescription = activity.getString(R.string.add_named_widget, entry.label, entry.app)
             preview.removeAllViews(); preview.nativeWidth = 0; preview.nativeHeight = 0
-            fallback.text = "Загружаем превью…"
+            fallback.text = activity.getString(R.string.loading_preview)
             preview.addView(fallback, LayoutParams(-1, -1))
             val info = entry.provider
             fun current() = !closed && token == binding
@@ -238,7 +238,7 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
                                 val empty = activity.vertical().apply { gravity = Gravity.CENTER }
                                 icon?.let { empty.addView(ImageView(activity).apply { setImageDrawable(it) }, LinearLayout.LayoutParams(activity.dp(40), activity.dp(40))) }
                                 empty.addView(activity.gap(8))
-                                empty.addView(activity.menuText("Превью недоступно", 13f).apply { gravity = Gravity.CENTER })
+                                empty.addView(activity.menuText(activity.getString(R.string.preview_unavailable), 13f).apply { gravity = Gravity.CENTER })
                                 preview.addView(empty, LayoutParams(-1, -1))
                             }
                         }
@@ -256,7 +256,7 @@ class WidgetPickerView(context: Context) : LinearLayout(context) {
                                 fallbackRequested = true
                                 handler.post { if (current()) loadImage() }
                             }
-                            return activity.menuText("Загружаем превью…", 13f)
+                            return activity.menuText(activity.getString(R.string.loading_preview), 13f)
                         }
                     }
                     layoutPreview = hostView

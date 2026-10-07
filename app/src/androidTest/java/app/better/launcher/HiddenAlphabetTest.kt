@@ -56,14 +56,14 @@ class HiddenAlphabetTest {
                                 .apply { isAccessible = true }.get(activity) as Dialog
                             assertTrue(views(dialog.window!!.decorView).first { it.contentDescription == label }.performClick())
                         }
-                        fun hide(index: Int) { menu(labels[index]); command("Скрыть приложение") }
+                        fun hide(index: Int) { menu(labels[index]); command("Hide app") }
 
                         expect("★", "A", "Z", "#")
                         hide(2)
                         assertFalse(activity.catalog.visible().any { it.id == apps[2].id })
                         expect("★", "A", "#")
                         assertTrue(views(activity.window.decorView).filterIsInstance<TextView>()
-                            .first { it.text.toString() == "Отменить" }.performClick())
+                            .first { it.text.toString() == "Undo" }.performClick())
                         expect("★", "A", "Z", "#")
                         hide(3)
                         expect("★", "A", "Z")
@@ -74,7 +74,7 @@ class HiddenAlphabetTest {
                         hide(2)
                         expect("★")
 
-                        views(activity.window.decorView).first { it.contentDescription == "Главный экран" }.performAccessibilityAction(R.id.home_search, null)
+                        views(activity.window.decorView).first { it.contentDescription == "Home screen" }.performAccessibilityAction(R.id.home_search, null)
                         views(activity.window.decorView).filterIsInstance<EditText>().single().setText(labels[3])
                         assertEquals(apps[3].id, activity.catalog.visible(labels[3]).single().id)
                         expect("★")
@@ -88,7 +88,7 @@ class HiddenAlphabetTest {
                         assertTrue(name.performLongClick())
                         val dialog = MainActivity::class.java.getDeclaredField("currentDialog")
                             .apply { isAccessible = true }.get(activity) as Dialog
-                        assertTrue(views(dialog.window!!.decorView).first { it.contentDescription == "Показывать снова" }.performClick())
+                        assertTrue(views(dialog.window!!.decorView).first { it.contentDescription == "Show again" }.performClick())
                         assertEquals(listOf("★", "#"), rail.letters)
                         assertEquals(setOf("#"), rail.activeLetters)
                         assertEquals(labels[3], views(activity.window.decorView).filterIsInstance<EditText>().single().text.toString())

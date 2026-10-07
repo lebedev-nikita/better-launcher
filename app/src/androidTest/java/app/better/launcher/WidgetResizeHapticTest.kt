@@ -50,8 +50,8 @@ class WidgetResizeHapticTest {
             }
             instrumentation.waitForIdleSync()
             instrumentation.runOnMainSync {
-                val labels = listOf("Верхняя граница виджета", "Нижняя граница виджета",
-                    "Левая граница виджета", "Правая граница виджета")
+                val labels = listOf("Top edge of widget", "Bottom edge of widget",
+                    "Left edge of widget", "Right edge of widget")
                 fun control(label: String): View = (0 until overlay.childCount).map { overlay.getChildAt(it) }
                     .single { it.contentDescription?.toString() == label }
                 fun touch(view: View, action: Int, delta: Int = 0, horizontal: Boolean = false) {
@@ -120,7 +120,7 @@ class WidgetResizeHapticTest {
                     ticks(3)
                 }
                 size = initial; feedback.clear()
-                val body = control("Переместить виджет")
+                val body = control("Move widget")
                 touch(body, MotionEvent.ACTION_DOWN)
                 touch(body, MotionEvent.ACTION_MOVE, 36)
                 touch(body, MotionEvent.ACTION_UP, 36)

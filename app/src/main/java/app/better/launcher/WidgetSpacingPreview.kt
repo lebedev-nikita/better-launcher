@@ -16,7 +16,7 @@ class WidgetSpacingPreview @JvmOverloads constructor(context: Context, labelType
         set(value) {
             field = value.coerceIn(0, 32)
             gaps.forEach { it.layoutParams = it.layoutParams.apply { height = context.dp(field) } }
-            contentDescription = "Предпросмотр: между виджетами и перед избранным — $field dp"
+            contentDescription = context.getString(R.string.spacing_preview, field)
             requestLayout()
         }
 
@@ -43,11 +43,11 @@ class WidgetSpacingPreview @JvmOverloads constructor(context: Context, labelType
                 setPadding(context.dp(8), 0, 0, 0)
             }, LinearLayout.LayoutParams(0, -2, 1f))
         }
-        stack.addView(row("Виджет", Glyph.WIDGETS, true))
+        stack.addView(row(context.getString(R.string.widget), Glyph.WIDGETS, true))
         stack.addView(gaps[0], LinearLayout.LayoutParams(-1, context.dp(spacingDp)))
-        stack.addView(row("Виджет", Glyph.WIDGETS, true))
+        stack.addView(row(context.getString(R.string.widget), Glyph.WIDGETS, true))
         stack.addView(gaps[1], LinearLayout.LayoutParams(-1, context.dp(spacingDp)))
-        stack.addView(row("Избранное", Glyph.STAR, false))
+        stack.addView(row(context.getString(R.string.favorites), Glyph.STAR, false))
         addView(stack, LayoutParams(-1, -2, Gravity.CENTER_VERTICAL))
         spacingDp = spacingDp
     }

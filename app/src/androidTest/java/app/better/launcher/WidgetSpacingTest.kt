@@ -106,9 +106,9 @@ class WidgetSpacingTest {
                 store.widgetSpacing = 8
                 activity.showSettings()
             }
-            await { descendants(activity.window.decorView).first { it.contentDescription == "Отступ между виджетами" }.height > 0 }
+            await { descendants(activity.window.decorView).first { it.contentDescription == "Widget spacing" }.height > 0 }
             instrumentation.runOnMainSync {
-                val slider = descendants(activity.window.decorView).first { it.contentDescription == "Отступ между виджетами" }
+                val slider = descendants(activity.window.decorView).first { it.contentDescription == "Widget spacing" }
                 slider.requestRectangleOnScreen(android.graphics.Rect(0, 0, slider.width, slider.height), true)
             }
             instrumentation.waitForIdleSync()

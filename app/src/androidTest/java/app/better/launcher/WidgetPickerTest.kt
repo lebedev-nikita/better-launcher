@@ -40,7 +40,7 @@ class WidgetPickerTest {
         var chosen: ComponentName? = null
         try {
             instrumentation.runOnMainSync {
-                dialog = activity.sheet("Добавить виджет", scrollContent = false, showHeader = false) { body, sheet ->
+                dialog = activity.sheet("Add widget", scrollContent = false, showHeader = false) { body, sheet ->
                     picker = WidgetPickerView(activity).apply { onChoose = { chosen = it.provider; sheet.dismiss() } }
                     body.addView(picker, android.widget.LinearLayout.LayoutParams(-1, 0, 1f))
                     input = descendants(picker).filterIsInstance<EditText>().single()
@@ -60,15 +60,15 @@ class WidgetPickerTest {
             await { list.count == 6 }
             instrumentation.runOnMainSync { input.setText("no-such-widget-987654") }
             await { list.count == 0 && rail.visibility == View.GONE && descendants(picker).filterIsInstance<TextView>().any {
-                it.visibility == View.VISIBLE && it.text.toString().startsWith("Виджеты не найдены.")
+                it.visibility == View.VISIBLE && it.text.toString().startsWith("No widgets found.")
             } }
             instrumentation.runOnMainSync {
-                descendants(picker).single { it.contentDescription == "Очистить поиск виджетов" }.performClick()
+                descendants(picker).single { it.contentDescription == "Clear widget search" }.performClick()
             }
             await { list.count >= 6 && rail.visibility == View.VISIBLE }
             assertEquals("", onMain { input.text.toString() })
             assertFalse("Clear is only offered for a nonempty query", onMain {
-                descendants(picker).single { it.contentDescription == "Очистить поиск виджетов" }.isShown
+                descendants(picker).single { it.contentDescription == "Clear widget search" }.isShown
             })
             assertTrue(onMain { rail.activeLetters.containsAll(listOf("A", "B", "C", "D", "P", "#")) })
             val total = onMain { list.count }
@@ -102,7 +102,7 @@ class WidgetPickerTest {
         var chosen: ComponentName? = null
         try {
             instrumentation.runOnMainSync {
-                dialog = activity.sheet("Добавить виджет", scrollContent = false, showHeader = false) { body, sheet ->
+                dialog = activity.sheet("Add widget", scrollContent = false, showHeader = false) { body, sheet ->
                     picker = WidgetPickerView(activity).apply { onChoose = { chosen = it.provider; sheet.dismiss() } }
                     body.addView(picker, android.widget.LinearLayout.LayoutParams(-1, 0, 1f))
                 }
@@ -141,7 +141,7 @@ class WidgetPickerTest {
             jump("B", "B00 Image preview")
             previewReady("B00 Image preview") { row -> descendants(row).filterIsInstance<ImageView>().any { it.drawable != null } }
             jump("C", "C00 No preview")
-            previewReady("C00 No preview") { row -> descendants(row).filterIsInstance<TextView>().any { it.text.toString() == "Превью недоступно" } }
+            previewReady("C00 No preview") { row -> descendants(row).filterIsInstance<TextView>().any { it.text.toString() == "Preview unavailable" } }
             jump("D", "D00 Broken layout")
             previewReady("D00 Broken layout") { row -> descendants(row).filterIsInstance<ImageView>().any { it.drawable != null } }
             jump("#", "000 Numeric preview")

@@ -1,18 +1,18 @@
-# Значки быстрых действий — проверка рабочей ветки
+# Quick-action icons — working-branch verification
 
-Проверка 7 октября 2026 года для кандидата 0.2.0-rc.59. Итоговые проверки подписанного APK и данные публикации фиксируются в GitHub Release.
+Checked 7 October 2026 for rc.59. Final signed-APK/publication data recorded in GitHub Release.
 
-Меню иконки приложения получает значки shortcuts через `LauncherApps.getShortcutBadgedIconDrawable`. Изображение 32 dp заменяет стрелку в прежнем слоте 48 dp; исходные цвета, форма и системная отметка профиля сохраняются. Загрузка выполняется в executor Activity, результат применяется только к текущему открытому диалогу. Отсутствующий или недоступный значок оставляет стрелку. Дополнительные разрешения, чтение контактов и сохранение аватарок в настройках не нужны.
+Icon menu loads shortcuts through `LauncherApps.getShortcutBadgedIconDrawable`. 32 dp image replaces arrow in existing 48 dp slot; original colors/shape/system profile badge retained. Activity executor loads; results apply only to current open dialog. Missing/unavailable icons retain arrow. No extra permissions/contact reads/saved avatars.
 
-## Выполненные проверки
+## Completed checks
 
-- `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` — успешно; 15 unit-тестов.
-- `./gradlew :app:connectedDebugAndroidTest` — по 48 тестов на выделенных Pixel 7 arm64 эмуляторах Android 12 / API 31 (`emulator-5580`) и Android 16 / API 36 (`emulator-5582`). В полном прогоне по одному тайм-ауту: `HomeSurfaceTest.fullHeightHomeRetainsTouchKeyboardAndAccessibleNavigation` на API 31 и `WidgetPickerTest.previewsFallbacksAndAlphabetChooseTheDisplayedProviderWithoutBindingDuringBrowse` на API 36. Полный прогон не считается успешным.
-- Отдельный повтор `ShortcutIconTest,HomeSurfaceTest,WidgetPickerTest` — все четыре теста прошли на каждом устройстве. Новый `ShortcutIconTest` прошёл также в полном прогоне: опубликованные bitmap/resource shortcuts, отсутствие значка, недоступный shortcut, выравнивание текста, доступная строка и запуск правильного быстрого действия.
-- Проверены реальные снимки меню с тестовой аватаркой на обеих версиях Android; изображения и тексты выровнены. Фиктивная беседа создаётся только тестом и удаляется в `finally`. Снимки находятся в локальной `.impeccable/review/shortcut-icons-emulator-5580.png` и `shortcut-icons-emulator-5582.png`.
-- Lint: 0 ошибок, 27 предупреждений. Сравнение с `HEAD` (26 предупреждений) выявило только новое уведомление `GradleDependency` о доступной версии Material 1.14.0. Зависимость осталась 1.13.0; это изменяемое сетевое уведомление о версии, а не новое нарушение в изменённом коде. Остальные предупреждения совпадают с исходной веткой.
-- `git diff --check`, пути Markdown-ссылок и JSON sidecar — без ошибок.
+- `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` passed; 15 unit tests.
+- `./gradlew :app:connectedDebugAndroidTest`: 48 each on dedicated Pixel 7 arm64 API 31 (`emulator-5580`)/API 36 (`emulator-5582`). One timeout each: `HomeSurfaceTest.fullHeightHomeRetainsTouchKeyboardAndAccessibleNavigation` (31), `WidgetPickerTest.previewsFallbacksAndAlphabetChooseTheDisplayedProviderWithoutBindingDuringBrowse` (36). Full runs not successful.
+- Isolated `ShortcutIconTest,HomeSurfaceTest,WidgetPickerTest`: all four passed each device. New ShortcutIconTest also passed full run: published bitmap/resource shortcuts, missing icon/unavailable shortcut, text alignment/accessible row/correct launch.
+- Real menu/test-avatar captures reviewed both; images/text aligned. Fake conversation created only by test/deleted in `finally`. Local `.impeccable/review/shortcut-icons-emulator-5580.png`/`shortcut-icons-emulator-5582.png`.
+- Lint: 0 errors, 27 warnings. Versus `HEAD` (26), only new `GradleDependency` notification for Material 1.14.0. Dependency remains 1.13.0; mutable network version notice, not new violation in changed code. Other warnings match original branch.
+- `git diff --check`, Markdown paths/JSON sidecar clean.
 
-## Ограничения
+## Limitations
 
-Аватарки зависят от данных, которые конкретное приложение публикует в shortcut. Telegram с пользовательским аккаунтом и реальные рабочие профили не проверялись. Запросы к Telegram API не выполняются. Полный паритет Niagara не заявляется.
+Avatars depend on app-published shortcut data. User-account Telegram/real work profiles untested. No Telegram API requests. Full Niagara parity is not claimed.

@@ -17,12 +17,12 @@ class TransientMessageTest {
     private val context get() = instrumentation.targetContext
 
     @Test fun ordinaryAndUndoMessagesExpireWithinThreeSecondsEvenDuringTouch() = launch { scenario ->
-        for (undo in listOf(null, "Отменить")) {
+        for (undo in listOf(null, "Undo")) {
             lateinit var bar: TransientMessageView
             var undone = false
             var shownAt = 0L
             scenario.onActivity {
-                it.message(if (undo == null) "Не удалось открыть приложение. Возможно, приложение отключено." else "Приложение скрыто", undo) { undone = true }
+                it.message(if (undo == null) "Не удалось открыть приложение. Возможно, приложение отключено." else "App hidden", undo) { undone = true }
                 bar = message(it)
                 shownAt = SystemClock.uptimeMillis()
             }
@@ -52,7 +52,7 @@ class TransientMessageTest {
             lateinit var bar: TransientMessageView
             var undone = false
             scenario.onActivity {
-                it.message("Приложение скрыто", "Отменить") { undone = true }
+                it.message("App hidden", "Undo") { undone = true }
                 bar = message(it)
             }
             await { bar.width > 0 }
@@ -73,7 +73,7 @@ class TransientMessageTest {
     @Test fun shortAndCancelledSwipesKeepUndoAndReplacementHasItsOwnTimeout() = launch { scenario ->
         lateinit var first: TransientMessageView
         var undone = 0
-        scenario.onActivity { it.message("Первое", "Отменить") { undone++ }; first = message(it) }
+        scenario.onActivity { it.message("Первое", "Undo") { undone++ }; first = message(it) }
         await { first.width > 0 }
         scenario.onActivity {
             val start = first.width / 2f
@@ -151,15 +151,15 @@ class TransientMessageTest {
                     // Use the actual long-press menu and hide action, not a synthetic store write.
                     menu.isAccessible = true; menu.invoke(it, entry)
                     val dialog = MainActivity::class.java.getDeclaredField("currentDialog").apply { isAccessible = true }.get(it) as android.app.Dialog
-                    descendants(dialog.window!!.decorView).firstOrNull { it.contentDescription == "Дополнительно" }?.performClick()
-                    descendants(dialog.window!!.decorView).first { it.contentDescription == "Скрыть приложение" }.performClick()
+                    descendants(dialog.window!!.decorView).firstOrNull { it.contentDescription == "Additional" }?.performClick()
+                    descendants(dialog.window!!.decorView).first { it.contentDescription == "Hide app" }.performClick()
                     bar = message(it)
                     assertTrue(entry.id in store.hidden)
                     bar.getChildAt(1).performClick()
                     assertFalse(entry.id in store.hidden)
                 }
                 scenario.onActivity {
-                    it.message("Приложение скрыто", "Отменить") { store.hidden = store.hidden - entry.id }
+                    it.message("App hidden", "Undo") { store.hidden = store.hidden - entry.id }
                     store.hidden = store.hidden + entry.id
                     bar = message(it)
                     bar.performAccessibilityAction(AccessibilityNodeInfo.ACTION_DISMISS, null)

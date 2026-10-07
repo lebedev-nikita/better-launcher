@@ -1,36 +1,35 @@
-# Проверка компактного алфавита
+# Compact-alphabet verification
 
-Первичная проверка рабочей правки после 0.1.7; результаты последующего релиз-кандидата приведены в конце.
+Initial working-change verification after 0.1.7; later candidate results at the end.
 
-## Изменение
+## Change
 
-Алфавит показывает ★ и только непустые разделы каталога видимых приложений. «#» показывается последним, если для него есть приложения. Ряд расположен внизу, с отступом 8 dp над зарезервированным местом нижней панели. Шаг букв — 20 dp при font scale 1.0; он растёт с системным шрифтом и уменьшается при нехватке высоты. Избранное и список приложений используют одинаковый отступ снизу, чтобы буквы не смещались под пальцем при переходе.
+Alphabet shows ★/nonempty visible-app sections only. # last if matching apps exist. Bottom rail 8 dp above reserved footer; spacing 20 dp at font scale 1.0, grows with fonts/shrinks with limited height. Favorites/list share bottom reservation so letters do not move under finger.
 
-## Выполнено
+## Completed
 
-- `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` — успешно.
-- 4 unit-теста, 0 ошибок. Проверены непустые разделы, порядок, условный «#» и пустой каталог.
-- `ANDROID_SERIAL=emulator-5580 ./gradlew :app:connectedDebugAndroidTest` — 18 тестов, 0 ошибок на выделенном `BetterLauncher_CompactRail_API_31`, Android 12 / API 31. Добавлены проверки доступности нижнего раздела, свободной верхней области и края Back в обоих режимах руки, переходов с клавиатуры только по существующим разделам и неизменного положения алфавита при открытии списка и возврате домой.
-- Lint: 0 ошибок, 27 предупреждений; сравнение XML-отчётов до и после правки не выявило новых предупреждений.
-- `git diff --check` и разбор `.impeccable/design.json` — успешно.
+- `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` passed.
+- 4 unit tests, 0 errors: populated sections/order/conditional #/empty catalog.
+- `ANDROID_SERIAL=emulator-5580 ./gradlew :app:connectedDebugAndroidTest`: 18 tests, 0 errors on dedicated `BetterLauncher_CompactRail_API_31`, Android 12/API 31. Adds bottom-section access, free top area/Back edge both handedness modes, keyboard only existing sections/stable rail on list/home transitions.
+- Lint: 0 errors, 27 warnings; before/after XML comparison found no new warnings.
+- `git diff --check`/`.impeccable/design.json` parsing passed.
 
-После connected-тестов debug APK переустановлен, HOME назначен на тестовом эмуляторе.
+Debug APK reinstalled/HOME assigned after connected.
 
-## Ограничения UI-проверки
+## UI limitations
 
-Полный `scripts/smoke-test.py` на Android 12 не завершился: UI Automator возвращал `null root node` и не позволил получить свежее дерево экрана. Это не успешный smoke. Локальный снимок экрана загрузки подтверждает нижнее положение ★, но не заменяет проверку готового каталога. Дополнительный UI-сценарий также прервался при чтении дерева экрана.
+Full Android 12 `scripts/smoke-test.py` incomplete: UI Automator null root prevented fresh tree. Not successful smoke. Loading-screen capture confirms bottom ★, not ready-catalog verification. Additional scenario also stopped reading tree.
 
-На выделенном `BetterLauncher_CompactRail_API_36` установка APK прервалась ошибкой службы package (`Broken pipe`), после чего перестали отвечать системные службы input/window/activity. UI Android 16 не проверен. Проверки узкого экрана/font scale 1.3, landscape, клавиатуры и левостороннего режима на реальном экране остаются незавершёнными; они не объявлены успешными на основании исходника или инструментальных тестов. Временные настройки эмуляторов восстановлены; физический телефон и TalkBack не проверялись.
+Dedicated `BetterLauncher_CompactRail_API_36` install failed with package-service Broken pipe, then input/window/activity stopped responding. Android 16 UI unverified. Narrow/font scale 1.3, landscape, keyboard/left-handed real-screen checks unfinished; source/instrumentation do not substitute. Temporary settings restored; physical phone/TalkBack untested.
 
-Вердикт: изменение и автоматические проверки готовы; полная визуальная проверка требует повторного запуска на работающих эмуляторах до выпуска.
+Verdict: implementation/automated checks ready; full visual verification needs working-emulator rerun before release.
 
+## Update: 0.2.0-rc.4
 
-## Обновление: релиз-кандидат 0.2.0-rc.4
+After `origin/main` (`3e11b26`) rebase/AGENTS reread, final debug/release/lint passed: 4 unit tests, 19 Android 12 connected, 0 errors/27 previous warnings, no new warnings. New main test covers heading renaming.
 
-После rebase на `origin/main` (`3e11b26`) и повторного чтения AGENTS.md выполнены итоговые debug/release сборки и lint: 4 unit-теста, 19 connected-тестов на Android 12, 0 ошибок и 27 прежних lint warnings без новых. Новый тест из main проверяет переименование по заголовку меню.
+Final signed release (code 12) installed/HOME assigned after connected. Updated full Android 12 smoke passed including heading rename/HOME cancellation. Separate scenario covered lower sections/stable alphabet/footer/IME/Back in portrait 1080×2400, 945×2100/font scale 1.3, left-handed and actual landscape 2400×1080. Initial user_rotation command did not rotate; false landscape rejected. Retry used `wm fixed-to-user-rotation enabled`/`wm user-rotation lock 1`, visually checked. Size/font/orientation/right side restored. Local captures `.impeccable/review/compact-alphabet/`.
 
-Итоговый подписанный release APK (versionCode 12) установлен после connected-тестов и назначен HOME. Полный обновлённый smoke прошёл на Android 12, включая переименование по заголовку и отмену через HOME. Отдельный UI-сценарий проверил нижние разделы, стабильное положение алфавита, footer, IME и Back в портрете 1080×2400, на 945×2100 с font scale 1.3, в левостороннем режиме и в настоящем landscape 2400×1080. Обычная команда изменения user_rotation сначала не повернула экран; этот ложный landscape не засчитан, вместо него выполнен и визуально проверен повтор с `wm fixed-to-user-rotation enabled` и `wm user-rotation lock 1`. После сценариев восстановлены размер, font scale, ориентация и правая сторона алфавита. Снимки находятся локально в `.impeccable/review/compact-alphabet/`.
+apksigner verified certificate matching published 0.1.7; debugging disabled, R8/resource shrinking enabled. Size: 2 416 396 bytes, SHA-256 `4912a6c002b1de7bbc62994b2acc6a19cdb9193f81af025ab2f808f82e447e69`. +1369 bytes from three main animation XMLs/code; no ICU4J.
 
-APK проверен apksigner; сертификат совпадает с опубликованным 0.1.7. Отладка отключена, R8 и resource shrinking включены. Размер — 2 416 396 байт, SHA-256 — `4912a6c002b1de7bbc62994b2acc6a19cdb9193f81af025ab2f808f82e447e69`. Увеличение на 1369 байт связано с тремя XML-ресурсами анимации из main и изменениями кода; ICU4J в APK отсутствует.
-
-Вердикт: готово к публикации как релиз-кандидат с указанными ограничениями. Итоговый APK на Android 16 не проверен: предварительный прогон до последнего rebase прервался из-за UI Automator. Физические устройства, рабочие профили и TalkBack остаются непроверенными. Подробности выпуска — в [release notes](releases/0.2.0-rc.4.md).
+Verdict: ready as candidate with listed limitations. Final Android 16 unverified; preliminary pre-rebase run stopped on UI Automator. Physical devices/work profiles/TalkBack unverified. [Release notes](releases/0.2.0-rc.4.md).

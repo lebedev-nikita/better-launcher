@@ -86,10 +86,10 @@ open class AlphabetRail @JvmOverloads constructor(context: Context, private val 
     var activeLetters = emptySet<String>()
         set(value) { field = value; invalidate() }
     var onSelect: (String) -> Unit = {}
-    var alphabetLabel = "Алфавит приложений"
+    var alphabetLabel = context.getString(R.string.app_alphabet)
         set(value) { field = value; selected = selected }
     var selected = "★"
-        set(value) { field = value; contentDescription = "$alphabetLabel, $value. Проведите вверх или вниз для выбора."; invalidate() }
+        set(value) { field = value; contentDescription = context.getString(R.string.alphabet_description, alphabetLabel, value); invalidate() }
     var leftHanded = false
     var contentTopInset = 0
         set(value) { field = value; invalidate() }

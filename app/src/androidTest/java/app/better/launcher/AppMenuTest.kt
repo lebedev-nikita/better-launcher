@@ -99,11 +99,11 @@ class AppMenuTest {
             oldAlias = activity.store.alias(entry.id)
             val initialLabel = activity.catalog.label(entry)
             openMenu(initialLabel)
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Приложения во всплывающем меню" })
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Уведомления и быстрые действия" })
-            node { it.contentDescription == "Скрыть приложение" }
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Переименовать" })
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Additional" })
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Apps in the pop-up menu" })
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Notifications and quick actions" })
+            node { it.contentDescription == "Hide app" }
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Rename" })
             val menu = currentDialog(activity)
             instrumentation.runOnMainSync {
                 fun commands(view: View): List<String> = buildList {
@@ -111,23 +111,23 @@ class AppMenuTest {
                     if (view.isClickable && view.contentDescription != null) add(view.contentDescription.toString())
                     if (view is ViewGroup) for (index in 0 until view.childCount) addAll(commands(view.getChildAt(index)))
                 }
-                assertEquals(listOf("Переименовать $initialLabel", "Убрать из избранного", "Изменить порядок",
-                    "Скрыть приложение", "Удалить приложение", "О приложении", "Настройки Better Launcher"),
+                assertEquals(listOf("Rename $initialLabel", "Remove from favorites", "Reorder",
+                    "Hide app", "Uninstall app", "App info", "Better Launcher settings"),
                     commands((menu as Dialog).window!!.decorView))
             }
-            node { it.contentDescription == "Переименовать $initialLabel" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Rename $initialLabel" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Renamed app")
             assertSame("Editing must keep the original app menu", menu, currentDialog(activity))
-            node { it.text == "Переименовать $initialLabel" }
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Скрыть приложение" })
-            node { it.text == "Сохранить" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.text == "Rename $initialLabel" }
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Hide app" })
+            node { it.text == "Save" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             node { it.text == "Renamed app" }
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
 
             await(30000) { !imeWindowVisible() }
             // The next menu must use the saved alias, and HOME must discard unsaved edits.
             openMenu("Renamed app")
-            node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Rename Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Unsaved name")
             instrumentation.runOnMainSync {
                 activity.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
@@ -140,7 +140,7 @@ class AppMenuTest {
             openMenu("Renamed app")
             val backDialog = currentDialog(activity) as Dialog
             val ime = observeIme(backDialog)
-            node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Rename Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("Discard with Back")
             // Insets report the target visibility before the animation finishes.
             // Both Back presses must start with the keyboard in a settled state.
@@ -155,7 +155,7 @@ class AppMenuTest {
             assertEquals("Renamed app", LauncherStore(instrumentation.targetContext).alias(entry.id))
 
             openMenu("Renamed app")
-            node { it.contentDescription == "Переименовать Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Rename Renamed app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             setName("")
             val dialog = currentDialog(activity) as android.app.Dialog
             instrumentation.runOnMainSync {
@@ -198,18 +198,18 @@ class AppMenuTest {
             val entry = app!!
             val label = activity.catalog.label(entry)
             openMenu(label)
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
-            node { it.contentDescription == "Скрыть приложение" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-            node { it.contentDescription == "Главный экран" }
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Additional" })
+            node { it.contentDescription == "Hide app" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Home screen" }
             assertTrue(entry.id in store.hidden)
             assertFalse(entry.id in store.favorites)
             assertFalse(activity.catalog.visible().any { it.id == entry.id })
 
-            node { it.contentDescription == "Главный экран" }.performAction(R.id.home_search)
+            node { it.contentDescription == "Home screen" }.performAction(R.id.home_search)
             setName(label)
             openMenu(label)
             // Restore is immediately available, without expanding additional actions.
-            node { it.contentDescription == "Показывать снова" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            node { it.contentDescription == "Show again" }.performAction(AccessibilityNodeInfo.ACTION_CLICK)
             node { it.className == "android.widget.EditText" && it.text?.toString() == label }
             node { it.text?.toString() == label && it.className != "android.widget.EditText" }
             assertFalse(entry.id in LauncherStore(instrumentation.targetContext).hidden)
@@ -219,9 +219,9 @@ class AppMenuTest {
                 .apply { load() }.visible().any { it.id == entry.id })
 
             openMenu(label)
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Показывать снова" })
-            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Дополнительно" })
-            node { it.contentDescription == "Скрыть приложение" }
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Show again" })
+            assertNull(findNode(instrumentation.uiAutomation.rootInActiveWindow) { it.contentDescription == "Additional" })
+            node { it.contentDescription == "Hide app" }
         } finally {
             instrumentation.runOnMainSync {
                 store.hidden = oldHidden
@@ -275,7 +275,7 @@ class AppMenuTest {
             while (row != null && !row.isLongClickable) row = row.parent
             row?.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK) == true
         }
-        node { it.contentDescription == "Переименовать $label" }
+        node { it.contentDescription == "Rename $label" }
     }
     private fun setName(value: String) {
         val input = node { it.className == "android.widget.EditText" }
