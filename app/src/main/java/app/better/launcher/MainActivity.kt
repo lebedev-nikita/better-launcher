@@ -6,6 +6,7 @@ import android.app.role.RoleManager
 import android.content.*
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
+import android.content.pm.ShortcutInfo
 import android.graphics.Color
 import android.graphics.Typeface
 import android.media.MediaMetadata
@@ -27,6 +28,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isNotEmpty
 import androidx.core.view.isEmpty
 import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.core.view.WindowCompat
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
@@ -820,26 +822,74 @@ class MainActivity : AppCompatActivity() {
         sheet(catalog.label(app), icon = app.icon) { body, dialog ->
             val notifications = NotificationHub.notifications(app.packageName, app.user)
             notifications.forEach { body.addView(notificationView(it)) }
-            val shortcuts = catalog.shortcuts(app)
-            val shortcutRows = shortcuts.filter { it.isEnabled }.map { shortcut ->
-                val row = menuAction(shortcut.shortLabel?.toString() ?: "Быстрое действие") {
-                    runCatching { catalog.launcherApps.startShortcut(app.packageName, shortcut.id, null, null, app.user); dialog.dismiss() }.onFailure { message("Не удалось открыть быстрое действие") }
+            val shortcuts = catalog.shortcuts(app).filter { it.isEnabled }
+            val attachedApps = store.popUp(app.id).mapNotNull(catalog::find)
+            val shortcutRows = mutableListOf<Pair<ShortcutInfo, LinearLayout>>()
+            var lastHidden: ShortcutInfo? = null
+            lateinit var undoAction: LinearLayout
+            lateinit var restoreAction: LinearLayout
+            lateinit var emptyText: TextView
+            fun updateVisibility() {
+                val hidden = store.hiddenShortcuts(app.id)
+                shortcutRows.forEach { (shortcut, row) -> (row.parent as View).isGone = shortcut.id in hidden }
+                undoAction.isGone = lastHidden == null
+                lastHidden?.let { shortcut ->
+                    val label = "Отменить скрытие «${shortcut.shortLabel ?: "Быстрое действие"}»"
+                    undoAction.contentDescription = label; (undoAction.getChildAt(1) as TextView).text = label
                 }
-                body.addView(row)
-                shortcut to row
+                restoreAction.isGone = hidden.isEmpty()
+                emptyText.isGone = notifications.isNotEmpty() || attachedApps.isNotEmpty() || shortcuts.any { it.id !in hidden }
+                emptyText.text = if (shortcuts.isNotEmpty()) "Все быстрые действия скрыты."
+                    else "Здесь появятся уведомления и быстрые действия приложения."
             }
-            if (shortcutRows.isNotEmpty()) executor.execute {
-                for ((shortcut, row) in shortcutRows) {
-                    if (Thread.currentThread().isInterrupted) break
-                    val icon = catalog.shortcutIcon(shortcut) ?: continue
-                    handler.post {
-                        if (!isDestroyed && currentDialog === dialog && dialog.isShowing) setMenuActionIcon(row, icon)
+            fun loadVisibleIcons() {
+                val pending = shortcutRows.filter { (_, row) -> (row.parent as View).isVisible && row.getChildAt(0) is GlyphView }
+                if (pending.isNotEmpty()) executor.execute {
+                    for ((shortcut, row) in pending) {
+                        if (Thread.currentThread().isInterrupted) break
+                        val icon = catalog.shortcutIcon(shortcut) ?: continue
+                        handler.post {
+                            if (!isDestroyed && currentDialog === dialog && dialog.isShowing &&
+                                (row.parent as View).isVisible) setMenuActionIcon(row, icon)
+                        }
                     }
                 }
             }
-            store.popUp(app.id).mapNotNull(catalog::find).forEach { body.addView(appRow(it, false).apply { setMenuAppColors(this) }) }
-            if (notifications.isEmpty() && shortcuts.isEmpty() && store.popUp(app.id).isEmpty()) body.addView(menuText("Здесь появятся уведомления и быстрые действия приложения.", 16f))
-            body.addView(gap(8)); body.addView(menuAction("Добавить приложения", Glyph.PLUS) { dialog.dismiss(); selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } })
+            shortcuts.forEach { shortcut ->
+                val label = shortcut.shortLabel?.toString() ?: "Быстрое действие"
+                val row = menuAction(label) {
+                    runCatching { catalog.launcherApps.startShortcut(app.packageName, shortcut.id, null, null, app.user); dialog.dismiss() }.onFailure { message("Не удалось открыть быстрое действие") }
+                }
+                val wrapper = horizontal().apply { addView(row, LinearLayout.LayoutParams(0, -2, 1f)) }
+                lateinit var hideButton: View
+                hideButton = menuIconButton(Glyph.CLOSE, "Скрыть быстрое действие «$label»") {
+                    val focused = hideButton.hasFocus()
+                    store.setHiddenShortcuts(app.id, store.hiddenShortcuts(app.id) + shortcut.id)
+                    lastHidden = shortcut; updateVisibility()
+                    if (focused) undoAction.requestFocus()
+                }
+                wrapper.addView(hideButton); body.addView(wrapper); shortcutRows.add(shortcut to row)
+            }
+            attachedApps.forEach { body.addView(appRow(it, false).apply { setMenuAppColors(this) }) }
+            emptyText = menuText("", 16f); body.addView(emptyText)
+            body.addView(gap(8))
+            undoAction = menuAction("Отменить скрытие", Glyph.BACK) {
+                lastHidden?.let { shortcut ->
+                    val focused = undoAction.hasFocus()
+                    store.setHiddenShortcuts(app.id, store.hiddenShortcuts(app.id) - shortcut.id)
+                    lastHidden = null; updateVisibility(); loadVisibleIcons()
+                    if (focused) shortcutRows.firstOrNull { it.first.id == shortcut.id }?.second?.requestFocus()
+                }
+            }
+            restoreAction = menuAction("Показать скрытые действия", Glyph.SHOW) {
+                val focused = restoreAction.hasFocus()
+                store.setHiddenShortcuts(app.id, emptySet())
+                lastHidden = null; updateVisibility(); loadVisibleIcons()
+                if (focused) shortcutRows.firstOrNull()?.second?.requestFocus()
+            }
+            body.addView(undoAction); body.addView(restoreAction)
+            body.addView(menuAction("Добавить приложения", Glyph.PLUS) { dialog.dismiss(); selectApps("Меню ${catalog.label(app)}", store.popUp(app.id)) { store.setPopUp(app.id, it); showHome() } })
+            updateVisibility(); loadVisibleIcons()
         }
     }
     private fun notificationView(sbn: StatusBarNotification): View {

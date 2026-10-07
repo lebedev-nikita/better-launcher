@@ -140,6 +140,16 @@
         "loading": "Background; replace chevron in fixed slot only while its dialog is current",
         "fallback": "Chevron for missing or inaccessible icons",
         "accessibility": "Decorative image; labeled, focusable action row"
+      },
+      "shortcutHiding": {
+        "hideButton": "Trailing 48dp contour Close, separate sibling of the launch row",
+        "label": "Скрыть быстрое действие «…»",
+        "interaction": "Hide immediately in the current sheet; keep it open",
+        "undo": "Отменить скрытие «…» for the last hide in the open sheet",
+        "restore": "Показать скрытые действия restores all shortcuts for this AppEntry",
+        "empty": "Все быстрые действия скрыты.",
+        "storage": "Opaque shortcut IDs under hiddenShortcuts:<AppEntry.id>; profile included; backup version 1",
+        "accessibility": "Separate labeled/focusable launch and hide actions; retain focus after keyboard hide/restore"
       }
     },
     "appGestures": {

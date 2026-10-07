@@ -282,3 +282,7 @@ The app search toolbar spans the inset-safe screen width with symmetric 20dp sid
 ## Shortcut icons
 
 Quick-action rows use the publisher’s shortcut icon, including conversation avatars when supplied. LauncherApps provides the icon with its profile badge; preserve publisher colors and shape without menu tint or additional clipping. The image occupies 32dp centered in the existing 48dp icon slot, with the same 16dp label gap. Background loading replaces only the chevron; missing/inaccessible icons keep the chevron, with no label movement or row-height change. Decorative images are excluded from accessibility; the complete row retains its label and keyboard action.
+
+## Hiding quick actions
+
+Each shortcut has a separate trailing 48dp pale blue contour Close button, labeled “Скрыть быстрое действие «…»”. It is a sibling of the weighted launch action, so hiding cannot launch the shortcut and keyboard/TalkBack can reach both actions independently. Icon and label alignment remain unchanged; text wraps before the trailing button. Hiding keeps the sheet open and removes only that shortcut wrapper. The sheet exposes “Отменить скрытие «…»” for the last hide in this session and “Показать скрытые действия” when saved hidden IDs exist. Restoring reuses rows and reloads missing icons in the background. With all shortcuts hidden and no other content, show “Все быстрые действия скрыты.”. There are no confirmation dialogs. Hidden IDs are scoped by AppEntry.id and persist across menu/activity recreation and backup.

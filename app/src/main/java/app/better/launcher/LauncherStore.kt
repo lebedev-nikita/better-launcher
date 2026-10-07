@@ -43,6 +43,12 @@ class LauncherStore(context: Context) {
     fun removeFolder(id: String) { favorites = favorites - id; prefs.edit().remove(id).apply() }
     fun popUp(id: String): List<String> = array("popup:$id")
     fun setPopUp(id: String, ids: List<String>) = putArray("popup:$id", ids)
+    fun hiddenShortcuts(id: String): Set<String> = array("hiddenShortcuts:$id").toSet()
+    fun setHiddenShortcuts(id: String, ids: Set<String>) {
+        require(id.isNotEmpty() && ids.all { it.isNotEmpty() })
+        if (ids.isEmpty()) prefs.edit { remove("hiddenShortcuts:$id") }
+        else putArray("hiddenShortcuts:$id", ids.toList())
+    }
     var widgets: List<Int>
         get() = array("widgets").mapNotNull(String::toIntOrNull)
         set(value) {
@@ -116,7 +122,7 @@ class LauncherStore(context: Context) {
                 key == "widgetSpacing" && value is Int && value in 0..32 -> accepted[key] = value
                 key == "hidden" && value is JSONArray -> accepted[key] = List(value.length()) { value.getString(it) }.toSet()
                 key in booleanKeys && value is Boolean -> accepted[key] = value
-                (key in stringKeys || key.startsWith("alias:") || key.startsWith("folder:") || key.startsWith("popup:")) && value is String -> accepted[key] = value
+                (key in stringKeys || key.startsWith("alias:") || key.startsWith("folder:") || key.startsWith("popup:") || key.startsWith("hiddenShortcuts:")) && value is String -> accepted[key] = value
                 else -> error("Повреждённая резервная копия")
             }
         }
@@ -133,6 +139,11 @@ class LauncherStore(context: Context) {
         accepted.filterKeys { it.startsWith("popup:") }.values.forEach { value ->
             val ids = JSONArray(value as String)
             repeat(ids.length()) { ids.getString(it) }
+        }
+        accepted.filterKeys { it.startsWith("hiddenShortcuts:") }.forEach { (key, value) ->
+            require(key.removePrefix("hiddenShortcuts:").isNotEmpty())
+            val ids = JSONArray(value as String)
+            repeat(ids.length()) { require(ids.get(it) is String && ids.getString(it).isNotEmpty()) }
         }
         (accepted["widgets"] as? String)?.let { value ->
             val ids = JSONArray(value)

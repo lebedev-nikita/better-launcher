@@ -68,6 +68,53 @@ class LauncherIntegrationTest {
         assertTrue(runCatching { store.import("""{"version":1,"preferences":{"folder:x":"{}"}}""") }.isFailure)
         assertEquals(before, store.export())
     }
+    @Test fun hiddenShortcutsSurviveRecreationBackupAndRemainSeparateByAppAndProfile() = isolated { store ->
+        val personal = "0:example/.Main"
+        val work = "10:example/.Main"
+        val other = "0:other/.Main"
+        store.setHiddenShortcuts(personal, setOf("conversation:42", "search"))
+        store.setHiddenShortcuts(work, setOf("shorts"))
+        store.setHiddenShortcuts(other, setOf("search"))
+        val backup = store.export()
+        store.setHiddenShortcuts(personal, emptySet())
+        assertTrue(store.hiddenShortcuts(personal).isEmpty())
+        store.import(backup)
+        val reloaded = LauncherStore(context)
+        assertEquals(setOf("conversation:42", "search"), reloaded.hiddenShortcuts(personal))
+        assertEquals(setOf("shorts"), reloaded.hiddenShortcuts(work))
+        assertEquals(setOf("search"), reloaded.hiddenShortcuts(other))
+        reloaded.rename(personal, "Renamed app")
+        assertEquals(setOf("conversation:42", "search"), reloaded.hiddenShortcuts(personal))
+        reloaded.import("""{"version":1,"preferences":{"favorites":"[]"}}""")
+        assertTrue(reloaded.hiddenShortcuts(personal).isEmpty())
+    }
+    @Test fun malformedHiddenShortcutBackupIsRejectedBeforeAnyWrite() = isolated { store ->
+        val id = "0:example/.Main"
+        store.favorites = listOf("keep")
+        store.setHiddenShortcuts(id, setOf("search"))
+        store.widgets = listOf(42); store.homeWidgetId = 42
+        val before = store.export()
+        val values = listOf("[42]", "[null]", "[true]", "[{}]", "[\"\"]", "not-json", "{}")
+        values.forEach { value ->
+            val prefs = org.json.JSONObject().put("favorites", "[\"overwrite\"]")
+                .put("hiddenShortcuts:$id", value)
+            val backup = org.json.JSONObject().put("version", 1).put("preferences", prefs).toString()
+            assertTrue(value, runCatching { store.import(backup) }.isFailure)
+            assertEquals(before, store.export())
+            assertEquals(listOf(42), store.widgets)
+            assertEquals(42, store.homeWidgetId)
+        }
+        listOf(org.json.JSONArray().put("search"), true, org.json.JSONObject.NULL).forEach { value ->
+            val prefs = org.json.JSONObject().put("favorites", "[]").put("hiddenShortcuts:$id", value)
+            assertTrue(runCatching { store.import(org.json.JSONObject().put("version", 1).put("preferences", prefs).toString()) }.isFailure)
+            assertEquals(before, store.export())
+        }
+        assertTrue(runCatching { store.import("""{"version":1,"preferences":{"hiddenShortcuts:":"[]"}}""") }.isFailure)
+        assertEquals(before, store.export())
+        store.import("""{"version":1,"preferences":{"hiddenShortcuts:0:example/.Main":"[]"}}""")
+        assertTrue(store.hiddenShortcuts(id).isEmpty())
+        assertEquals(listOf(42), store.widgets)
+    }
     @Test fun widgetPlacementMigratesAndSurvivesRecreationAndPortableImport() = isolated { store ->
         // Existing stacks keep their first widget on home; the others move left.
         store.prefs.edit().putString("widgets", "[\"41\",\"42\",\"43\"]").commit()
