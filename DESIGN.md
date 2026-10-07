@@ -278,3 +278,7 @@ All bottom sheets arrive with the same 300ms eased rise, native dimming and 180m
 ## App search width
 
 The app search toolbar spans the inset-safe screen width with symmetric 20dp side padding. Its 48dp Back and Clear targets surround the weighted native input. Only the results reserve the usual alphabet margins; changing rail side does not narrow or shift the toolbar. On the app screen the rail starts below the 12dp top spacing and 56dp toolbar so its drawing and touch area cannot cover Back, input or Clear in short windows. System/cutout/IME insets remain applied by the screen root.
+
+## Shortcut icons
+
+Quick-action rows use the publisher’s shortcut icon, including conversation avatars when supplied. LauncherApps provides the icon with its profile badge; preserve publisher colors and shape without menu tint or additional clipping. The image occupies 32dp centered in the existing 48dp icon slot, with the same 16dp label gap. Background loading replaces only the chevron; missing/inaccessible icons keep the chevron, with no label movement or row-height change. Decorative images are excluded from accessibility; the complete row retains its label and keyboard action.

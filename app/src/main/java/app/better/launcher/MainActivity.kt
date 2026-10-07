@@ -598,6 +598,15 @@ class MainActivity : AppCompatActivity() {
         addView(menuText(label, 17f).apply { importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO },
             LinearLayout.LayoutParams(0, -2, 1f))
     }
+    private fun setMenuActionIcon(row: LinearLayout, icon: android.graphics.drawable.Drawable) {
+        val slot = row.getChildAt(0).layoutParams
+        row.removeViewAt(0)
+        row.addView(ImageView(this).apply {
+            setImageDrawable(icon); scaleType = ImageView.ScaleType.FIT_CENTER
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, 0, slot)
+    }
     fun sheet(title: String, scrollContent: Boolean = true, icon: android.graphics.drawable.Drawable? = null, showHeader: Boolean = true, build: (LinearLayout, Dialog) -> Unit): Dialog {
         currentDialog?.dismiss(); hideKeyboard()
         val dialog = Dialog(this, R.style.Theme_BetterLauncher_AppMenu).apply { setCanceledOnTouchOutside(true) }
@@ -812,10 +821,21 @@ class MainActivity : AppCompatActivity() {
             val notifications = NotificationHub.notifications(app.packageName, app.user)
             notifications.forEach { body.addView(notificationView(it)) }
             val shortcuts = catalog.shortcuts(app)
-            shortcuts.filter { it.isEnabled }.forEach { shortcut ->
-                body.addView(menuAction(shortcut.shortLabel?.toString() ?: "Быстрое действие") {
+            val shortcutRows = shortcuts.filter { it.isEnabled }.map { shortcut ->
+                val row = menuAction(shortcut.shortLabel?.toString() ?: "Быстрое действие") {
                     runCatching { catalog.launcherApps.startShortcut(app.packageName, shortcut.id, null, null, app.user); dialog.dismiss() }.onFailure { message("Не удалось открыть быстрое действие") }
-                })
+                }
+                body.addView(row)
+                shortcut to row
+            }
+            if (shortcutRows.isNotEmpty()) executor.execute {
+                for ((shortcut, row) in shortcutRows) {
+                    if (Thread.currentThread().isInterrupted) break
+                    val icon = catalog.shortcutIcon(shortcut) ?: continue
+                    handler.post {
+                        if (!isDestroyed && currentDialog === dialog && dialog.isShowing) setMenuActionIcon(row, icon)
+                    }
+                }
             }
             store.popUp(app.id).mapNotNull(catalog::find).forEach { body.addView(appRow(it, false).apply { setMenuAppColors(this) }) }
             if (notifications.isEmpty() && shortcuts.isEmpty() && store.popUp(app.id).isEmpty()) body.addView(menuText("Здесь появятся уведомления и быстрые действия приложения.", 16f))

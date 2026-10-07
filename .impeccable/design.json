@@ -130,7 +130,17 @@
       "iconSlotDp": 48,
       "iconGapDp": 16,
       "source": "MainActivity.menuBody/menuHeader/menuAction/presentSheet",
-      "scope": "All app-owned bottom sheets and navy settings; excludes system UI and hosted provider content"
+      "scope": "All app-owned bottom sheets and navy settings; excludes system UI and hosted provider content",
+      "shortcutIcons": {
+        "source": "LauncherApps.getShortcutBadgedIconDrawable",
+        "imageDp": 32,
+        "slotDp": 48,
+        "gapDp": 16,
+        "appearance": "Publisher colors and shape, including profile badge; no tint or clipping",
+        "loading": "Background; replace chevron in fixed slot only while its dialog is current",
+        "fallback": "Chevron for missing or inaccessible icons",
+        "accessibility": "Decorative image; labeled, focusable action row"
+      }
     },
     "appGestures": {
       "iconTarget": "48dp with 38dp drawable",

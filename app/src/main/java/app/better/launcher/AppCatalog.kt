@@ -59,6 +59,11 @@ class AppCatalog(private val context: Context, private val store: LauncherStore)
             .setQueryFlags(LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST or LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED), app.user) ?: emptyList()
     }.getOrDefault(emptyList())
 
+    // May read the publisher's bitmap or URI; call from a background thread.
+    fun shortcutIcon(shortcut: ShortcutInfo): Drawable? = runCatching {
+        launcherApps.getShortcutBadgedIconDrawable(shortcut, context.resources.displayMetrics.densityDpi)
+    }.getOrNull()
+
     fun seedFavorites() {
         if (store.bool("initialized")) return
         val priorities = listOf("dialer", "messaging", "chrome", "camera", "photos", "maps", "vending", "settings")
