@@ -9,3 +9,4 @@ local.properties
 .impeccable/cache/
 artifacts/*.apk
 artifacts/SHA256SUMS.txt
+.claude/settings.local.json
